@@ -5,6 +5,7 @@ const { app, BrowserWindow, shell, ipcMain, session, dialog } = require('electro
 const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 
 // ← Auto-update
 const { autoUpdater } = require('electron-updater');
@@ -264,6 +265,84 @@ function getTikTokSession() {
 }
 
 // ================================================================
+// 🔑 CAPTURA DE COOKIES DE TIKTOK (Fase 1)
+// ================================================================
+const COOKIE_SECRET = 'togipanel-tiktok-v1';
+const TIKTOK_COOKIES_FILE = path.join(userDataDir, 'tiktok-cookies.enc');
+
+function cifrar(texto) {
+    const iv = crypto.randomBytes(16);
+    const key = crypto.scryptSync(COOKIE_SECRET, 'togipanel-salt', 32);
+    const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
+    let enc = cipher.update(texto, 'utf8', 'hex');
+    enc += cipher.final('hex');
+    return iv.toString('hex') + ':' + enc;
+}
+
+function descifrar(texto) {
+    try {
+        const [ivHex, enc] = texto.split(':');
+        const iv = Buffer.from(ivHex, 'hex');
+        const key = crypto.scryptSync(COOKIE_SECRET, 'togipanel-salt', 32);
+        const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
+        let dec = decipher.update(enc, 'hex', 'utf8');
+        dec += decipher.final('utf8');
+        return dec;
+    } catch (e) {
+        console.error('❌ No se pudieron descifrar las cookies:', e.message);
+        return null;
+    }
+}
+
+const COOKIES_INTERES = [
+    'sessionid', 'sessionid_ss', 'sid_tt', 'sid_guard', 'uid_tt', 'uid_tt_ss',
+    'ttwid', 'odin_tt', 'passport_csrf_token', 'passport_csrf_token_default',
+    'tt_csrf_token', 'msToken', 'tt_chain_token', 'store-idc', 'store-country-code'
+];
+
+async function capturarYGuardarCookies() {
+    try {
+        const tiktokSession = session.fromPartition('persist:tiktok-session');
+        const todas = await tiktokSession.cookies.get({});
+        const relevantes = {};
+        todas.forEach((c) => {
+            if (COOKIES_INTERES.includes(c.name)) {
+                relevantes[c.name] = c.value;
+            }
+        });
+
+        const tieneSesion = relevantes.sessionid || relevantes.sessionid_ss;
+        if (!tieneSesion) {
+            console.log('⚠️ No se encontró sessionid. Login incompleto.');
+            return { success: false, error: 'Sin sessionid' };
+        }
+
+        const payload = {
+            cookies: relevantes,
+            capturadoEn: new Date().toISOString(),
+            totalCookies: todas.length
+        };
+
+        const cifrado = cifrar(JSON.stringify(payload));
+        fs.writeFileSync(TIKTOK_COOKIES_FILE, cifrado, 'utf8');
+
+        console.log(`✅ Cookies de TikTok guardadas (${Object.keys(relevantes).length} relevantes)`);
+        console.log(`   Archivo: ${TIKTOK_COOKIES_FILE}`);
+
+        BrowserWindow.getAllWindows().forEach((win) => {
+            if (win !== loginWin) {
+                try { win.webContents.send('tiktok-login-success'); } catch (e) {}
+            }
+        });
+
+        return { success: true, total: Object.keys(relevantes).length };
+    } catch (e) {
+        console.error('❌ Error capturando cookies:', e.message);
+        return { success: false, error: e.message };
+    }
+}
+
+// ================================================================
 // 🔄 AUTO-UPDATE (con diálogo nativo + descarga automática)
 // ================================================================
 function initAutoUpdater(win) {
@@ -287,7 +366,6 @@ function initAutoUpdater(win) {
     autoUpdater.on('update-available', (info) => {
         console.log(`🔄 Nueva versión disponible: ${info.version}`);
 
-        // Avisar al panel (por si quiere mostrar banner)
         if (win && !win.isDestroyed()) {
             win.webContents.send('update:available', {
                 version: info.version,
@@ -295,7 +373,6 @@ function initAutoUpdater(win) {
             });
         }
 
-        // 🔽 Descargar automáticamente
         console.log('🔄 Descargando actualización...');
         autoUpdater.downloadUpdate().catch(e => console.error('❌ updater download:', e.message));
     });
@@ -316,12 +393,10 @@ function initAutoUpdater(win) {
     autoUpdater.on('update-downloaded', (info) => {
         console.log(`🔄 Actualización descargada: ${info.version}`);
 
-        // Avisar al panel
         if (win && !win.isDestroyed()) {
             win.webContents.send('update:ready', { version: info.version });
         }
 
-        // 🔔 Diálogo nativo preguntando si reiniciar
         dialog.showMessageBox(win, {
             type: 'info',
             buttons: ['Reiniciar ahora', 'Más tarde'],
@@ -348,7 +423,6 @@ function initAutoUpdater(win) {
         }
     });
 
-    // Comprobar al arrancar (15 s) y cada 4 horas
     setTimeout(() => {
         autoUpdater.checkForUpdates().catch((e) => console.error('❌ updater:', e.message));
     }, 15000);
@@ -429,14 +503,20 @@ function openTikTokLoginWindow() {
     loginWin.webContents.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36');
     loginWin.loadURL('https://livecenter.tiktok.com/login');
 
-    loginWin.webContents.on('did-navigate', (event, url) => {
-        if (url.includes('/live_monitor') || url.includes('/dashboard') || !url.includes('/login')) {
-            BrowserWindow.getAllWindows().forEach(win => {
-                if (win !== loginWin) win.webContents.send('tiktok-login-success');
-            });
-            setTimeout(() => { if (loginWin) loginWin.close(); }, 1500);
+    loginWin.webContents.on('did-navigate', async (event, url) => {
+        const loginOk = url.includes('/live_monitor') || url.includes('/dashboard') || !url.includes('/login');
+
+        if (loginOk) {
+            console.log('🔑 Login detectado en ventana externa. Capturando cookies...');
+            setTimeout(async () => {
+                const res = await capturarYGuardarCookies();
+                if (res.success) {
+                    setTimeout(() => { if (loginWin) loginWin.close(); }, 1500);
+                }
+            }, 2000);
         }
     });
+
     loginWin.on('closed', () => { loginWin = null; });
 }
 
@@ -446,7 +526,6 @@ function openTikTokLoginWindow() {
 function startTikTokMonitorWindow() {
     if (monitorWin) { monitorWin.focus(); return; }
 
-    // 🔥 Base del server según el modo (server vs client)
     const serverBase = getServerBase();
     console.log(`🎥 Monitor TikTok → enviará eventos a ${serverBase}`);
 
@@ -648,6 +727,31 @@ ipcMain.on('tiktok-chat-captured', async (event, data) => {
 });
 
 // ================================================================
+// 🍪 IPC DE COOKIES TIKTOK (Fase 1)
+// ================================================================
+ipcMain.handle('tiktok:capturar-cookies', async () => {
+    return await capturarYGuardarCookies();
+});
+
+ipcMain.handle('tiktok:cookies-status', async () => {
+    try {
+        if (!fs.existsSync(TIKTOK_COOKIES_FILE)) return { existe: false };
+        const cifrado = fs.readFileSync(TIKTOK_COOKIES_FILE, 'utf8');
+        const json = descifrar(cifrado);
+        if (!json) return { existe: false };
+        const data = JSON.parse(json);
+        return {
+            existe: true,
+            capturadoEn: data.capturadoEn,
+            total: Object.keys(data.cookies || {}).length,
+            nombres: Object.keys(data.cookies || {})
+        };
+    } catch (e) {
+        return { existe: false, error: e.message };
+    }
+});
+
+// ================================================================
 // 🔄 IPC DEL AUTO-UPDATE
 // ================================================================
 ipcMain.handle('update:check', async () => {
@@ -683,6 +787,9 @@ ipcMain.handle('update:install', () => {
 app.whenReady().then(() => {
     const setup = readSetup();
     const mode = setup ? setup.mode : null;
+
+    // 🔥 Preparar la partición persist:tiktok-session desde el inicio
+    getTikTokSession();
 
     console.log(`🚀 Arrancando en modo: ${mode || 'PRIMERA VEZ (sin setup.json)'}`);
 

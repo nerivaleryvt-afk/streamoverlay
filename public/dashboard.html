@@ -193,6 +193,122 @@
     .toggle-right-btn.tiktok-btn:hover { color: var(--secondary); border-color: rgba(214,123,168,0.3); }
     .toggle-right-btn.youtube-btn:hover { color: var(--youtube); border-color: rgba(201,90,90,0.3); }
 
+    /* ============================================
+       DROPDOWN SELECTOR DE VISTAS TIKTOK
+       ============================================ */
+    .tiktok-view-selector {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 0;
+      border-radius: 100px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      overflow: visible;
+    }
+    .tiktok-view-selector .tiktok-view-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 12px;
+      background: transparent;
+      color: var(--text-dim);
+      font-weight: 500;
+      font-size: 12px;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      border-radius: 100px 0 0 100px;
+      transition: all 0.15s;
+      white-space: nowrap;
+      max-width: 180px;
+    }
+    .tiktok-view-selector .tiktok-view-btn:hover { color: var(--secondary); }
+    .tiktok-view-selector .tiktok-view-btn i.tk-icon { color: var(--secondary); font-size: 13px; }
+    .tiktok-view-selector .tiktok-view-btn i.tk-caret { font-size: 12px; transition: transform 0.15s; }
+    .tiktok-view-selector.open .tiktok-view-btn i.tk-caret { transform: rotate(180deg); }
+
+    .tiktok-view-selector .tiktok-eye-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 7px 10px;
+      background: transparent;
+      color: var(--text-dim);
+      border: none;
+      border-left: 1px solid var(--border);
+      cursor: pointer;
+      font-size: 13px;
+      border-radius: 0 100px 100px 0;
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+    .tiktok-view-selector .tiktok-eye-btn:hover { color: var(--secondary); }
+
+    .tiktok-view-dropdown {
+      position: absolute;
+      top: calc(100% + 6px);
+      right: 0;
+      min-width: 220px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--r-md);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+      padding: 6px;
+      z-index: 200;
+      display: none;
+      animation: tkDropIn 0.12s ease;
+    }
+    @keyframes tkDropIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+    .tiktok-view-selector.open .tiktok-view-dropdown { display: block; }
+
+    .tiktok-view-dropdown .tk-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 8px 10px;
+      border-radius: var(--r-sm);
+      cursor: pointer;
+      font-size: 12.5px;
+      color: var(--text-dim);
+      transition: background 0.12s, color 0.12s;
+      border: none;
+      background: transparent;
+      width: 100%;
+      text-align: left;
+      font-family: inherit;
+    }
+    .tiktok-view-dropdown .tk-item:hover { background: var(--bg-hover); color: var(--text); }
+    .tiktok-view-dropdown .tk-item.active { background: rgba(214,123,168,0.08); color: var(--secondary); font-weight: 500; }
+    .tiktok-view-dropdown .tk-item .tk-check { margin-left: auto; font-size: 14px; opacity: 0; color: var(--secondary); }
+    .tiktok-view-dropdown .tk-item.active .tk-check { opacity: 1; }
+    .tiktok-view-dropdown .tk-item .tk-label { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+    .tiktok-view-dropdown .tk-item .tk-label .tk-name { color: inherit; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tiktok-view-dropdown .tk-item .tk-label .tk-user { font-size: 10.5px; color: var(--text-muted); font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; }
+
+    .tiktok-view-dropdown .tk-sep {
+      height: 1px;
+      background: var(--border);
+      margin: 5px 6px;
+    }
+    .tiktok-view-dropdown .tk-action {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      border-radius: var(--r-sm);
+      cursor: pointer;
+      font-size: 12px;
+      color: var(--text-dim);
+      border: none;
+      background: transparent;
+      width: 100%;
+      text-align: left;
+      font-family: inherit;
+      transition: background 0.12s, color 0.12s;
+    }
+    .tiktok-view-dropdown .tk-action:hover { background: var(--bg-hover); color: var(--text); }
+
     .stats-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 22px; scroll-margin-top: 20px; }
     .stat-item {
       background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--r-md);
@@ -268,6 +384,16 @@
     }
     .tiktok-view-container h2 > span { display: flex; align-items: center; gap: 8px; }
     .tiktok-view-container h2 > span i { color: var(--secondary); font-size: 15px; }
+    .tiktok-view-container h2 .tk-current-view {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 500;
+      padding: 2px 8px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      margin-left: 4px;
+    }
     .tiktok-view-container webview {
       width: 100%; flex: 1; min-height: 100%;
       border-radius: var(--r-md); border: 1px solid var(--border);
@@ -547,10 +673,25 @@
       <p>Moderación, encuestas y estadísticas en vivo</p>
     </div>
     <div class="header-right">
-      <button class="toggle-right-btn tiktok-btn" onclick="toggleTikTokColumn()" id="toggleTikTokBtn">
-        <i class="ri-tiktok-fill"></i>
-        <span id="toggleTikTokText">Ocultar TikTok</span>
-      </button>
+
+      <!-- ============================================
+           SELECTOR DE VISTAS TIKTOK (dropdown + ojo)
+           ============================================ -->
+      <div class="tiktok-view-selector" id="tiktokViewSelector">
+        <button class="tiktok-view-btn" onclick="toggleTikTokDropdown(event)" title="Seleccionar cuenta de TikTok Live Center">
+          <i class="ri-tiktok-fill tk-icon"></i>
+          <span id="tiktokViewLabel">TikTok</span>
+          <i class="ri-arrow-down-s-line tk-caret"></i>
+        </button>
+        <button class="tiktok-eye-btn" onclick="toggleTikTokColumn()" id="toggleTikTokBtn" title="Mostrar/Ocultar panel TikTok">
+          <i class="ri-eye-line" id="toggleTikTokIcon"></i>
+        </button>
+
+        <div class="tiktok-view-dropdown" id="tiktokViewDropdown">
+          <!-- se rellena por JS -->
+        </div>
+      </div>
+
       <button class="toggle-right-btn youtube-btn" onclick="toggleYouTubeStats()" id="toggleYouTubeBtn">
         <i class="ri-youtube-fill"></i>
         <span id="toggleYouTubeText">Ocultar YouTube</span>
@@ -578,10 +719,13 @@
 
     <div class="tiktok-view-container" id="tiktokViewContainer">
       <h2>
-        <span><i class="ri-tiktok-fill"></i> TikTok Live Center</span>
+        <span>
+          <i class="ri-tiktok-fill"></i> TikTok Live Center
+          <span class="tk-current-view" id="tkCurrentViewBadge">—</span>
+        </span>
         <button class="open-native-btn" onclick="openTikTokNative()"><i class="ri-external-link-line"></i> Ventana externa</button>
       </h2>
-      <webview id="tiktokView" src="about:blank"></webview>
+      <webview id="tiktokView" src="about:blank" partition="persist:tiktok-session"></webview>
     </div>
 
     <div class="right-column" id="rightColumn">
@@ -949,7 +1093,10 @@
       tiktokContainer.classList.toggle('hidden', tiktokCollapsed);
       rightColumn.classList.toggle('hidden', rightCollapsed);
 
-      document.getElementById('toggleTikTokText').textContent = tiktokCollapsed ? 'Mostrar TikTok' : 'Ocultar TikTok';
+      // Actualizar icono del ojo
+      const eyeIcon = document.getElementById('toggleTikTokIcon');
+      if (eyeIcon) eyeIcon.className = tiktokCollapsed ? 'ri-eye-off-line' : 'ri-eye-line';
+
       document.getElementById('toggleIcon').className = rightCollapsed ? 'ri-layout-left-line' : 'ri-layout-right-line';
       document.getElementById('toggleText').textContent = rightCollapsed ? 'Mostrar Panel' : 'Ocultar Panel';
     }
@@ -958,15 +1105,154 @@
     function toggleRightColumn() { rightCollapsed = !rightCollapsed; applyLayout(); }
     function toggleYouTubeStats() {
       youtubeCollapsed = !youtubeCollapsed;
-      document.getElementById('youtubeStatsSection').classList.toggle('hidden', youtubeCollapsed);
+      document.getElementById('section-stats-youtube').classList.toggle('hidden', youtubeCollapsed);
       document.getElementById('toggleYouTubeText').textContent = youtubeCollapsed ? 'Mostrar YouTube' : 'Ocultar YouTube';
+    }
+
+    // ============================================
+    // SELECTOR DE VISTAS TIKTOK
+    // ============================================
+    const DEFAULT_TIKTOK_VIEWS = [
+      { id: 'browser',  name: 'Tiktok Browser',  username: 'lugivt_',  url: 'https://livecenter.tiktok.com/live_monitor', partition: 'persist:tiktok-browser'  },
+      { id: 'lugi',     name: 'Tiktok Lugi',     username: 'lugivt_',  url: 'https://livecenter.tiktok.com/live_monitor', partition: 'persist:tiktok-lugi'     },
+      { id: 'neriaiko', name: 'Tiktok Neriaiko', username: 'neriaiko', url: 'https://livecenter.tiktok.com/live_monitor', partition: 'persist:tiktok-neriaiko' }
+    ];
+
+    let TIKTOK_VIEWS = [...DEFAULT_TIKTOK_VIEWS];
+    let TIKTOK_ACTIVE_VIEW = 'browser';
+
+    async function loadTikTokViews() {
+      // 1. Intentar desde el endpoint
+      try {
+        const r = await fetch(`${window.SERVER_BASE}/api/tiktok/views`);
+        if (r.ok) {
+          const data = await r.json();
+          if (Array.isArray(data.views) && data.views.length > 0) {
+            TIKTOK_VIEWS = data.views;
+            TIKTOK_ACTIVE_VIEW = data.active || data.views[0].id;
+            renderTikTokDropdown();
+            return;
+          }
+        }
+      } catch (e) {
+        // silencioso: el endpoint puede no existir todavía
+      }
+
+      // 2. Fallback: localStorage
+      try {
+        const saved = localStorage.getItem('TIKTOK_ACTIVE_VIEW');
+        if (saved && TIKTOK_VIEWS.some(v => v.id === saved)) {
+          TIKTOK_ACTIVE_VIEW = saved;
+        }
+      } catch (e) {}
+
+      renderTikTokDropdown();
+    }
+
+    function renderTikTokDropdown() {
+      const dd = document.getElementById('tiktokViewDropdown');
+      const label = document.getElementById('tiktokViewLabel');
+      const badge = document.getElementById('tkCurrentViewBadge');
+      const current = TIKTOK_VIEWS.find(v => v.id === TIKTOK_ACTIVE_VIEW) || TIKTOK_VIEWS[0];
+
+      if (current) {
+        label.textContent = current.name;
+        if (badge) badge.textContent = current.username ? '@' + current.username : current.name;
+      }
+
+      dd.innerHTML = TIKTOK_VIEWS.map(v => `
+        <button class="tk-item ${v.id === TIKTOK_ACTIVE_VIEW ? 'active' : ''}" onclick="switchTikTokView('${v.id}')">
+          <i class="ri-tiktok-fill" style="color:var(--secondary);font-size:13px;"></i>
+          <span class="tk-label">
+            <span class="tk-name">${escapeHtml(v.name)}</span>
+            ${v.username ? `<span class="tk-user">@${escapeHtml(v.username)}</span>` : ''}
+          </span>
+          <i class="ri-check-line tk-check"></i>
+        </button>
+      `).join('') + `
+        <div class="tk-sep"></div>
+        <button class="tk-action" onclick="openTikTokNative()">
+          <i class="ri-external-link-line"></i>
+          <span>Abrir en ventana externa</span>
+        </button>
+      `;
+    }
+
+    function toggleTikTokDropdown(ev) {
+      if (ev) ev.stopPropagation();
+      const sel = document.getElementById('tiktokViewSelector');
+      sel.classList.toggle('open');
+    }
+
+    // Cerrar dropdown al hacer click fuera
+    document.addEventListener('click', (e) => {
+      const sel = document.getElementById('tiktokViewSelector');
+      if (!sel) return;
+      if (!sel.contains(e.target)) sel.classList.remove('open');
+    });
+
+    function switchTikTokView(id) {
+      const view = TIKTOK_VIEWS.find(v => v.id === id);
+      if (!view) return;
+
+      TIKTOK_ACTIVE_VIEW = id;
+
+      // Recrear el webview porque Electron no permite cambiar partition en caliente
+      const oldWv = document.getElementById('tiktokView');
+      if (!oldWv) return;
+
+      const newWv = document.createElement('webview');
+      newWv.id = 'tiktokView';
+      newWv.setAttribute('src', view.url || 'https://livecenter.tiktok.com/live_monitor');
+      newWv.setAttribute('partition', view.partition || 'persist:tiktok-session');
+      newWv.setAttribute('allowpopups', '');
+      oldWv.replaceWith(newWv);
+
+      bindTikTokWebviewEvents(newWv);
+
+      // Actualizar UI del dropdown
+      renderTikTokDropdown();
+      document.getElementById('tiktokViewSelector').classList.remove('open');
+
+      // Guardar selección: 1) en el server si existe endpoint, 2) en localStorage
+      try { localStorage.setItem('TIKTOK_ACTIVE_VIEW', id); } catch (e) {}
+      fetch(`${window.SERVER_BASE}/api/tiktok/active-view`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id })
+      }).catch(() => { /* endpoint puede no existir todavía */ });
+    }
+
+    function bindTikTokWebviewEvents(webview) {
+      webview.addEventListener('dom-ready', () => {
+        if (ipcRenderer) ipcRenderer.send('tiktok-view-loaded', webview.getWebContentsId());
+      });
+
+      webview.addEventListener('did-navigate', (e) => {
+        const u = (e && e.url) || '';
+        console.log('🌐 TikTok webview navegó a:', u);
+        if (u.includes('tiktok.com') && !u.includes('/login')) {
+          if (ipcRenderer) {
+            console.log('🔑 Login detectado. Pidiendo captura de cookies...');
+            ipcRenderer.invoke('tiktok:capturar-cookies').then((res) => {
+              console.log('📦 Resultado captura:', res);
+            }).catch((err) => console.error('❌ Error captura:', err));
+          }
+        }
+      });
+
+      webview.addEventListener('did-navigate-in-page', (e) => {
+        const u = (e && e.url) || '';
+        if (u.includes('tiktok.com') && !u.includes('/login')) {
+          if (ipcRenderer) ipcRenderer.invoke('tiktok:capturar-cookies').catch(() => {});
+        }
+      });
     }
 
     // ============================================
     // SIDEBAR: SCROLL + ACTIVE + UNCOLLAPSE
     // ============================================
     function scrollToSection(targetId) {
-      // Auto-descolapsar si hace falta
       if (targetId === 'section-tiktok-live' && tiktokCollapsed) {
         toggleTikTokColumn();
         setTimeout(() => doScroll(targetId), 320);
@@ -1187,18 +1473,38 @@
       } catch (e) { console.error('Error loadChannels:', e); }
     }
 
+    // ============================================
+    // 🍪 TIKTOK VIEW + CAPTURA DE COOKIES (Fase 1B)
+    // ============================================
     async function loadTikTokView() {
+      const webview = document.getElementById('tiktokView');
+      if (!webview) return;
+
+      // Si el endpoint de vistas existe, ya carga la activa con su partition.
+      // Si no, cargamos la URL del config como antes.
       try {
         const response = await fetch(`${window.SERVER_BASE}/get-config`);
         const config = await response.json();
         const url = config.CONTROL_URL || 'https://livecenter.tiktok.com/live_monitor';
-        const webview = document.getElementById('tiktokView');
-        if (webview) {
-          webview.src = url;
-          webview.addEventListener('dom-ready', () => {
-            if (ipcRenderer) ipcRenderer.send('tiktok-view-loaded', webview.getWebContentsId());
-          });
+
+        // Si el webview sigue en about:blank y no se ha cambiado por el selector,
+        // aplicamos la vista activa.
+        if (!webview.src || webview.src === 'about:blank' || webview.src === '') {
+          const current = TIKTOK_VIEWS.find(v => v.id === TIKTOK_ACTIVE_VIEW) || TIKTOK_VIEWS[0];
+          if (current) {
+            // Recrear con la partition de la vista activa
+            const newWv = document.createElement('webview');
+            newWv.id = 'tiktokView';
+            newWv.setAttribute('src', current.url || url);
+            newWv.setAttribute('partition', current.partition || 'persist:tiktok-session');
+            newWv.setAttribute('allowpopups', '');
+            webview.replaceWith(newWv);
+            bindTikTokWebviewEvents(newWv);
+            return;
+          }
         }
+
+        bindTikTokWebviewEvents(webview);
       } catch (e) { console.error('Error loadTikTokView:', e); }
     }
 
@@ -1566,8 +1872,10 @@
       socket.emit('change-title', { channel: getSelectedChannel(), title });
     }
 
+    // ============================================
+    // INICIALIZACIÓN
+    // ============================================
     loadChannels();
-    loadTikTokView();
     updateStats();
     renderNativePoll();
     renderPrediction();
@@ -1575,6 +1883,12 @@
     renderTablasYouTube();
     applyLayout();
     initSidebar();
+
+    // Cargar vistas TikTok y luego el webview activo
+    loadTikTokViews().then(() => loadTikTokView());
   </script>
+
+  <!-- Auto-Stream UI (se carga al final para que el DOM exista) -->
+  <script src="/js/autostream.js" defer></script>
 </body>
 </html>

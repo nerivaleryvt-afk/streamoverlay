@@ -12,7 +12,8 @@ const os = require('os');
 const WebSocket = require('ws');
 const { TikTokChat } = require('./tiktok');
 const { YouTubeChat } = require('./youtube');
-
+const tiktokStream = require('./tiktok-stream');
+const tiktokProxy = require('./tiktok-proxy');
 // 🤖 AI CO-HOST
 const aiKeyPool = require('./ai-key-pool');
 const aiCohost = require('./ai-cohost');
@@ -98,6 +99,139 @@ app.use('/tts-audio', express.static(ttsEngine.TTS_DIR, {
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
+// ================================================================
+// 🎬 TIKTOK STREAM KEY vía STREAMLABS
+// ================================================================
+app.get('/api/tiktok/streamlabs-accounts', async (req, res) => {
+    try {
+        const accounts = tiktokStream.readStreamlabsTokens();
+        const detailed = [];
+
+        for (const acc of accounts) {
+            try {
+                const info = await tiktokStream.getAccountInfo(acc.apiToken);
+                if (info && info.user) {
+                    detailed.push({
+                        apiToken: acc.apiToken,
+                        username: info.user.username || acc.username || '(desconocido)',
+                        nickname: info.user.nickname || info.user.username || '',
+                        avatar: info.user.avatar || info.user.avatar_thumb || null,
+                        canBeLive: !!info.can_be_live
+                    });
+                } else {
+                    detailed.push({
+                        apiToken: acc.apiToken,
+                        username: acc.username || '(sin acceso)',
+                        canBeLive: false,
+                        invalid: true
+                    });
+                }
+            } catch (e) {
+                detailed.push({
+                    apiToken: acc.apiToken,
+                    username: acc.username || '(error)',
+                    canBeLive: false,
+                    error: e.message
+                });
+            }
+        }
+
+        // Quitamos duplicados por apiToken
+        const unique = [];
+        const seen = new Set();
+        for (const d of detailed) {
+            if (!seen.has(d.apiToken)) {
+                seen.add(d.apiToken);
+                unique.push(d);
+            }
+        }
+
+        res.json({ ok: true, total: unique.length, accounts: unique });
+    } catch (e) {
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+app.get('/api/tiktok/stream-key', async (req, res) => {
+    try {
+        const apiToken = String(req.query.token || '').trim();
+        if (!apiToken) return res.status(400).json({ ok: false, error: 'Falta ?token=' });
+
+        const info = await tiktokStream.getAccountInfo(apiToken);
+        if (!info) return res.json({ ok: false, error: 'Token inválido o expirado' });
+
+        const canBeLive = !!info.can_be_live;
+        const username = (info.user && info.user.username) || '(desconocido)';
+
+        if (!canBeLive) {
+            return res.json({ ok: false, error: 'La cuenta no puede emitir en TikTok', username });
+        }
+
+        const title = String(req.query.title || 'TogiPanel Stream');
+        const result = await tiktokStream.startLive(apiToken, title);
+
+        if (!result.ok) {
+            return res.json({ ok: false, error: result.error, raw: result.raw, username });
+        }
+
+        res.json({
+            ok: true,
+            username,
+            server: result.server,
+            key: result.key,
+            id: result.id
+        });
+    } catch (e) {
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+app.get('/api/tiktok/stream-stop', async (req, res) => {
+    try {
+        const apiToken = String(req.query.token || '').trim();
+        const streamId = String(req.query.id || '').trim();
+        if (!apiToken || !streamId) return res.status(400).json({ ok: false, error: 'Faltan token o id' });
+        const ok = await tiktokStream.endLive(apiToken, streamId);
+        res.json({ ok });
+    } catch (e) {
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+// ================================================================
+// 🎥 PROXY RTMP (OBS → TogiPanel → TikTok)
+// ================================================================
+app.post('/api/tiktok/proxy/start', async (req, res) => {
+    try {
+        const { token, title } = req.body || {};
+        if (!token) return res.status(400).json({ ok: false, error: 'Falta token' });
+        const result = await tiktokProxy.start(token, title);
+        res.json(result);
+    } catch (e) {
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+app.post('/api/tiktok/proxy/stop', async (req, res) => {
+    try {
+        const result = await tiktokProxy.stop();
+        res.json(result);
+    } catch (e) {
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+app.get('/api/tiktok/proxy/status', (req, res) => {
+    res.json({ ok: true, state: tiktokProxy.getState() });
+});
+
+app.post('/api/tiktok/proxy/renew', async (req, res) => {
+    try {
+        const result = await tiktokProxy.renewManual();
+        res.json(result);
+    } catch (e) {
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
 // ================================================================
 // 🌐 IP LOCAL (para el modo dos PC)
 // ================================================================
@@ -479,6 +613,7 @@ app.delete('/api/themes/:overlay', (req, res) => {
     console.log(`🎨 Tema reseteado: ${key}`);
     res.json({ success: true });
 });
+
 // ================================================================
 // 📁 CONFIGURACIÓN
 // ================================================================
@@ -603,7 +738,70 @@ let config = loadConfig();
 // 🤖 Cargar proveedores de IA con la config actual
 aiKeyPool.cargarProveedores(config);
 console.log(`🤖 AI Co-Host: ${config.aiCohost?.enabled ? 'ACTIVADO' : 'desactivado'}`);
+// ================================================================
+// 📺 VISTAS DE TIKTOK LIVE CENTER (multi-cuenta genérico)
+// ================================================================
+const DEFAULT_TIKTOK_VIEWS = [
+    { id: 'slot1', name: 'Cuenta 1', url: 'https://livecenter.tiktok.com/live_monitor', partition: 'persist:tiktok-slot-1' },
+    { id: 'slot2', name: 'Cuenta 2', url: 'https://livecenter.tiktok.com/live_monitor', partition: 'persist:tiktok-slot-2' },
+    { id: 'slot3', name: 'Cuenta 3', url: 'https://livecenter.tiktok.com/live_monitor', partition: 'persist:tiktok-slot-3' }
+];
 
+app.get('/api/tiktok/views', (req, res) => {
+    try {
+        const views = Array.isArray(config.TIKTOK_VIEWS) && config.TIKTOK_VIEWS.length > 0
+            ? config.TIKTOK_VIEWS
+            : DEFAULT_TIKTOK_VIEWS;
+        const active = config.TIKTOK_ACTIVE_VIEW && views.some(v => v.id === config.TIKTOK_ACTIVE_VIEW)
+            ? config.TIKTOK_ACTIVE_VIEW
+            : views[0].id;
+
+        res.json({ ok: true, views, active });
+    } catch (e) {
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+app.post('/api/tiktok/active-view', (req, res) => {
+    try {
+        const { id } = req.body || {};
+        if (!id) return res.status(400).json({ ok: false, error: 'Falta id' });
+
+        const views = Array.isArray(config.TIKTOK_VIEWS) && config.TIKTOK_VIEWS.length > 0
+            ? config.TIKTOK_VIEWS
+            : DEFAULT_TIKTOK_VIEWS;
+        if (!views.some(v => v.id === id)) {
+            return res.status(400).json({ ok: false, error: 'Vista desconocida: ' + id });
+        }
+
+        config.TIKTOK_ACTIVE_VIEW = id;
+        fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
+        console.log(`📺 [TIKTOK VIEW] Vista activa: ${id}`);
+        res.json({ ok: true, active: id });
+    } catch (e) {
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+app.post('/api/tiktok/views', (req, res) => {
+    try {
+        const { views } = req.body || {};
+        if (!Array.isArray(views)) return res.status(400).json({ ok: false, error: 'views debe ser un array' });
+
+        for (const v of views) {
+            if (!v.id || !v.name || !v.url || !v.partition) {
+                return res.status(400).json({ ok: false, error: 'Cada vista necesita id, name, url y partition' });
+            }
+        }
+
+        config.TIKTOK_VIEWS = views;
+        fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
+        console.log(`📺 [TIKTOK VIEW] Lista actualizada (${views.length} vistas)`);
+        res.json({ ok: true, views });
+    } catch (e) {
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
 // ================================================================
 // 🏺 RUTA POST — Cambiar meta del cristal
 // ================================================================
@@ -804,7 +1002,6 @@ const bannedUsers = new Map();
 
 // 🚫 Lista de palabras bloqueadas (para TTS y overlay si se usa)
 const filteredWords = new Set([
-    // ─── Insultos / palabras feas ───
     'puta', 'puto', 'putas', 'putos',
     'mierda', 'mierdas',
     'cabron', 'cabrón', 'cabrona', 'cabronas',
@@ -823,8 +1020,6 @@ const filteredWords = new Set([
     'verga', 'vergas',
     'chinga', 'chingada', 'chingado', 'chingas',
     'pinche',
-
-    // ─── Racismo / xenofobia ───
     'negro', 'negra', 'negros', 'negras',
     'nigga', 'nigger', 'niggas', 'niggers',
     'sudaca', 'sudacas',
@@ -833,18 +1028,12 @@ const filteredWords = new Set([
     'panchito', 'panchita',
     'indio', 'india',
     'chino', 'china',
-
-    // ─── Homofobia / transfobia ───
     'travelo', 'travesti',
     'torta', 'tortillera',
     'plumifero', 'plumífero',
-
-    // ─── Discapacidad (uso despectivo) ───
     'retrasado', 'retrasada', 'retrasados', 'retrasadas',
     'subnormal', 'subnormales',
     'mongolo', 'mongola', 'mongolos',
-
-    // ─── Contenido sexual / +18 ───
     'polla', 'pollas',
     'pito',
     'nalga', 'nalgas',
@@ -852,8 +1041,6 @@ const filteredWords = new Set([
     'culos',
     'porno', 'pornografia', 'pornografía',
     'xxx',
-
-    // ─── Violencia / amenazas ───
     'matate', 'mátate',
     'suicidate', 'suicídate',
     'muere',
@@ -861,8 +1048,6 @@ const filteredWords = new Set([
     'violar',
     'nazi', 'nazis',
     'hitler',
-
-    // ─── Spam / scams ───
     'spam',
     'scam',
     'estafa',
@@ -944,24 +1129,10 @@ async function procesarCoHost(usuario, texto, plataforma, canal) {
 // ================================================================
 const ttsQueue = new TTSQueue(io);
 
-// 🚫 Bots conocidos que NO se leen por TTS
 const BOTS_CONOCIDOS = new Set([
-    'nightbot',
-    'streamelements',
-    'streamlabs',
-    'moobot',
-    'fossabot',
-    'wizebot',
-    'sery_bot',
-    'kofistreambot',
-    'soundalerts',
-    'creatisbot',
-    'commanderroot',
-    'own3d',
-    'stay_hydrated_bot',
-    'pokemoncommunitygame',
-    'tangiabot',
-    'togikirei'
+    'nightbot', 'streamelements', 'streamlabs', 'moobot', 'fossabot', 'wizebot',
+    'sery_bot', 'kofistreambot', 'soundalerts', 'creatisbot', 'commanderroot',
+    'own3d', 'stay_hydrated_bot', 'pokemoncommunitygame', 'tangiabot', 'togikirei'
 ]);
 
 function esBot(nombre) {
@@ -974,7 +1145,6 @@ function esBot(nombre) {
     return false;
 }
 
-// 🔍 Comprobar si un texto contiene alguna palabra prohibida
 function contienePalabraProhibida(texto) {
     if (!texto) return false;
     const t = String(texto).toLowerCase();
@@ -992,23 +1162,18 @@ function tryEnqueueTTS({ text, type = 'chat', platform, user }) {
         if (!tts.readEvents || tts.readEvents[type] === false) return;
         if (type === 'chat' && typeof text === 'string' && /(^|\s)!/.test(text)) return;
 
-        // 🚫 Filtro de bots
         if (user && esBot(user)) return;
-
-        // 🚫 Filtro de palabras prohibidas
         if (contienePalabraProhibida(text)) return;
 
         ttsQueue.enqueue({
-            text,
-            type,
-            platform,
-            user,
+            text, type, platform, user,
             options: { voice: tts.voice, rate: tts.rate, pitch: tts.pitch }
         });
     } catch (e) {
         console.error('❌ [TTS] Error encolando:', e.message);
     }
 }
+
 // ================================================================
 // 🎵 INSTANCIA TIKTOK
 // ================================================================
@@ -1024,11 +1189,8 @@ const tiktokChat = new TikTokChat({
         try { aiCohost.agregarAlaMemoria(msg.username, msg.message, config); } catch (e) {}
         tryEnqueueTTS({
             text: `${msg.username} dice: ${msg.message}`,
-            type: 'chat',
-            platform: 'tiktok',
-            user: msg.username
+            type: 'chat', platform: 'tiktok', user: msg.username
         });
-
         procesarCoHost(msg.username, msg.message, 'tiktok', msg.channel);
     },
     onLike: (data) => { io.emit('tiktok-like', data); },
@@ -1078,13 +1240,6 @@ const tiktokChat = new TikTokChat({
                 giftIcon: data.giftIcon || null,
                 extendedGiftInfo: data.extendedGiftInfo || null
             });
-
-            if (giftImageSource === 'none') {
-                console.log(`⚠️ [GIFT] Sin imagen (ni local ni remota) para "${data.giftName}" ` +
-                            `(clave: ${normalizarNombreRegalo(data.giftName)})`);
-            } else {
-                console.log(`🎁 [GIFT] "${data.giftName}" → imagen ${giftImageSource}`);
-            }
         }
     },
     onFollow: (data) => {
@@ -1170,11 +1325,8 @@ const youtubeChat = new YouTubeChat({
         try { aiCohost.agregarAlaMemoria(msg.username, msg.message, config); } catch (e) {}
         tryEnqueueTTS({
             text: `${msg.username} dice: ${msg.message}`,
-            type: 'chat',
-            platform: 'youtube',
-            user: msg.username
+            type: 'chat', platform: 'youtube', user: msg.username
         });
-
         procesarCoHost(msg.username, msg.message, 'youtube', msg.channel);
     },
     onGift: (data) => {
@@ -1261,7 +1413,7 @@ app.get('/get-config', (req, res) => {
             nombre: config.aiCohost?.nombre || '',
             personalidad: config.aiCohost?.personalidad || '',
             comando: config.aiCohost?.comando || '!guia',
-                       proveedores: {
+            proveedores: {
                 groq:       { modelo: config.aiCohost?.proveedores?.groq?.modelo || 'openai/gpt-oss-20b', apiKey: config.aiCohost?.proveedores?.groq?.apiKey ? '***' : '' },
                 cerebras:   { modelo: config.aiCohost?.proveedores?.cerebras?.modelo || 'gpt-oss-120b', apiKey: config.aiCohost?.proveedores?.cerebras?.apiKey ? '***' : '' },
                 openrouter: { modelo: config.aiCohost?.proveedores?.openrouter?.modelo || 'meta-llama/llama-3.1-8b-instruct:free', apiKey: config.aiCohost?.proveedores?.openrouter?.apiKey ? '***' : '' },
@@ -1308,24 +1460,23 @@ app.post('/save-config', (req, res) => {
             newConfig.TTS = config.TTS || {};
         }
 
-        // 🤖 AI Co-Host — preservar keys si llegan enmascaradas
-if (newConfig.aiCohost && typeof newConfig.aiCohost === 'object') {
-    const provs = newConfig.aiCohost.proveedores || {};
-    for (const pid of ['groq', 'cerebras', 'openrouter', 'agnes']) {
-        const actual = provs[pid] || {};
-        const previo = (config.aiCohost?.proveedores?.[pid] || {});
-        if (!actual.apiKey || actual.apiKey === '***' || actual.apiKey === '••••••••') {
-            actual.apiKey = previo.apiKey || '';
+        if (newConfig.aiCohost && typeof newConfig.aiCohost === 'object') {
+            const provs = newConfig.aiCohost.proveedores || {};
+            for (const pid of ['groq', 'cerebras', 'openrouter', 'agnes']) {
+                const actual = provs[pid] || {};
+                const previo = (config.aiCohost?.proveedores?.[pid] || {});
+                if (!actual.apiKey || actual.apiKey === '***' || actual.apiKey === '••••••••') {
+                    actual.apiKey = previo.apiKey || '';
+                }
+                if (!actual.modelo) {
+                    actual.modelo = previo.modelo || '';
+                }
+                provs[pid] = actual;
+            }
+            newConfig.aiCohost.proveedores = provs;
+        } else {
+            newConfig.aiCohost = config.aiCohost || {};
         }
-        if (!actual.modelo) {
-            actual.modelo = previo.modelo || '';
-        }
-        provs[pid] = actual;
-    }
-    newConfig.aiCohost.proveedores = provs;
-} else {
-    newConfig.aiCohost = config.aiCohost || {};
-}
 
         if (typeof newConfig.JAR_META !== 'number' || newConfig.JAR_META < 1) {
             newConfig.JAR_META = config.JAR_META || 500;
@@ -1446,6 +1597,7 @@ app.get('/top-shares',      (req, res) => res.sendFile(path.join(publicDir, 'top
 app.get('/follows',         (req, res) => res.sendFile(path.join(publicDir, 'follows.html')));
 app.get('/last-follower',   (req, res) => res.sendFile(path.join(publicDir, 'last-follower.html')));
 app.get('/stats',           (req, res) => res.sendFile(path.join(publicDir, 'stats.html')));
+
 // ================================================================
 // 📡 FUNCIONES TWITCH
 // ================================================================
@@ -1777,7 +1929,7 @@ async function connectTwitchChannel(channelName, account) {
             channels: [channelName]
         });
 
-               client.on('message', async (channel, tags, message, self) => {
+        client.on('message', async (channel, tags, message, self) => {
             if (self) return;
             const username = tags['display-name'] || tags.username;
             const canal = channel.replace('#', '');
@@ -2112,6 +2264,7 @@ async function shutdown(reason = 'unknown') {
     if (kickReconnectTimer) clearTimeout(kickReconnectTimer);
     try { tiktokChat.detenerTodo(); } catch {}
     try { youtubeChat.stopAll(); } catch {}
+    try { await tiktokProxy.stop(); } catch (e) {}
 
     for (const [key, entry] of twitchChannels.entries()) {
         try { await entry.client.disconnect(); } catch {}
