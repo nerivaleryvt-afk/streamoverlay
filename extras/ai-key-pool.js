@@ -1,6 +1,6 @@
 // extras/ai-key-pool.js
 // Pool de proveedores de IA con rotación y cooldowns.
-// Proveedores: Groq (principal), Cerebras (respaldo 1), OpenRouter (respaldo 2).
+// Proveedores: Groq (1), Cerebras (2), OpenRouter (3), Agnes (4).
 
 const PROVEEDORES_BASE = {
   groq: {
@@ -12,7 +12,7 @@ const PROVEEDORES_BASE = {
     timeoutMs: 15000,
     apiKey: '',
     cooldownHasta: 0,
-    estado: 'sin-key', // sin-key | lista | cooldown | invalida
+    estado: 'sin-key',
     fallosSeguidos: 0,
     headersExtra: {}
   },
@@ -20,7 +20,7 @@ const PROVEEDORES_BASE = {
     id: 'cerebras',
     nombre: 'Cerebras',
     url: 'https://api.cerebras.ai/v1/chat/completions',
-    modelo: 'llama3.1-8b',
+    modelo: 'gpt-oss-120b',
     prioridad: 2,
     timeoutMs: 20000,
     apiKey: '',
@@ -44,6 +44,19 @@ const PROVEEDORES_BASE = {
       'HTTP-Referer': 'http://localhost:3000',
       'X-Title': 'TogiPanel AI Co-Host'
     }
+  },
+  agnes: {
+    id: 'agnes',
+    nombre: 'Agnes',
+    url: 'https://apihub.agnes-ai.com/v1/chat/completions',
+    modelo: 'agnes-2.5-flash',
+    prioridad: 4,
+    timeoutMs: 25000,
+    apiKey: '',
+    cooldownHasta: 0,
+    estado: 'sin-key',
+    fallosSeguidos: 0,
+    headersExtra: {}
   }
 };
 

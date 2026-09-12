@@ -4,7 +4,7 @@
 const pool = require('./ai-key-pool');
 
 // --- memoria a corto plazo (últimos N mensajes del chat) ---
-const MAX_MEMORIA = 25;
+const MAX_MEMORIA = 60;   // ← Subido de 25 a 60
 let memoria = []; // [{ usuario, texto }]
 
 // --- contador de actividad por usuario ---
@@ -12,13 +12,16 @@ const actividadUsuarios = new Map(); // usuario -> { conteo, ultimaVez }
 const UMBRAL_FRECUENTE = 3;
 const TIEMPO_OLVIDO_MS = 30 * 60 * 1000;
 
-function agregarAlaMemoria(usuario, texto) {
+function agregarAlaMemoria(usuario, texto, config) {
   memoria.push({ usuario, texto });
   if (memoria.length > MAX_MEMORIA) {
     memoria.shift();
   }
 
-  if (usuario && usuario !== 'Guía') {
+  // El nombre del bot se lee de config (en vez de estar hardcodeado)
+  const nombreBot = (config && config.aiCohost && config.aiCohost.nombre) || 'Guía';
+
+  if (usuario && usuario !== nombreBot) {
     const ahora = Date.now();
     const prev = actividadUsuarios.get(usuario);
     if (prev && (ahora - prev.ultimaVez) < TIEMPO_OLVIDO_MS) {
@@ -161,7 +164,7 @@ async function responder(mensaje, config) {
     return { ok: false, motivo: 'sin-pregunta' };
   }
 
-  agregarAlaMemoria(mensaje.usuario || 'alguien', pregunta);
+  agregarAlaMemoria(mensaje.usuario || 'alguien', pregunta, config);
 
   const mensajes = [
     { role: 'system', content: construirSystemPrompt(config) }
@@ -175,7 +178,7 @@ async function responder(mensaje, config) {
   const r = await pool.pedir(mensajes);
 
   if (r.ok) {
-    agregarAlaMemoria(config?.aiCohost?.nombre || 'Guía', r.texto);
+    agregarAlaMemoria(config?.aiCohost?.nombre || 'Guía', r.texto, config);
     return { ok: true, texto: r.texto, proveedor: r.proveedor };
   }
 

@@ -532,7 +532,6 @@ function loadConfig() {
                 parsed.TTS[k] = { ...v, ...(parsed.TTS[k] || {}) };
             }
         }
-
         // 🤖 AI Co-Host — defaults
         if (!parsed.aiCohost || typeof parsed.aiCohost !== 'object') parsed.aiCohost = {};
         const aiDefaults = {
@@ -542,8 +541,9 @@ function loadConfig() {
             comando: '!guia',
             proveedores: {
                 groq:       { apiKey: '', modelo: 'openai/gpt-oss-20b' },
-                cerebras:   { apiKey: '', modelo: 'llama3.1-8b' },
-                openrouter: { apiKey: '', modelo: 'meta-llama/llama-3.1-8b-instruct:free' }
+                cerebras:   { apiKey: '', modelo: 'gpt-oss-120b' },
+                openrouter: { apiKey: '', modelo: 'meta-llama/llama-3.1-8b-instruct:free' },
+                agnes:      { apiKey: '', modelo: 'agnes-2.5-flash' }
             }
         };
         for (const [k, v] of Object.entries(aiDefaults)) {
@@ -1148,10 +1148,11 @@ app.get('/get-config', (req, res) => {
             nombre: config.aiCohost?.nombre || '',
             personalidad: config.aiCohost?.personalidad || '',
             comando: config.aiCohost?.comando || '!guia',
-            proveedores: {
+                       proveedores: {
                 groq:       { modelo: config.aiCohost?.proveedores?.groq?.modelo || 'openai/gpt-oss-20b', apiKey: config.aiCohost?.proveedores?.groq?.apiKey ? '***' : '' },
-                cerebras:   { modelo: config.aiCohost?.proveedores?.cerebras?.modelo || 'llama3.1-8b', apiKey: config.aiCohost?.proveedores?.cerebras?.apiKey ? '***' : '' },
-                openrouter: { modelo: config.aiCohost?.proveedores?.openrouter?.modelo || 'meta-llama/llama-3.1-8b-instruct:free', apiKey: config.aiCohost?.proveedores?.openrouter?.apiKey ? '***' : '' }
+                cerebras:   { modelo: config.aiCohost?.proveedores?.cerebras?.modelo || 'gpt-oss-120b', apiKey: config.aiCohost?.proveedores?.cerebras?.apiKey ? '***' : '' },
+                openrouter: { modelo: config.aiCohost?.proveedores?.openrouter?.modelo || 'meta-llama/llama-3.1-8b-instruct:free', apiKey: config.aiCohost?.proveedores?.openrouter?.apiKey ? '***' : '' },
+                agnes:      { modelo: config.aiCohost?.proveedores?.agnes?.modelo || 'agnes-2.5-flash', apiKey: config.aiCohost?.proveedores?.agnes?.apiKey ? '***' : '' }
             }
         }
     });
@@ -1195,23 +1196,23 @@ app.post('/save-config', (req, res) => {
         }
 
         // 🤖 AI Co-Host — preservar keys si llegan enmascaradas
-        if (newConfig.aiCohost && typeof newConfig.aiCohost === 'object') {
-            const provs = newConfig.aiCohost.proveedores || {};
-            for (const pid of ['groq', 'cerebras', 'openrouter']) {
-                const actual = provs[pid] || {};
-                const previo = (config.aiCohost?.proveedores?.[pid] || {});
-                if (!actual.apiKey || actual.apiKey === '***' || actual.apiKey === '••••••••') {
-                    actual.apiKey = previo.apiKey || '';
-                }
-                if (!actual.modelo) {
-                    actual.modelo = previo.modelo || '';
-                }
-                provs[pid] = actual;
-            }
-            newConfig.aiCohost.proveedores = provs;
-        } else {
-            newConfig.aiCohost = config.aiCohost || {};
+if (newConfig.aiCohost && typeof newConfig.aiCohost === 'object') {
+    const provs = newConfig.aiCohost.proveedores || {};
+    for (const pid of ['groq', 'cerebras', 'openrouter', 'agnes']) {
+        const actual = provs[pid] || {};
+        const previo = (config.aiCohost?.proveedores?.[pid] || {});
+        if (!actual.apiKey || actual.apiKey === '***' || actual.apiKey === '••••••••') {
+            actual.apiKey = previo.apiKey || '';
         }
+        if (!actual.modelo) {
+            actual.modelo = previo.modelo || '';
+        }
+        provs[pid] = actual;
+    }
+    newConfig.aiCohost.proveedores = provs;
+} else {
+    newConfig.aiCohost = config.aiCohost || {};
+}
 
         if (typeof newConfig.JAR_META !== 'number' || newConfig.JAR_META < 1) {
             newConfig.JAR_META = config.JAR_META || 500;

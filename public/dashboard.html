@@ -42,7 +42,6 @@
         linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
       background-size: 32px 32px;
       color: var(--text);
-      padding: 24px 28px 40px;
       min-height: 100vh;
       overflow-y: auto;
       font-size: 14px;
@@ -53,6 +52,124 @@
     body::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 5px; }
     body::-webkit-scrollbar-thumb:hover { background: #3a4150; }
 
+    /* ============================================
+       LAYOUT CON SIDEBAR
+       ============================================ */
+    .layout {
+      display: flex;
+      width: 100%;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      width: 220px;
+      background: #0a0b0e;
+      border-right: 1px solid #1a1d24;
+      padding: 20px 12px;
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      overflow-y: auto;
+      z-index: 10;
+    }
+    .sidebar::-webkit-scrollbar { width: 6px; }
+    .sidebar::-webkit-scrollbar-thumb { background: #23262e; border-radius: 3px; }
+
+    .sidebar-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 10px 20px;
+      border-bottom: 1px solid #1a1d24;
+      margin-bottom: 20px;
+    }
+    .logo-icon {
+      width: 34px; height: 34px;
+      background: #4d7cc7;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 18px; flex-shrink: 0;
+    }
+    .sidebar-logo span {
+      font-weight: 600; color: #e4e6eb;
+      font-size: 14px; letter-spacing: -0.01em;
+    }
+
+    .sidebar-section-title {
+      font-size: 10px;
+      color: #565b66;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 0 10px;
+      margin-bottom: 8px;
+      margin-top: 4px;
+      font-weight: 600;
+    }
+
+    .sidebar-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 6px;
+      color: #9198a4;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      text-decoration: none;
+      margin-bottom: 2px;
+      user-select: none;
+      border: none;
+      background: transparent;
+      width: 100%;
+      text-align: left;
+      font-family: inherit;
+    }
+    .sidebar-item:hover { background: #141720; color: #e4e6eb; }
+    .sidebar-item.active { background: #161b26; color: #e4e6eb; font-weight: 500; }
+    .sidebar-item.active i:first-child { color: #4d7cc7; }
+    .sidebar-item i { font-size: 15px; flex-shrink: 0; transition: color 0.15s; }
+    .sidebar-item .count {
+      margin-left: auto;
+      font-size: 11px;
+      background: #1c1f26;
+      padding: 1px 7px;
+      border-radius: 10px;
+      color: #7b8090;
+      font-variant-numeric: tabular-nums;
+      min-width: 22px;
+      text-align: center;
+      font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+      transition: color 0.15s, background 0.15s;
+    }
+    .sidebar-item.active .count { background: #1e2836; color: #8badd8; }
+    .sidebar-item .count.live { background: #1e2a1e; color: #4fa87a; }
+
+    .sidebar-bottom {
+      margin-top: auto;
+      padding-top: 20px;
+      border-top: 1px solid #1a1d24;
+    }
+
+    .main-content {
+      flex: 1;
+      margin-left: 220px;
+      padding: 24px 28px 40px;
+      width: calc(100% - 220px);
+      min-height: 100vh;
+    }
+
+    @media (max-width: 900px) {
+      .sidebar { transform: translateX(-100%); transition: transform 0.25s; }
+      .main-content { margin-left: 0; width: 100%; padding: 16px 14px 40px; }
+    }
+
+    /* ============================================
+       TODO EL CSS ORIGINAL DEL DASHBOARD
+       ============================================ */
     .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; gap: 16px; flex-wrap: wrap; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
     .header-left h1 { font-size: 19px; font-weight: 600; letter-spacing: -0.01em; color: #f1f2f4; margin: 0; }
     .header-left p { color: var(--text-dim); font-size: 12.5px; margin-top: 3px; }
@@ -76,7 +193,7 @@
     .toggle-right-btn.tiktok-btn:hover { color: var(--secondary); border-color: rgba(214,123,168,0.3); }
     .toggle-right-btn.youtube-btn:hover { color: var(--youtube); border-color: rgba(201,90,90,0.3); }
 
-    .stats-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 22px; }
+    .stats-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 22px; scroll-margin-top: 20px; }
     .stat-item {
       background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--r-md);
       padding: 14px 16px; transition: border-color 0.15s;
@@ -98,6 +215,7 @@
     .chat-panel {
       background: var(--bg-panel); border: 1px solid var(--border); border-radius: var(--r-lg);
       display: flex; flex-direction: column; overflow: hidden; min-width: 0;
+      scroll-margin-top: 20px;
     }
     .chat-panel-header {
       padding: 14px 18px; border-bottom: 1px solid var(--border);
@@ -120,13 +238,7 @@
     .chat-message .avatar { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; flex-shrink: 0; background: var(--bg-hover); border: 1px solid var(--border); }
     .chat-message .username { font-weight: 600; color: var(--text); font-size: 12.5px; }
     .chat-message .message { color: var(--text-dim); margin-top: 3px; word-break: break-word; font-size: 12.5px; line-height: 1.5; }
-    .chat-message .lang-flag {
-      font-size: 12px;
-      margin-right: 5px;
-      opacity: 0.85;
-      vertical-align: middle;
-      display: inline-block;
-    }
+    .chat-message .lang-flag { font-size: 12px; margin-right: 5px; opacity: 0.85; vertical-align: middle; display: inline-block; }
     .chat-message .platform-badge {
       display: inline-block; padding: 1px 6px; border-radius: 3px;
       font-size: 9px; font-weight: 700; text-transform: uppercase;
@@ -146,6 +258,7 @@
       padding: 14px; display: flex; flex-direction: column; height: 100%; overflow: hidden; min-width: 0;
       min-height: 0;
       transition: opacity 0.25s ease, padding 0.25s ease;
+      scroll-margin-top: 20px;
     }
     .tiktok-view-container.hidden { opacity: 0; pointer-events: none; padding: 0; border-width: 0; overflow: hidden; }
     .tiktok-view-container h2 {
@@ -156,13 +269,9 @@
     .tiktok-view-container h2 > span { display: flex; align-items: center; gap: 8px; }
     .tiktok-view-container h2 > span i { color: var(--secondary); font-size: 15px; }
     .tiktok-view-container webview {
-      width: 100%;
-      flex: 1;
-      min-height: 100%;
-      border-radius: var(--r-md);
-      border: 1px solid var(--border);
-      background: #000;
-      display: flex;
+      width: 100%; flex: 1; min-height: 100%;
+      border-radius: var(--r-md); border: 1px solid var(--border);
+      background: #000; display: flex;
     }
     .open-native-btn {
       display: inline-flex; align-items: center; gap: 5px;
@@ -186,6 +295,7 @@
     .moderation-box, .poll-panel, .title-category-panel {
       background: var(--bg-card); border: 1px solid var(--border);
       padding: 14px 16px; border-radius: var(--r-lg);
+      scroll-margin-top: 20px;
     }
     .moderation-box h2, .poll-panel h2, .title-category-panel h2 {
       font-size: 12.5px; margin-bottom: 12px; font-weight: 600;
@@ -281,7 +391,7 @@
     .category-item-id { font-size: 10.5px; color: var(--text-muted); font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; margin-top: 2px; }
     .category-empty { padding: 12px; text-align: center; font-size: 12px; color: var(--text-muted); font-style: italic; }
 
-    .stats-section { margin-top: 22px; display: flex; flex-direction: column; gap: 14px; }
+    .stats-section { margin-top: 22px; display: flex; flex-direction: column; gap: 14px; scroll-margin-top: 20px; }
     .stats-section.youtube-section.hidden { display: none; }
     .section-title {
       display: flex; align-items: center; gap: 9px;
@@ -359,6 +469,78 @@
 </head>
 <body>
 
+  <div class="layout">
+
+    <!-- ============================= -->
+    <!-- SIDEBAR                       -->
+    <!-- ============================= -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-icon"><i class="ri-live-line"></i></div>
+        <span>Dashboard</span>
+      </div>
+
+      <div class="sidebar-section-title">Vistas</div>
+
+      <button class="sidebar-item" data-target="section-overview">
+        <i class="ri-dashboard-3-line"></i>
+        <span>General</span>
+      </button>
+      <button class="sidebar-item" data-target="section-chat">
+        <i class="ri-chat-3-line"></i>
+        <span>Chat</span>
+        <span class="count" id="sideChatCount">0</span>
+      </button>
+      <button class="sidebar-item" data-target="section-tiktok-live">
+        <i class="ri-tiktok-fill"></i>
+        <span>TikTok Live</span>
+      </button>
+
+      <div class="sidebar-section-title">Control</div>
+
+      <button class="sidebar-item" data-target="section-moderation">
+        <i class="ri-shield-check-line"></i>
+        <span>Moderación</span>
+        <span class="count" id="sideModCount">0</span>
+      </button>
+      <button class="sidebar-item" data-target="section-polls">
+        <i class="ri-bar-chart-box-line"></i>
+        <span>Encuestas</span>
+      </button>
+      <button class="sidebar-item" data-target="section-title-category">
+        <i class="ri-edit-2-line"></i>
+        <span>Título y Categoría</span>
+      </button>
+
+      <div class="sidebar-section-title">Estadísticas</div>
+
+      <button class="sidebar-item" data-target="section-stats-tiktok">
+        <i class="ri-bar-chart-fill"></i>
+        <span>Stats TikTok</span>
+      </button>
+      <button class="sidebar-item" data-target="section-stats-youtube">
+        <i class="ri-youtube-fill"></i>
+        <span>Stats YouTube</span>
+      </button>
+
+      <div class="sidebar-bottom">
+        <a href="/" class="sidebar-item">
+          <i class="ri-home-line"></i>
+          <span>Panel</span>
+        </a>
+        <a href="/overlays" class="sidebar-item">
+          <i class="ri-layout-grid-line"></i>
+          <span>Overlays</span>
+        </a>
+        <a href="/config" class="sidebar-item">
+          <i class="ri-settings-3-line"></i>
+          <span>Configuración</span>
+        </a>
+      </div>
+    </aside>
+
+    <main class="main-content">
+
   <div class="header">
     <div class="header-left">
       <h1>Dashboard de Lives</h1>
@@ -381,7 +563,7 @@
     </div>
   </div>
 
-  <div class="stats-bar">
+  <div class="stats-bar" id="section-overview">
     <div class="stat-item"><div class="stat-value" id="totalMessages">0</div><div class="stat-label">Mensajes</div></div>
     <div class="stat-item"><div class="stat-value" id="totalBans">0</div><div class="stat-label">Baneos</div></div>
     <div class="stat-item"><div class="stat-value" id="totalBits">0</div><div class="stat-label">Bits</div></div>
@@ -389,7 +571,7 @@
   </div>
 
   <div class="main-layout" id="mainLayout">
-    <div class="chat-panel">
+    <div class="chat-panel" id="section-chat">
       <div class="chat-panel-header"><i class="ri-chat-3-line"></i><span>Mi Chat Multiplataforma</span></div>
       <div class="chat-messages" id="liveChat"></div>
     </div>
@@ -403,7 +585,7 @@
     </div>
 
     <div class="right-column" id="rightColumn">
-      <div class="moderation-box">
+      <div class="moderation-box" id="section-moderation">
         <h2><i class="ri-shield-check-line"></i> Moderación</h2>
         <div class="input-group"><select id="actionChannelSelect"></select></div>
         <div class="input-group">
@@ -418,7 +600,7 @@
         </div>
       </div>
 
-      <div class="poll-panel">
+      <div class="poll-panel" id="section-polls">
         <h2><i class="ri-bar-chart-box-line"></i> Encuestas y Predicciones</h2>
         <div class="input-group"><select id="pollChannelSelect"></select></div>
         <div class="input-group"><input type="text" id="nativePollQuestion" placeholder="Pregunta..."></div>
@@ -439,7 +621,7 @@
         </div>
       </div>
 
-      <div class="title-category-panel">
+      <div class="title-category-panel" id="section-title-category">
         <h2><i class="ri-edit-2-line"></i> Título y Categoría</h2>
 
         <div class="input-group">
@@ -484,7 +666,7 @@
     </div>
   </div>
 
-  <div class="stats-section">
+  <div class="stats-section" id="section-stats-tiktok">
     <div class="section-title tiktok">
       <i class="ri-tiktok-fill"></i>
       <span>Estadísticas TikTok en Vivo</span>
@@ -517,7 +699,7 @@
     </div>
   </div>
 
-  <div class="stats-section youtube-section" id="youtubeStatsSection">
+  <div class="stats-section youtube-section" id="section-stats-youtube">
     <div class="section-title youtube">
       <i class="ri-youtube-fill"></i>
       <span>Estadísticas YouTube en Vivo</span>
@@ -547,6 +729,9 @@
         <tbody id="topChattersTable"><tr><td colspan="3" class="empty">Sin datos todavía</td></tr></tbody></table>
       </div>
     </div>
+  </div>
+
+    </main>
   </div>
 
   <script>
@@ -775,6 +960,78 @@
       youtubeCollapsed = !youtubeCollapsed;
       document.getElementById('youtubeStatsSection').classList.toggle('hidden', youtubeCollapsed);
       document.getElementById('toggleYouTubeText').textContent = youtubeCollapsed ? 'Mostrar YouTube' : 'Ocultar YouTube';
+    }
+
+    // ============================================
+    // SIDEBAR: SCROLL + ACTIVE + UNCOLLAPSE
+    // ============================================
+    function scrollToSection(targetId) {
+      // Auto-descolapsar si hace falta
+      if (targetId === 'section-tiktok-live' && tiktokCollapsed) {
+        toggleTikTokColumn();
+        setTimeout(() => doScroll(targetId), 320);
+        return;
+      }
+      if ((targetId === 'section-moderation' || targetId === 'section-polls' || targetId === 'section-title-category') && rightCollapsed) {
+        toggleRightColumn();
+        setTimeout(() => doScroll(targetId), 320);
+        return;
+      }
+      if (targetId === 'section-stats-youtube' && youtubeCollapsed) {
+        toggleYouTubeStats();
+        setTimeout(() => doScroll(targetId), 200);
+        return;
+      }
+      doScroll(targetId);
+    }
+
+    function doScroll(targetId) {
+      const el = document.getElementById(targetId);
+      if (!el) return;
+      const y = el.getBoundingClientRect().top + window.scrollY - 20;
+      window.scrollTo({ top: y, behavior: 'smooth' });
+      marcarSidebarActivo(targetId);
+    }
+
+    function marcarSidebarActivo(targetId) {
+      document.querySelectorAll('.sidebar-item[data-target]').forEach(item => {
+        item.classList.toggle('active', item.dataset.target === targetId);
+      });
+    }
+
+    function setupSidebarScrollSpy() {
+      const sections = ['section-overview', 'section-chat', 'section-tiktok-live', 'section-moderation', 'section-polls', 'section-title-category', 'section-stats-tiktok', 'section-stats-youtube'];
+      const observer = new IntersectionObserver((entries) => {
+        const visibles = entries.filter(e => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        if (visibles.length > 0) {
+          marcarSidebarActivo(visibles[0].target.id);
+        }
+      }, { rootMargin: '-20% 0px -70% 0px', threshold: 0 });
+      sections.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) observer.observe(el);
+      });
+    }
+
+    function updateSidebarCounts() {
+      const chatEl = document.getElementById('sideChatCount');
+      if (chatEl) {
+        chatEl.textContent = stats.messages;
+        chatEl.classList.toggle('live', stats.messages > 0);
+      }
+      const modEl = document.getElementById('sideModCount');
+      if (modEl) {
+        modEl.textContent = stats.actions;
+        modEl.classList.toggle('live', stats.actions > 0);
+      }
+    }
+
+    function initSidebar() {
+      document.querySelectorAll('.sidebar-item[data-target]').forEach(btn => {
+        btn.addEventListener('click', () => scrollToSection(btn.dataset.target));
+      });
+      setupSidebarScrollSpy();
+      updateSidebarCounts();
     }
 
     let categorySearchTimer = null;
@@ -1233,6 +1490,7 @@
       document.getElementById('totalMessages').textContent = stats.messages;
       document.getElementById('totalBans').textContent = stats.bans;
       document.getElementById('totalActions').textContent = stats.actions;
+      updateSidebarCounts();
     }
 
     function getChannel() { return document.getElementById('actionChannelSelect').value; }
@@ -1316,6 +1574,7 @@
     renderTablasTikTok();
     renderTablasYouTube();
     applyLayout();
+    initSidebar();
   </script>
 </body>
 </html>
