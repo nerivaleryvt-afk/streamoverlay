@@ -6,6 +6,10 @@ const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 
+// ← NUEVO: Auto-update
+const { autoUpdater } = require('electron-updater');
+const updaterLog = require('electron-log');
+
 // ================================================================
 // 🔥 DETECCIÓN DE RUTAS (Dev vs Producción)
 // ================================================================
@@ -15,24 +19,26 @@ const extrasPath = isPackaged
     ? path.join(process.resourcesPath, 'extras')
     : path.join(__dirname, 'extras');
 
-// 📦 En prod, la config vive en userData (con permisos de escritura)
+const publicPath = isPackaged
+    ? path.join(process.resourcesPath, 'public')
+    : path.join(__dirname, 'public');
+
 const userDataDir = app.getPath('userData');
 const configPath = isPackaged
     ? path.join(userDataDir, 'config.json')
     : path.join(__dirname, 'config.json');
 
-// 📦 setup.json (respuesta del usuario: modo servidor o modo cliente)
 const setupPath = isPackaged
     ? path.join(userDataDir, 'setup.json')
     : path.join(__dirname, 'setup.json');
 
 console.log(`📂 Modo: ${isPackaged ? 'PRODUCCIÓN' : 'DESARROLLO'}`);
 console.log(`📂 Extras: ${extrasPath}`);
+console.log(`📂 Public: ${publicPath}`);
 console.log(`📂 Config: ${configPath}`);
 console.log(`📂 UserData: ${userDataDir}`);
 console.log(`📂 Setup: ${setupPath}`);
 
-// 📦 Si es prod y no existe la config en userData, la copiamos del paquete
 if (isPackaged && !fs.existsSync(configPath)) {
     const defaultConfig = path.join(extrasPath, 'config.json');
     if (fs.existsSync(defaultConfig)) {
@@ -45,7 +51,6 @@ if (isPackaged && !fs.existsSync(configPath)) {
     }
 }
 
-// 🛑 LEER CONFIGURACIÓN
 let config = {};
 try {
     if (fs.existsSync(configPath)) {
@@ -59,7 +64,6 @@ try {
     config = {};
 }
 
-// 🛑 DEFINIR VARIABLES DE ENTORNO
 process.env.PORT = process.env.PORT || '3000';
 process.env.MODERATION_PORT = process.env.MODERATION_PORT || '3001';
 process.env.TWITCH_BOT_USERNAME = config.TWITCH_BOT_USERNAME || 'togikirei';
@@ -68,20 +72,20 @@ process.env.TWITCH_CLIENT_ID = config.TWITCH_CLIENT_ID || '';
 process.env.MOD_PASSWORD = config.MOD_PASSWORD || 'camiones';
 process.env.OVERLAY_TOKEN = config.OVERLAY_TOKEN || 'camiones';
 
-// Procesos hijos y Logs
 let childProcesses = [];
 let appLogs = [];
 let loginWin = null;
 let monitorWin = null;
 
-// 🔥 Contador de reinicios por proceso (evita bucle infinito)
-const restartCounters = {};
+// ← NUEVO: referencia global a la ventana principal y flag del updater
+let mainWindow = null;
+let updaterInitialized = false;
 
-// 📦 NUEVO — Guardamos las rutas de los scripts para poder reiniciarlos
+const restartCounters = {};
 const processScripts = {};
 
 // ================================================================
-// 📝 SETUP.JSON — LEER / ESCRIBIR LA ELECCIÓN DEL USUARIO
+// 📝 SETUP.JSON
 // ================================================================
 function readSetup() {
     try {
@@ -97,8 +101,8 @@ function readSetup() {
 function writeSetup(payload) {
     try {
         const data = {
-            mode: payload.mode,                                  // 'server' | 'client'
-            ip: payload.mode === 'client' ? payload.ip : null,   // solo si es cliente
+            mode: payload.mode,
+            ip: payload.mode === 'client' ? payload.ip : null,
             configuredAt: new Date().toISOString()
         };
         fs.writeFileSync(setupPath, JSON.stringify(data, null, 2), 'utf8');
@@ -111,12 +115,27 @@ function writeSetup(payload) {
 }
 
 // ================================================================
-// 🔍 RESOLVER CARPETA DE MÓDULOS (dev vs prod, node_modules vs modules)
+// 🔥 CALCULAR BASE DEL SERVER SEGÚN MODO (server vs client)
+// ================================================================
+// - Modo server: apunta a localhost
+// - Modo client: apunta a la IP del server guardada en setup.json
+// Esto se usa para scripts que se inyectan en ventanas externas (TikTok),
+// porque esas ventanas NO tienen window.SERVER_BASE (no cargan server-url.js).
+function getServerBase() {
+    const setup = readSetup();
+    if (setup && setup.mode === 'client' && setup.ip) {
+        return `http://${setup.ip}:${process.env.PORT}`;
+    }
+    return `http://localhost:${process.env.PORT}`;
+}
+
+// ================================================================
+// 🔍 RESOLVER CARPETA DE MÓDULOS
 // ================================================================
 function resolveNodeModulesPath() {
     const candidates = [
-        path.join(extrasPath, 'node_modules'),   // dev
-        path.join(extrasPath, 'modules'),        // prod (renombrado por prebuild)
+        path.join(extrasPath, 'node_modules'),
+        path.join(extrasPath, 'modules'),
     ];
     for (const c of candidates) {
         if (fs.existsSync(c)) return c;
@@ -125,33 +144,21 @@ function resolveNodeModulesPath() {
 }
 
 // ================================================================
-// 🚀 ARRANQUE DE PROCESOS (SIN shell: true → SIN cmd.exe)
+// 🚀 ARRANQUE DE PROCESOS
 // ================================================================
 function startProcess(name, scriptPath, cwd) {
     console.log(`⏳ Iniciando ${name}...`);
-    console.log(`   Script: ${scriptPath}`);
-    console.log(`   CWD: ${cwd}`);
 
     if (!fs.existsSync(scriptPath)) {
-        console.error(`❌ [${name}] NO EXISTE el archivo: ${scriptPath}`);
+        console.error(`❌ [${name}] NO EXISTE: ${scriptPath}`);
         appLogs.push(`❌ [${name}] Archivo no encontrado: ${scriptPath}`);
         return null;
     }
 
-    // 📦 Guardamos la info del proceso para poder reiniciarlo
     processScripts[name] = { scriptPath, cwd };
 
-    // 📦 Resolver dónde están los módulos
     const extrasNodeModules = resolveNodeModulesPath();
 
-    if (extrasNodeModules) {
-        console.log(`   📦 node_modules: ${extrasNodeModules}`);
-    } else {
-        console.warn(`   ⚠️ No se encontró carpeta de módulos en ${extrasPath}`);
-        console.warn(`      Esperado: extras/node_modules o extras/modules`);
-    }
-
-    // 📦 Construir env vars
     const envVars = {
         ...process.env,
         ELECTRON_RUN_AS_NODE: '1',
@@ -159,12 +166,10 @@ function startProcess(name, scriptPath, cwd) {
         NODE_ENV: isPackaged ? 'production' : 'development'
     };
 
-    // Solo añadir NODE_PATH si encontramos la carpeta
     if (extrasNodeModules) {
         envVars.NODE_PATH = extrasNodeModules + path.delimiter + (process.env.NODE_PATH || '');
     }
 
-    // 🔥 Usar el Node embebido en Electron con ELECTRON_RUN_AS_NODE
     const proc = spawn(process.execPath, [scriptPath], {
         cwd: cwd || path.dirname(scriptPath),
         env: envVars,
@@ -174,16 +179,16 @@ function startProcess(name, scriptPath, cwd) {
     });
 
     proc.stdout.on('data', (data) => {
-        const log = `[${name}] ${data.toString().trim()}`;
-        console.log(log);
-        appLogs.push(log);
+        const logLine = `[${name}] ${data.toString().trim()}`;
+        console.log(logLine);
+        appLogs.push(logLine);
         if (appLogs.length > 500) appLogs = appLogs.slice(-500);
     });
 
     proc.stderr.on('data', (data) => {
-        const log = `[${name} ERROR] ${data.toString().trim()}`;
-        console.log(log);
-        appLogs.push(log);
+        const logLine = `[${name} ERROR] ${data.toString().trim()}`;
+        console.log(logLine);
+        appLogs.push(logLine);
         if (appLogs.length > 500) appLogs = appLogs.slice(-500);
     });
 
@@ -196,25 +201,16 @@ function startProcess(name, scriptPath, cwd) {
         console.log(`[${name}] Proceso terminado con código ${code}`);
         appLogs.push(`[${name}] Terminado (código ${code})`);
 
-        // 🔥 Si salió con código 0 → cierre limpio intencional, NO reiniciar
-        if (code === 0) {
-            console.log(`[${name}] Cierre limpio. No se reinicia.`);
-            return;
-        }
-
-        // 🔥 Si estamos cerrando la app, no reiniciar
+        if (code === 0) return;
         if (app.isQuitting) return;
 
-        // 🔥 Contador de reinicios (máx 5 para evitar bucle infinito)
         restartCounters[name] = (restartCounters[name] || 0) + 1;
 
         if (restartCounters[name] > 5) {
-            console.error(`❌ [${name}] Demasiados reinicios (5). Deteniendo para evitar bucle.`);
-            appLogs.push(`❌ [${name}] Bucle de reinicios detenido.`);
+            console.error(`❌ [${name}] Demasiados reinicios.`);
             return;
         }
 
-        console.log(`🔄 Reiniciando ${name} en 5 segundos... (intento ${restartCounters[name]}/5)`);
         setTimeout(() => {
             if (!app.isQuitting) startProcess(name, scriptPath, cwd);
         }, 5000);
@@ -228,23 +224,17 @@ function startProcess(name, scriptPath, cwd) {
 // 🛑 CERRAR PROCESOS
 // ================================================================
 function closeAllProcesses() {
-    console.log('⏳ Cerrando todos los procesos...');
     app.isQuitting = true;
-
     childProcesses.forEach((proc) => {
         if (proc && !proc.killed) {
-            try {
-                proc.kill();
-            } catch (e) {
-                console.error('Error matando proceso:', e.message);
-            }
+            try { proc.kill(); } catch (e) {}
         }
     });
     childProcesses = [];
 }
 
 // ================================================================
-// 🌐 CONFIGURACIÓN DE SESIÓN PERSISTENTE DE TIKTOK
+// 🌐 SESIÓN TIKTOK
 // ================================================================
 function getTikTokSession() {
     const tiktokSession = session.fromPartition('persist:tiktok-session');
@@ -279,9 +269,79 @@ function getTikTokSession() {
 }
 
 // ================================================================
-// 🏠 VENTANA PRINCIPAL (DASHBOARD)
+// 🔄 AUTO-UPDATE
+// ================================================================
+function initAutoUpdater(win) {
+    if (updaterInitialized) return;
+    updaterInitialized = true;
+
+    if (!isPackaged) {
+        console.log('🔄 Auto-updater: en desarrollo, no se comprueba.');
+        return;
+    }
+
+    autoUpdater.logger = updaterLog;
+    autoUpdater.logger.transports.file.level = 'info';
+    autoUpdater.autoDownload = false;
+    autoUpdater.autoInstallOnAppQuit = true;
+
+    autoUpdater.on('checking-for-update', () => {
+        console.log('🔄 Buscando actualizaciones...');
+    });
+
+    autoUpdater.on('update-available', (info) => {
+        console.log(`🔄 Nueva versión disponible: ${info.version}`);
+        if (win && !win.isDestroyed()) {
+            win.webContents.send('update:available', {
+                version: info.version,
+                releaseNotes: info.releaseNotes || ''
+            });
+        }
+    });
+
+    autoUpdater.on('update-not-available', () => {
+        console.log('🔄 No hay actualizaciones disponibles.');
+    });
+
+    autoUpdater.on('download-progress', (p) => {
+        if (win && !win.isDestroyed()) {
+            win.webContents.send('update:progress', {
+                percent: Math.round(p.percent),
+                mbps: (p.bytesPerSecond / 1024 / 1024).toFixed(2)
+            });
+        }
+    });
+
+    autoUpdater.on('update-downloaded', (info) => {
+        console.log(`🔄 Actualización descargada: ${info.version}`);
+        if (win && !win.isDestroyed()) {
+            win.webContents.send('update:ready', { version: info.version });
+        }
+    });
+
+    autoUpdater.on('error', (err) => {
+        console.error('❌ [updater]', err.message);
+        if (win && !win.isDestroyed()) {
+            win.webContents.send('update:error', err.message);
+        }
+    });
+
+    setTimeout(() => {
+        autoUpdater.checkForUpdates().catch((e) => console.error('❌ updater:', e.message));
+    }, 15000);
+
+    setInterval(() => {
+        autoUpdater.checkForUpdates().catch((e) => console.error('❌ updater:', e.message));
+    }, 4 * 60 * 60 * 1000);
+}
+
+// ================================================================
+// 🏠 VENTANA PRINCIPAL
 // ================================================================
 function createWindow() {
+    const setup = readSetup();
+    const isClient = setup && setup.mode === 'client' && setup.ip;
+
     const win = new BrowserWindow({
         width: 1200, height: 800,
         title: 'Stream Overlay',
@@ -291,19 +351,41 @@ function createWindow() {
             nodeIntegration: true,
             contextIsolation: false,
             webviewTag: true,
-            nodeIntegrationInSubFrames: true,
-            preload: path.join(__dirname, 'preload.js')
+            nodeIntegrationInSubFrames: true
         }
     });
+
+    mainWindow = win;
+
     win.webContents.setWindowOpenHandler(({ url }) => {
         shell.openExternal(url);
         return { action: 'deny' };
     });
-    win.loadURL(`http://localhost:${process.env.PORT}`);
+
+    if (!setup) {
+        console.log('🆕 No hay setup.json → mostrando setup.html');
+        const setupFile = path.join(publicPath, 'setup.html');
+        win.loadFile(setupFile);
+    } else if (isClient) {
+        const base = `http://${setup.ip}:${process.env.PORT}`;
+        console.log(`💻 Modo CLIENTE → abriendo panel en ${base}`);
+        win.loadURL(`${base}/`);
+    } else {
+        console.log('🖥️ Modo SERVIDOR → abriendo panel local');
+        win.loadURL(`http://localhost:${process.env.PORT}`);
+    }
+
+    win.webContents.once('did-finish-load', () => {
+        initAutoUpdater(win);
+    });
+
+    win.on('closed', () => {
+        if (mainWindow === win) mainWindow = null;
+    });
 }
 
 // ================================================================
-// 🔑 VENTANA DE LOGIN DE TIKTOK
+// 🔑 LOGIN TIKTOK
 // ================================================================
 function openTikTokLoginWindow() {
     if (loginWin) { loginWin.focus(); return; }
@@ -325,9 +407,7 @@ function openTikTokLoginWindow() {
     loginWin.loadURL('https://livecenter.tiktok.com/login');
 
     loginWin.webContents.on('did-navigate', (event, url) => {
-        console.log('[TikTok Login] Navegando a:', url);
         if (url.includes('/live_monitor') || url.includes('/dashboard') || !url.includes('/login')) {
-            console.log('✅ ¡Login detectado con éxito!');
             BrowserWindow.getAllWindows().forEach(win => {
                 if (win !== loginWin) win.webContents.send('tiktok-login-success');
             });
@@ -338,10 +418,16 @@ function openTikTokLoginWindow() {
 }
 
 // ================================================================
-// 🎥 VENTANA DE MONITOREO Y CAPTURA
+// 🎥 MONITOR TIKTOK
 // ================================================================
 function startTikTokMonitorWindow() {
     if (monitorWin) { monitorWin.focus(); return; }
+
+    // 🔥 Calcular base del server según el modo (server vs client).
+    // Se usa DENTRO del script inyectado en la ventana de TikTok, que
+    // NO tiene window.SERVER_BASE porque no carga server-url.js.
+    const serverBase = getServerBase();
+    console.log(`🎥 Monitor TikTok → enviará eventos a ${serverBase}`);
 
     let url = 'https://livecenter.tiktok.com/live_monitor';
     try {
@@ -368,9 +454,11 @@ function startTikTokMonitorWindow() {
     monitorWin.loadURL(url);
 
     monitorWin.webContents.on('did-finish-load', () => {
-        console.log('🚀 Monitor cargado. Iniciando captura...');
+        // ✅ Inyectamos SERVER_BASE dinámico (localhost en server, IP en client)
         const captureScript = `
             (function() {
+                const SERVER_BASE = ${JSON.stringify(serverBase)};
+
                 function captureTikTokEvents() {
                     const chatContainer = document.querySelector('[data-e2e="chat-list"], [class*="chat-list"], [class*="comment-list"]') || document.body;
                     if (!chatContainer || window.__tiktokObserverLoaded) return;
@@ -386,7 +474,7 @@ function startTikTokMonitorWindow() {
 
                                 if (userEl && textEl) {
                                     node.dataset.processed = "true";
-                                    fetch('http://localhost:3000/tiktok-chat', {
+                                    fetch(SERVER_BASE + '/tiktok-chat', {
                                         method: 'POST',
                                         headers: { 'Content-Type': 'application/json' },
                                         body: JSON.stringify({ username: userEl.innerText.trim(), message: textEl.innerText.trim() })
@@ -398,7 +486,7 @@ function startTikTokMonitorWindow() {
                                 if (giftEl) {
                                     node.dataset.processed = "true";
                                     const user = node.querySelector('[class*="nickname"], [class*="username"]')?.innerText.trim() || 'Usuario';
-                                    fetch('http://localhost:3000/tiktok-gift', {
+                                    fetch(SERVER_BASE + '/tiktok-gift', {
                                         method: 'POST',
                                         headers: { 'Content-Type': 'application/json' },
                                         body: JSON.stringify({ username: user, gift: giftEl.innerText.trim(), diamonds: 1 })
@@ -410,7 +498,7 @@ function startTikTokMonitorWindow() {
                                 if (textContent.includes('followed') || textContent.includes('siguió') || textContent.includes('te sigue')) {
                                     node.dataset.processed = "true";
                                     const user = node.querySelector('[class*="nickname"], [class*="username"]')?.innerText.trim() || 'Nuevo Seguidor';
-                                    fetch('http://localhost:3000/tiktok-follow', {
+                                    fetch(SERVER_BASE + '/tiktok-follow', {
                                         method: 'POST',
                                         headers: { 'Content-Type': 'application/json' },
                                         body: JSON.stringify({ username: user })
@@ -430,38 +518,82 @@ function startTikTokMonitorWindow() {
 
     monitorWin.on('closed', () => {
         monitorWin = null;
-        console.log('[TikTok] Monitor cerrado');
     });
 }
 
 // ================================================================
-// 🎥 MANEJADORES IPC
+// 🎥 IPC
 // ================================================================
 ipcMain.handle('start-servers', async () => {
     return { success: true };
 });
 
-// 📝 Setup — guardar la elección del usuario (servidor / cliente)
 ipcMain.handle('setup:save', async (event, payload) => {
     return writeSetup(payload);
 });
 
-// 📝 Setup — leer la elección actual (por si hay que reconfigurar)
 ipcMain.handle('setup:load', async () => {
     return readSetup();
+});
+
+// ← NUEVO: info y reset del setup
+ipcMain.handle('setup:get-info', async () => {
+    const setup = readSetup();
+    if (!setup) return { mode: null };
+    return {
+        mode: setup.mode,
+        ip: setup.ip || null,
+        configuredAt: setup.configuredAt || null
+    };
+});
+
+ipcMain.handle('setup:reset', async () => {
+    try {
+        if (fs.existsSync(setupPath)) {
+            fs.unlinkSync(setupPath);
+            console.log('🗑️ setup.json borrado');
+        }
+        setTimeout(() => {
+            try { app.relaunch(); } catch (e) {}
+            app.quit();
+        }, 500);
+        return { success: true };
+    } catch (e) {
+        console.error('❌ Error reseteando setup:', e.message);
+        return { success: false, error: e.message };
+    }
+});
+
+// ================================================================
+// 🔄 SETUP COMPLETADO → REINICIAR LA APP PARA APLICAR MODO
+// ================================================================
+ipcMain.on('setup:done', () => {
+    console.log('🔄 Setup completado. Reiniciando la aplicación...');
+
+    childProcesses.forEach((proc) => {
+        if (proc && !proc.killed) {
+            try { proc.kill(); } catch (e) {}
+        }
+    });
+    childProcesses = [];
+
+    setTimeout(() => {
+        try {
+            app.relaunch();
+            console.log('🚀 Relanzando app...');
+        } catch (e) {
+            console.error('❌ Error al relanzar:', e.message);
+        }
+        app.quit();
+    }, 500);
 });
 
 ipcMain.handle('get-logs', () => {
     return appLogs;
 });
 
-// 📦 NUEVO — Handler de reinicio de servidores
 ipcMain.handle('restart-servers', async () => {
-    console.log('🔄 Solicitud de reinicio de servidores recibida');
-    appLogs.push(`🔄 Reinicio manual solicitado (${new Date().toLocaleTimeString()})`);
-
     try {
-        // 1) Matar los procesos actuales (sin marcar isQuitting para que no se cierre la app)
         childProcesses.forEach((proc) => {
             if (proc && !proc.killed) {
                 try { proc.kill(); } catch (e) {}
@@ -469,23 +601,17 @@ ipcMain.handle('restart-servers', async () => {
         });
         childProcesses = [];
 
-        // 2) Resetear contadores para que no cuenten el reinicio manual
         restartCounters['SERVIDOR'] = 0;
         restartCounters['MODERACIÓN'] = 0;
 
-        // 3) Esperar 1 segundo antes de re-lanzarlos
         await new Promise(resolve => setTimeout(resolve, 1000));
 
-        // 4) Re-lanzar cada proceso registrado
         for (const [name, info] of Object.entries(processScripts)) {
             startProcess(name, info.scriptPath, info.cwd);
         }
 
-        appLogs.push(`✅ Servidores reiniciados correctamente`);
         return { success: true };
     } catch (e) {
-        console.error('❌ Error al reiniciar servidores:', e.message);
-        appLogs.push(`❌ Error al reiniciar: ${e.message}`);
         return { success: false, error: e.message };
     }
 });
@@ -494,33 +620,85 @@ ipcMain.on('open-tiktok-login', () => { openTikTokLoginWindow(); });
 ipcMain.on('open-tiktok-window', () => { startTikTokMonitorWindow(); });
 ipcMain.on('start-tiktok-stream-monitor', () => { startTikTokMonitorWindow(); });
 
+// ✅ CAMBIO: usar getServerBase() en vez de localhost hardcodeado
 ipcMain.on('tiktok-chat-captured', async (event, data) => {
-    console.log(`[TikTok Chat] ${data.user}: ${data.text}`);
     try {
-        await fetch(`http://localhost:${process.env.PORT}/tiktok-chat`, {
+        const base = getServerBase();
+        await fetch(`${base}/tiktok-chat`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username: data.user, message: data.text })
         });
+    } catch (e) {}
+});
+
+// ================================================================
+// 🔄 IPC DEL AUTO-UPDATE
+// ================================================================
+ipcMain.handle('update:check', async () => {
+    if (!isPackaged) return { success: false, error: 'No disponible en desarrollo' };
+    try {
+        const result = await autoUpdater.checkForUpdates();
+        return { success: true, version: result?.updateInfo?.version };
     } catch (e) {
-        console.log('Error enviando mensaje al servidor:', e);
+        return { success: false, error: e.message };
     }
+});
+
+ipcMain.handle('update:download', async () => {
+    try {
+        await autoUpdater.downloadUpdate();
+        return { success: true };
+    } catch (e) {
+        return { success: false, error: e.message };
+    }
+});
+
+ipcMain.handle('update:install', () => {
+    setImmediate(() => {
+        closeAllProcesses();
+        autoUpdater.quitAndInstall();
+    });
+    return { success: true };
 });
 
 // ================================================================
 // 🚀 INICIO DE LA APLICACIÓN
 // ================================================================
 app.whenReady().then(() => {
-    const serverScript = path.join(extrasPath, 'server.js');
-    const moderationScript = path.join(extrasPath, 'moderation.js');
+    const setup = readSetup();
+    const mode = setup ? setup.mode : null;
 
-    // 🔥 Arrancar los servidores con el Node embebido
-    startProcess('SERVIDOR', serverScript, extrasPath);
-    startProcess('MODERACIÓN', moderationScript, extrasPath);
+    console.log(`🚀 Arrancando en modo: ${mode || 'PRIMERA VEZ (sin setup.json)'}`);
 
-    setTimeout(() => {
-        createWindow();
-    }, 5000);
+    if (!setup) {
+        console.log('🆕 Sin setup.json → no se arrancan servidores. Mostrando setup.html.');
+        setTimeout(() => { createWindow(); }, 500);
+        return;
+    }
+
+    if (mode === 'server') {
+        console.log('🖥️ Modo SERVIDOR → arrancando servidor y moderación.');
+        const serverScript = path.join(extrasPath, 'server.js');
+        const moderationScript = path.join(extrasPath, 'moderation.js');
+
+        startProcess('SERVIDOR', serverScript, extrasPath);
+        startProcess('MODERACIÓN', moderationScript, extrasPath);
+
+        setTimeout(() => { createWindow(); }, 5000);
+    } else if (mode === 'client') {
+        console.log(`💻 Modo CLIENTE → conectando a ${setup.ip}:${process.env.PORT}. No se arrancan servidores.`);
+        setTimeout(() => { createWindow(); }, 500);
+    } else {
+        console.warn(`⚠️ Modo desconocido "${mode}". Arrancando como servidor por seguridad.`);
+        const serverScript = path.join(extrasPath, 'server.js');
+        const moderationScript = path.join(extrasPath, 'moderation.js');
+
+        startProcess('SERVIDOR', serverScript, extrasPath);
+        startProcess('MODERACIÓN', moderationScript, extrasPath);
+
+        setTimeout(() => { createWindow(); }, 5000);
+    }
 });
 
 // ================================================================

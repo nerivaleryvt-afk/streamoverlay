@@ -171,7 +171,7 @@
         .btn-help:hover { color: #8badd8; text-decoration: underline; }
         .btn-help i { font-size: 13px; }
 
-        input[type="text"], input[type="password"] {
+        input[type="text"], input[type="password"], textarea {
             width: 100%;
             padding: 10px 12px;
             border-radius: 6px;
@@ -183,15 +183,21 @@
             outline: none;
             transition: border-color 0.15s, box-shadow 0.15s;
         }
-        input[type="text"]:focus, input[type="password"]:focus {
+        input[type="text"]:focus, input[type="password"]:focus, textarea:focus {
             border-color: #4d7cc7;
             box-shadow: 0 0 0 3px rgba(77,124,199,0.12);
         }
-        input[type="text"]::placeholder, input[type="password"]::placeholder {
+        input[type="text"]::placeholder, input[type="password"]::placeholder, textarea::placeholder {
             color: #4a4f5a;
         }
         input.border-green { border-color: #2f855a !important; }
         input.border-red { border-color: #a03a3a !important; }
+
+        textarea {
+            resize: vertical;
+            min-height: 70px;
+            line-height: 1.55;
+        }
 
         select {
             width: 100%;
@@ -761,253 +767,606 @@
             height: 4px;
         }
 
+        /* ============ AI CO-HOST: TARJETA DE ENTRADA ============ */
+        .ai-entry-card {
+            background: #101216;
+            border: 1px solid #23262e;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .ai-entry-info {
+            flex: 1;
+            min-width: 220px;
+        }
+        .ai-entry-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            color: #c8cdd6;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        .ai-entry-title i { font-size: 17px; color: #a970ff; }
+        .ai-entry-desc {
+            font-size: 12.5px;
+            color: #7b8090;
+            line-height: 1.55;
+            margin: 0;
+        }
+        .ai-entry-btn {
+            background: #4d7cc7;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 11px 20px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.15s;
+            flex-shrink: 0;
+        }
+        .ai-entry-btn:hover { background: #5a8ad6; }
+        .ai-entry-btn i { font-size: 15px; }
+
+        /* ============ AI CO-HOST: SUB-PÁGINA ============ */
+        #aiSubpage {
+            display: none;
+        }
+        #aiSubpage.open {
+            display: block;
+        }
+        #mainConfig.hidden {
+            display: none;
+        }
+        .subpage-back-btn {
+            background: transparent;
+            border: none;
+            color: #8badd8;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            padding: 0;
+            margin-bottom: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: inherit;
+            transition: color 0.15s;
+        }
+        .subpage-back-btn:hover { color: #b8cdf0; text-decoration: underline; }
+        .subpage-back-btn i { font-size: 16px; }
+
+        .provider-block {
+            background: #101216;
+            border: 1px solid #23262e;
+            border-radius: 8px;
+            padding: 16px 18px;
+            margin-bottom: 12px;
+        }
+        .provider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .provider-name {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            color: #c8cdd6;
+            font-size: 13.5px;
+        }
+        .provider-priority {
+            font-size: 11px;
+            color: #6b7280;
+            background: #1c1f26;
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+        }
+        .provider-status {
+            font-size: 11.5px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .provider-status.sin-key { color: #6b7280; }
+        .provider-status.lista { color: #4fa87a; }
+        .provider-status.cooldown { color: #d6a84a; }
+        .provider-status.invalida { color: #c26a6a; }
+        .provider-actions {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
+        .btn-test {
+            background: #1c1f26;
+            border: 1px solid #2a2e37;
+            color: #b8bdc7;
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12.5px;
+            font-weight: 500;
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.15s;
+        }
+        .btn-test:hover {
+            border-color: #4d7cc7;
+            color: #8badd8;
+        }
+        .btn-test:disabled { opacity: 0.6; cursor: wait; }
+        .btn-test i { font-size: 13px; }
+        .test-result {
+            margin-top: 10px;
+            font-size: 12.5px;
+            padding: 9px 12px;
+            border-radius: 6px;
+            line-height: 1.5;
+            display: none;
+        }
+        .test-result.show { display: block; }
+        .test-result.ok {
+            background: #14201a;
+            border-left: 2px solid #3f9b78;
+            color: #8ba89c;
+        }
+        .test-result.fail {
+            background: #1a1414;
+            border-left: 2px solid #a03a3a;
+            color: #c09090;
+        }
+
+        .subpage-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 24px;
+        }
+        .subpage-actions button {
+            flex: 1;
+        }
+
         @media (max-width: 640px) {
             body { padding: 16px 12px; }
             .card { padding: 24px 20px; }
             h2 { font-size: 19px; }
             .action-row { flex-direction: column; }
             .action-row .btn-restore { width: 100%; }
+            .subpage-actions { flex-direction: column; }
         }
     </style>
 </head>
 <body>
 
     <div class="card">
-        <h2>Configuración</h2>
-        <p class="subtitle">Completa los apartados que necesites. Nada es obligatorio excepto lo que uses.</p>
 
-        <div id="unsavedBadge" class="unsaved-badge">Cambios sin guardar</div>
+        <!-- ============================= -->
+        <!-- PÁGINA PRINCIPAL DE CONFIG    -->
+        <!-- ============================= -->
+        <div id="mainConfig">
 
-        <div class="token-info">
-            <h4><i class="ri-key-2-line"></i> Varias cuentas de Twitch</h4>
-            <p>Puedes registrar más de una cuenta de Twitch, cada una con sus tokens, su bot y sus canales. Útil cuando:</p>
-            <ul>
-                <li>Moderas canales donde no eres editor (el dueño te pasa su token).</li>
-                <li>Quieres tener varias identidades de bot.</li>
-                <li>Necesitas cambiar título o categoría en canales con permisos distintos.</li>
-            </ul>
-            <span class="highlight">Si solo usas una cuenta, deja la primera y ya está.</span>
-        </div>
+            <h2>Configuración</h2>
+            <p class="subtitle">Completa los apartados que necesites. Nada es obligatorio excepto lo que uses.</p>
 
-        <div class="guide-banner">
-            <i class="ri-information-line"></i>
-            <div>
-                <h3>Cada plataforma es independiente</h3>
-                <p>Puedes configurar solo Twitch, solo TikTok, solo Kick o solo YouTube. <b>No hace falta llenar todo.</b></p>
+            <div id="unsavedBadge" class="unsaved-badge">Cambios sin guardar</div>
+
+            <div class="token-info">
+                <h4><i class="ri-key-2-line"></i> Varias cuentas de Twitch</h4>
+                <p>Puedes registrar más de una cuenta de Twitch, cada una con sus tokens, su bot y sus canales. Útil cuando:</p>
+                <ul>
+                    <li>Moderas canales donde no eres editor (el dueño te pasa su token).</li>
+                    <li>Quieres tener varias identidades de bot.</li>
+                    <li>Necesitas cambiar título o categoría en canales con permisos distintos.</li>
+                </ul>
+                <span class="highlight">Si solo usas una cuenta, deja la primera y ya está.</span>
             </div>
-        </div>
 
-        <div class="platform-toggles">
-            <div class="platform-toggles-title">
-                <i class="ri-toggle-line"></i> Plataformas activas
+            <div class="guide-banner">
+                <i class="ri-information-line"></i>
+                <div>
+                    <h3>Cada plataforma es independiente</h3>
+                    <p>Puedes configurar solo Twitch, solo TikTok, solo Kick o solo YouTube. <b>No hace falta llenar todo.</b></p>
+                </div>
             </div>
-            <p class="platform-toggles-hint">
-                Desactiva las que no uses. Si están apagadas, el servidor no intentará conectarse
-                y no verás errores en la terminal.
-            </p>
-            <div class="toggle-grid">
-                <label class="toggle-item">
-                    <input type="checkbox" id="platformTwitch" onchange="onPlatformToggle()">
-                    <span class="toggle-label"><i class="ri-twitch-fill" style="color:#a78bfa"></i> Twitch</span>
-                </label>
-                <label class="toggle-item">
-                    <input type="checkbox" id="platformTikTok" onchange="onPlatformToggle()">
-                    <span class="toggle-label"><i class="ri-tiktok-fill" style="color:#fe2c55"></i> TikTok</span>
-                </label>
-                <label class="toggle-item">
-                    <input type="checkbox" id="platformKick" onchange="onPlatformToggle()">
-                    <span class="toggle-label"><i class="ri-live-fill" style="color:#53fc18"></i> Kick</span>
-                </label>
-                <label class="toggle-item">
-                    <input type="checkbox" id="platformYouTube" onchange="onPlatformToggle()">
-                    <span class="toggle-label"><i class="ri-youtube-fill" style="color:#ff0000"></i> YouTube</span>
-                </label>
+
+            <div class="platform-toggles">
+                <div class="platform-toggles-title">
+                    <i class="ri-toggle-line"></i> Plataformas activas
+                </div>
+                <p class="platform-toggles-hint">
+                    Desactiva las que no uses. Si están apagadas, el servidor no intentará conectarse
+                    y no verás errores en la terminal.
+                </p>
+                <div class="toggle-grid">
+                    <label class="toggle-item">
+                        <input type="checkbox" id="platformTwitch" onchange="onPlatformToggle()">
+                        <span class="toggle-label"><i class="ri-twitch-fill" style="color:#a78bfa"></i> Twitch</span>
+                    </label>
+                    <label class="toggle-item">
+                        <input type="checkbox" id="platformTikTok" onchange="onPlatformToggle()">
+                        <span class="toggle-label"><i class="ri-tiktok-fill" style="color:#fe2c55"></i> TikTok</span>
+                    </label>
+                    <label class="toggle-item">
+                        <input type="checkbox" id="platformKick" onchange="onPlatformToggle()">
+                        <span class="toggle-label"><i class="ri-live-fill" style="color:#53fc18"></i> Kick</span>
+                    </label>
+                    <label class="toggle-item">
+                        <input type="checkbox" id="platformYouTube" onchange="onPlatformToggle()">
+                        <span class="toggle-label"><i class="ri-youtube-fill" style="color:#ff0000"></i> YouTube</span>
+                    </label>
+                </div>
             </div>
-        </div>
 
-        <div id="section-twitch" class="platform-section">
-            <div class="section-divider"><span>Cuentas de Twitch</span></div>
+            <div id="section-twitch" class="platform-section">
+                <div class="section-divider"><span>Cuentas de Twitch</span></div>
 
-            <div id="twitchAccountsContainer"></div>
+                <div id="twitchAccountsContainer"></div>
 
-            <button class="add-item-btn" type="button" onclick="addTwitchAccount()" style="margin-bottom: 22px;">
-                <i class="ri-add-line"></i> Añadir otra cuenta de Twitch
+                <button class="add-item-btn" type="button" onclick="addTwitchAccount()" style="margin-bottom: 22px;">
+                    <i class="ri-add-line"></i> Añadir otra cuenta de Twitch
+                </button>
+            </div>
+
+            <div id="section-tiktok" class="platform-section">
+                <div class="section-divider"><span>TikTok (opcional)</span></div>
+
+                <div class="input-group">
+                    <div class="label-row">
+                        <label>TikTok Users:</label>
+                        <span style="font-size: 12px; color: #6b7280;">0 o más</span>
+                    </div>
+                    <div id="tiktokUsersList" class="multi-list"></div>
+                    <button class="add-item-btn" type="button" onclick="addTikTokUser()"><i class="ri-add-line"></i> Añadir otro usuario de TikTok</button>
+                    <div class="field-help" id="tiktokUsersHelp"><i class="ri-information-line"></i> Sin @, solo el nombre. Necesitas estar en vivo para que aparezcan mensajes.</div>
+                </div>
+            </div>
+
+            <div id="section-kick" class="platform-section">
+                <div class="section-divider"><span>Kick (opcional)</span></div>
+
+                <div class="input-group">
+                    <div class="label-row">
+                        <label>Kick Users:</label>
+                        <span style="font-size: 12px; color: #6b7280;">0 o más</span>
+                    </div>
+                    <div id="kickUsersList" class="multi-list"></div>
+                    <button class="add-item-btn" type="button" onclick="addKickUser()"><i class="ri-add-line"></i> Añadir otro usuario de Kick</button>
+                    <div class="hint-kick">
+                        <i class="ri-information-line"></i>
+                        <span>Solo necesitas el nombre de usuario de Kick. <b>Sin tokens ni APIs.</b></span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="section-youtube" class="platform-section">
+                <div class="section-divider"><span>YouTube (opcional)</span></div>
+
+                <div class="input-group">
+                    <div class="label-row">
+                        <label>YouTube Canales:</label>
+                        <button class="btn-help" type="button" onclick="toggleModal('modalYouTube')"><i class="ri-question-line"></i> ¿Cómo obtenerlo?</button>
+                    </div>
+                    <div id="youtubeUsersList" class="multi-list"></div>
+                    <button class="add-item-btn" type="button" onclick="addYouTubeUser()"><i class="ri-add-line"></i> Añadir otro canal de YouTube</button>
+                    <div class="hint-youtube">
+                        <i class="ri-information-line"></i>
+                        <span>Acepta <code>@handle</code>, URL completa del canal o ID <code>UC...</code>. <b>Sin API Key ni OAuth.</b></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-divider"><span>Texto a Voz</span></div>
+
+            <div class="checkbox-container">
+                <input type="checkbox" id="ttsEnabled" onchange="onFieldChange()">
+                <label for="ttsEnabled"><b>Activar TTS</b> — lee los mensajes en voz alta</label>
+            </div>
+
+            <div class="tts-panel">
+                <div class="input-group" style="margin-bottom: 16px;">
+                    <div class="label-row">
+                        <label>Voz:</label>
+                        <span style="font-size: 12px; color: #6b7280;">Español + inglés</span>
+                    </div>
+                    <select id="ttsVoice" onchange="onFieldChange()">
+                        <option value="es-ES-AlvaroNeural">Álvaro — Español (España) ♂</option>
+                        <option value="es-ES-ElviraNeural">Elvira — Español (España) ♀</option>
+                        <option value="es-MX-DaliaNeural">Dalia — Español (México) ♀</option>
+                        <option value="es-MX-JorgeNeural">Jorge — Español (México) ♂</option>
+                        <option value="es-AR-ElenaNeural">Elena — Español (Argentina) ♀</option>
+                        <option value="es-AR-TomasNeural">Tomás — Español (Argentina) ♂</option>
+                        <option value="es-CO-SalomeNeural">Salomé — Español (Colombia) ♀</option>
+                        <option value="es-CO-GonzaloNeural">Gonzalo — Español (Colombia) ♂</option>
+                        <option value="es-PE-CamilaNeural">Camila — Español (Perú) ♀</option>
+                        <option value="es-CL-CatalinaNeural">Catalina — Español (Chile) ♀</option>
+                        <option value="es-VE-PaolaNeural">Paola — Español (Venezuela) ♀</option>
+                        <option value="en-US-AriaNeural">Aria — English (US) ♀</option>
+                        <option value="en-US-GuyNeural">Guy — English (US) ♂</option>
+                    </select>
+                </div>
+
+                <div class="input-group" style="margin-bottom: 14px;">
+                    <div class="label-row">
+                        <label>Velocidad:</label>
+                        <span class="tts-slider-val" id="ttsRateVal">+0%</span>
+                    </div>
+                    <input type="range" id="ttsRate" min="-50" max="50" value="0"
+                        oninput="document.getElementById('ttsRateVal').textContent=(this.value>0?'+':'')+this.value+'%'; onFieldChange();">
+                </div>
+
+                <div class="input-group" style="margin-bottom: 14px;">
+                    <div class="label-row">
+                        <label>Tono:</label>
+                        <span class="tts-slider-val" id="ttsPitchVal">+0Hz</span>
+                    </div>
+                    <input type="range" id="ttsPitch" min="-50" max="50" value="0"
+                        oninput="document.getElementById('ttsPitchVal').textContent=(this.value>0?'+':'')+this.value+'Hz'; onFieldChange();">
+                </div>
+
+                <div class="input-group" style="margin-bottom: 4px;">
+                    <div class="label-row">
+                        <label>Volumen:</label>
+                        <span class="tts-slider-val" id="ttsVolumeVal">80%</span>
+                    </div>
+                    <input type="range" id="ttsVolume" min="0" max="100" value="80"
+                        oninput="document.getElementById('ttsVolumeVal').textContent=this.value+'%'; onFieldChange();">
+                </div>
+            </div>
+
+            <div class="input-group">
+                <div class="label-row">
+                    <label>Leer de estas plataformas:</label>
+                </div>
+                <div class="toggle-grid">
+                    <label class="toggle-item">
+                        <input type="checkbox" id="ttsFromTwitch" onchange="onFieldChange()">
+                        <span class="toggle-label"><i class="ri-twitch-fill" style="color:#a78bfa"></i> Twitch</span>
+                    </label>
+                    <label class="toggle-item">
+                        <input type="checkbox" id="ttsFromTikTok" onchange="onFieldChange()">
+                        <span class="toggle-label"><i class="ri-tiktok-fill" style="color:#fe2c55"></i> TikTok</span>
+                    </label>
+                    <label class="toggle-item">
+                        <input type="checkbox" id="ttsFromKick" onchange="onFieldChange()">
+                        <span class="toggle-label"><i class="ri-live-fill" style="color:#53fc18"></i> Kick</span>
+                    </label>
+                    <label class="toggle-item">
+                        <input type="checkbox" id="ttsFromYouTube" onchange="onFieldChange()">
+                        <span class="toggle-label"><i class="ri-youtube-fill" style="color:#ff0000"></i> YouTube</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <div class="label-row">
+                    <label>Leer estos eventos:</label>
+                </div>
+                <div class="toggle-grid">
+                    <label class="toggle-item">
+                        <input type="checkbox" id="ttsEventChat" onchange="onFieldChange()">
+                        <span class="toggle-label">Chat</span>
+                    </label>
+                    <label class="toggle-item">
+                        <input type="checkbox" id="ttsEventGifts" onchange="onFieldChange()">
+                        <span class="toggle-label">Regalos</span>
+                    </label>
+                    <label class="toggle-item">
+                        <input type="checkbox" id="ttsEventFollows" onchange="onFieldChange()">
+                        <span class="toggle-label">Follows</span>
+                    </label>
+                    <label class="toggle-item">
+                        <input type="checkbox" id="ttsEventSubs" onchange="onFieldChange()">
+                        <span class="toggle-label">Subs</span>
+                    </label>
+                </div>
+            </div>
+
+            <button class="secondary-btn" id="btnProbarTTS" onclick="probarVozTTS(this)" style="margin-bottom: 22px;">
+                <i class="ri-volume-up-line"></i> Probar voz (solo en este navegador)
             </button>
+
+            <div class="section-divider"><span>AI Co-Host</span></div>
+
+            <div class="ai-entry-card">
+                <div class="ai-entry-info">
+                    <div class="ai-entry-title">
+                        <i class="ri-robot-2-line"></i> Asistente de chat con IA
+                    </div>
+                    <p class="ai-entry-desc">
+                        Configura un asistente que responde en el chat cuando lo mencionan.
+                        Usa tus propias API keys (BYOK). Opcional — si no lo usas, no pasa nada.
+                    </p>
+                </div>
+                <button class="ai-entry-btn" type="button" onclick="abrirAsistente()">
+                    <i class="ri-arrow-right-line"></i> Abrir asistente
+                </button>
+            </div>
+
+            <div class="checkbox-container">
+                <input type="checkbox" id="enableCensorship" onchange="onFieldChange()">
+                <label for="enableCensorship">Activar Filtro de Censura Positiva (cambia palabras feas por bonitas)</label>
+            </div>
+
+            <div class="action-row">
+                <button class="main-btn" onclick="saveConfig()">Guardar y abrir panel</button>
+                <button class="btn-restore" onclick="restoreFromServer()" title="Restaurar datos guardados en el servidor">Restaurar</button>
+            </div>
+
+            <button class="secondary-btn" onclick="window.location.href = window.SERVER_BASE + '/'"><i class="ri-arrow-left-line"></i> Volver al panel sin guardar</button>
+
+            <div class="footer">
+                Tus datos se guardan en <code style="color:#7b8090;">config.json</code>
+            </div>
         </div>
 
-        <div id="section-tiktok" class="platform-section">
-            <div class="section-divider"><span>TikTok (opcional)</span></div>
+        <!-- ============================= -->
+        <!-- SUB-PÁGINA DEL ASISTENTE      -->
+        <!-- ============================= -->
+        <div id="aiSubpage">
+
+            <button class="subpage-back-btn" type="button" onclick="cerrarAsistente()">
+                <i class="ri-arrow-left-line"></i> Volver a configuración
+            </button>
+
+            <h2>🤖 AI Co-Host</h2>
+            <p class="subtitle">Configura tu asistente de chat. Todo es opcional y se guarda en tu propia PC.</p>
+
+            <div class="checkbox-container">
+                <input type="checkbox" id="aiEnabled" onchange="onFieldChange()">
+                <label for="aiEnabled"><b>Activar AI Co-Host</b> — responde en el chat cuando lo mencionan</label>
+            </div>
 
             <div class="input-group">
                 <div class="label-row">
-                    <label>TikTok Users:</label>
-                    <span style="font-size: 12px; color: #6b7280;">0 o más</span>
+                    <label>Nombre del asistente:</label>
+                    <span style="font-size: 12px; color: #6b7280;">Ej: Togi, Aura, Nova</span>
                 </div>
-                <div id="tiktokUsersList" class="multi-list"></div>
-                <button class="add-item-btn" type="button" onclick="addTikTokUser()"><i class="ri-add-line"></i> Añadir otro usuario de TikTok</button>
-                <div class="field-help" id="tiktokUsersHelp"><i class="ri-information-line"></i> Sin @, solo el nombre. Necesitas estar en vivo para que aparezcan mensajes.</div>
+                <input type="text" id="aiNombre" placeholder="Togi" oninput="onFieldChange()" autocomplete="off">
             </div>
-        </div>
-
-        <div id="section-kick" class="platform-section">
-            <div class="section-divider"><span>Kick (opcional)</span></div>
 
             <div class="input-group">
                 <div class="label-row">
-                    <label>Kick Users:</label>
-                    <span style="font-size: 12px; color: #6b7280;">0 o más</span>
+                    <label>Comando de invocación:</label>
+                    <span style="font-size: 12px; color: #6b7280;">Ej: !guia</span>
                 </div>
-                <div id="kickUsersList" class="multi-list"></div>
-                <button class="add-item-btn" type="button" onclick="addKickUser()"><i class="ri-add-line"></i> Añadir otro usuario de Kick</button>
-                <div class="hint-kick">
-                    <i class="ri-information-line"></i>
-                    <span>Solo necesitas el nombre de usuario de Kick. <b>Sin tokens ni APIs.</b></span>
-                </div>
+                <input type="text" id="aiComando" placeholder="!guia" oninput="onFieldChange()" autocomplete="off">
+                <div class="field-help"><i class="ri-information-line"></i> También responde si alguien escribe <code>@nombre</code>.</div>
             </div>
-        </div>
-
-        <div id="section-youtube" class="platform-section">
-            <div class="section-divider"><span>YouTube (opcional)</span></div>
 
             <div class="input-group">
                 <div class="label-row">
-                    <label>YouTube Canales:</label>
-                    <button class="btn-help" type="button" onclick="toggleModal('modalYouTube')"><i class="ri-question-line"></i> ¿Cómo obtenerlo?</button>
+                    <label>Personalidad:</label>
+                    <span style="font-size: 12px; color: #6b7280;">Cómo quieres que hable</span>
                 </div>
-                <div id="youtubeUsersList" class="multi-list"></div>
-                <button class="add-item-btn" type="button" onclick="addYouTubeUser()"><i class="ri-add-line"></i> Añadir otro canal de YouTube</button>
-                <div class="hint-youtube">
-                    <i class="ri-information-line"></i>
-                    <span>Acepta <code>@handle</code>, URL completa del canal o ID <code>UC...</code>. <b>Sin API Key ni OAuth.</b></span>
+                <textarea id="aiPersonalidad" placeholder="Ej: Eres graciosa, breve, usas emojis y respondes en español. Nunca rompes el personaje." oninput="onFieldChange()"></textarea>
+                <div class="field-help"><i class="ri-information-line"></i> Sé descriptivo. Cuanto más claro, mejor se comportará.</div>
+            </div>
+
+            <div class="section-divider"><span>Proveedores de IA</span></div>
+
+            <div class="guide-banner">
+                <i class="ri-information-line"></i>
+                <div>
+                    <h3>Rellena solo las que tengas</h3>
+                    <p>Con una sola key ya funciona. Si rellenas varias, el sistema <b>rota automáticamente</b> entre ellas si alguna falla. <b>Todo gratis.</b></p>
                 </div>
             </div>
-        </div>
 
-        <div class="section-divider"><span>Texto a Voz</span></div>
+            <!-- GROQ -->
+            <div class="provider-block">
+                <div class="provider-header">
+                    <div class="provider-name">
+                        <i class="ri-flashlight-fill" style="color:#f55036"></i> Groq
+                        <span class="provider-priority">Principal</span>
+                    </div>
+                    <button class="btn-help" type="button" onclick="toggleModal('modalKeyGroq')"><i class="ri-question-line"></i> ¿Cómo la consigo?</button>
+                </div>
 
-        <div class="checkbox-container">
-            <input type="checkbox" id="ttsEnabled" onchange="onFieldChange()">
-            <label for="ttsEnabled"><b>Activar TTS</b> — lee los mensajes en voz alta</label>
-        </div>
-
-        <div class="tts-panel">
-            <div class="input-group" style="margin-bottom: 16px;">
                 <div class="label-row">
-                    <label>Voz:</label>
-                    <span style="font-size: 12px; color: #6b7280;">Español + inglés</span>
+                    <label>API Key:</label>
+                    <span class="provider-status sin-key" id="statusGroq"><i class="ri-circle-fill" style="font-size:8px"></i> sin key</span>
                 </div>
-                <select id="ttsVoice" onchange="onFieldChange()">
-                    <option value="es-ES-AlvaroNeural">Álvaro — Español (España) ♂</option>
-                    <option value="es-ES-ElviraNeural">Elvira — Español (España) ♀</option>
-                    <option value="es-MX-DaliaNeural">Dalia — Español (México) ♀</option>
-                    <option value="es-MX-JorgeNeural">Jorge — Español (México) ♂</option>
-                    <option value="es-AR-ElenaNeural">Elena — Español (Argentina) ♀</option>
-                    <option value="es-AR-TomasNeural">Tomás — Español (Argentina) ♂</option>
-                    <option value="es-CO-SalomeNeural">Salomé — Español (Colombia) ♀</option>
-                    <option value="es-CO-GonzaloNeural">Gonzalo — Español (Colombia) ♂</option>
-                    <option value="es-PE-CamilaNeural">Camila — Español (Perú) ♀</option>
-                    <option value="es-CL-CatalinaNeural">Catalina — Español (Chile) ♀</option>
-                    <option value="es-VE-PaolaNeural">Paola — Español (Venezuela) ♀</option>
-                    <option value="en-US-AriaNeural">Aria — English (US) ♀</option>
-                    <option value="en-US-GuyNeural">Guy — English (US) ♂</option>
-                </select>
+                <div class="password-wrap">
+                    <input type="password" id="aiKeyGroq" placeholder="gsk_..." oninput="onFieldChange()" autocomplete="off" spellcheck="false">
+                    <button class="toggle-eye-btn" type="button" onclick="toggleTokenVisibility(this)" title="Mostrar"><i class="ri-eye-line"></i></button>
+                </div>
+
+                <div class="provider-actions">
+                    <button class="btn-test" type="button" id="btnTestGroq" onclick="probarKey('groq', this)">
+                        <i class="ri-play-circle-line"></i> Probar
+                    </button>
+                </div>
+                <div class="test-result" id="testResultGroq"></div>
             </div>
 
-            <div class="input-group" style="margin-bottom: 14px;">
+            <!-- CEREBRAS -->
+            <div class="provider-block">
+                <div class="provider-header">
+                    <div class="provider-name">
+                        <i class="ri-cpu-line" style="color:#7c5cff"></i> Cerebras
+                        <span class="provider-priority">Respaldo 1</span>
+                    </div>
+                    <button class="btn-help" type="button" onclick="toggleModal('modalKeyCerebras')"><i class="ri-question-line"></i> ¿Cómo la consigo?</button>
+                </div>
+
                 <div class="label-row">
-                    <label>Velocidad:</label>
-                    <span class="tts-slider-val" id="ttsRateVal">+0%</span>
+                    <label>API Key:</label>
+                    <span class="provider-status sin-key" id="statusCerebras"><i class="ri-circle-fill" style="font-size:8px"></i> sin key</span>
                 </div>
-                <input type="range" id="ttsRate" min="-50" max="50" value="0"
-                    oninput="document.getElementById('ttsRateVal').textContent=(this.value>0?'+':'')+this.value+'%'; onFieldChange();">
+                <div class="password-wrap">
+                    <input type="password" id="aiKeyCerebras" placeholder="csk-..." oninput="onFieldChange()" autocomplete="off" spellcheck="false">
+                    <button class="toggle-eye-btn" type="button" onclick="toggleTokenVisibility(this)" title="Mostrar"><i class="ri-eye-line"></i></button>
+                </div>
+
+                <div class="provider-actions">
+                    <button class="btn-test" type="button" id="btnTestCerebras" onclick="probarKey('cerebras', this)">
+                        <i class="ri-play-circle-line"></i> Probar
+                    </button>
+                </div>
+                <div class="test-result" id="testResultCerebras"></div>
             </div>
 
-            <div class="input-group" style="margin-bottom: 14px;">
+            <!-- OPENROUTER -->
+            <div class="provider-block">
+                <div class="provider-header">
+                    <div class="provider-name">
+                        <i class="ri-route-line" style="color:#4d7cc7"></i> OpenRouter
+                        <span class="provider-priority">Respaldo 2</span>
+                    </div>
+                    <button class="btn-help" type="button" onclick="toggleModal('modalKeyOpenRouter')"><i class="ri-question-line"></i> ¿Cómo la consigo?</button>
+                </div>
+
                 <div class="label-row">
-                    <label>Tono:</label>
-                    <span class="tts-slider-val" id="ttsPitchVal">+0Hz</span>
+                    <label>API Key:</label>
+                    <span class="provider-status sin-key" id="statusOpenRouter"><i class="ri-circle-fill" style="font-size:8px"></i> sin key</span>
                 </div>
-                <input type="range" id="ttsPitch" min="-50" max="50" value="0"
-                    oninput="document.getElementById('ttsPitchVal').textContent=(this.value>0?'+':'')+this.value+'Hz'; onFieldChange();">
-            </div>
-
-            <div class="input-group" style="margin-bottom: 4px;">
-                <div class="label-row">
-                    <label>Volumen:</label>
-                    <span class="tts-slider-val" id="ttsVolumeVal">80%</span>
+                <div class="password-wrap">
+                    <input type="password" id="aiKeyOpenRouter" placeholder="sk-or-..." oninput="onFieldChange()" autocomplete="off" spellcheck="false">
+                    <button class="toggle-eye-btn" type="button" onclick="toggleTokenVisibility(this)" title="Mostrar"><i class="ri-eye-line"></i></button>
                 </div>
-                <input type="range" id="ttsVolume" min="0" max="100" value="80"
-                    oninput="document.getElementById('ttsVolumeVal').textContent=this.value+'%'; onFieldChange();">
+
+                <div class="provider-actions">
+                    <button class="btn-test" type="button" id="btnTestOpenRouter" onclick="probarKey('openrouter', this)">
+                        <i class="ri-play-circle-line"></i> Probar
+                    </button>
+                </div>
+                <div class="test-result" id="testResultOpenRouter"></div>
             </div>
-        </div>
 
-        <div class="input-group">
-            <div class="label-row">
-                <label>Leer de estas plataformas:</label>
+            <div class="alert-box info" style="margin-top: 20px;">
+                <b>Tus keys se quedan en tu PC.</b> No se envían a ningún servidor nuestro. Solo tu propio TogiPanel las usa para hablar con el proveedor.
             </div>
-            <div class="toggle-grid">
-                <label class="toggle-item">
-                    <input type="checkbox" id="ttsFromTwitch" onchange="onFieldChange()">
-                    <span class="toggle-label"><i class="ri-twitch-fill" style="color:#a78bfa"></i> Twitch</span>
-                </label>
-                <label class="toggle-item">
-                    <input type="checkbox" id="ttsFromTikTok" onchange="onFieldChange()">
-                    <span class="toggle-label"><i class="ri-tiktok-fill" style="color:#fe2c55"></i> TikTok</span>
-                </label>
-                <label class="toggle-item">
-                    <input type="checkbox" id="ttsFromKick" onchange="onFieldChange()">
-                    <span class="toggle-label"><i class="ri-live-fill" style="color:#53fc18"></i> Kick</span>
-                </label>
-                <label class="toggle-item">
-                    <input type="checkbox" id="ttsFromYouTube" onchange="onFieldChange()">
-                    <span class="toggle-label"><i class="ri-youtube-fill" style="color:#ff0000"></i> YouTube</span>
-                </label>
+
+            <div class="subpage-actions">
+                <button class="main-btn" type="button" onclick="guardarAsistenteYVolver()">
+                    <i class="ri-check-line"></i> Guardar asistente
+                </button>
+                <button class="btn-restore" type="button" onclick="cerrarAsistente()">
+                    Cancelar
+                </button>
             </div>
+
         </div>
 
-        <div class="input-group">
-            <div class="label-row">
-                <label>Leer estos eventos:</label>
-            </div>
-            <div class="toggle-grid">
-                <label class="toggle-item">
-                    <input type="checkbox" id="ttsEventChat" onchange="onFieldChange()">
-                    <span class="toggle-label">Chat</span>
-                </label>
-                <label class="toggle-item">
-                    <input type="checkbox" id="ttsEventGifts" onchange="onFieldChange()">
-                    <span class="toggle-label">Regalos</span>
-                </label>
-                <label class="toggle-item">
-                    <input type="checkbox" id="ttsEventFollows" onchange="onFieldChange()">
-                    <span class="toggle-label">Follows</span>
-                </label>
-                <label class="toggle-item">
-                    <input type="checkbox" id="ttsEventSubs" onchange="onFieldChange()">
-                    <span class="toggle-label">Subs</span>
-                </label>
-            </div>
-        </div>
-
-        <button class="secondary-btn" id="btnProbarTTS" onclick="probarVozTTS(this)" style="margin-bottom: 22px;">
-            <i class="ri-volume-up-line"></i> Probar voz (solo en este navegador)
-        </button>
-
-        <div class="checkbox-container">
-            <input type="checkbox" id="enableCensorship" onchange="onFieldChange()">
-            <label for="enableCensorship">Activar Filtro de Censura Positiva (cambia palabras feas por bonitas)</label>
-        </div>
-
-        <div class="action-row">
-            <button class="main-btn" onclick="saveConfig()">Guardar y abrir panel</button>
-            <button class="btn-restore" onclick="restoreFromServer()" title="Restaurar datos guardados en el servidor">Restaurar</button>
-        </div>
-
-        <button class="secondary-btn" onclick="window.location.href = window.SERVER_BASE + '/'"><i class="ri-arrow-left-line"></i> Volver al panel sin guardar</button>
-
-        <div class="footer">
-            Tus datos se guardan en <code style="color:#7b8090;">config.json</code>
-        </div>
     </div>
 
     <!-- ==================== MODAL: TWITCH CLIENT ID ==================== -->
@@ -1153,6 +1512,118 @@
         </div>
     </div>
 
+    <!-- ==================== MODAL: GROQ KEY ==================== -->
+    <div id="modalKeyGroq" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Obtener tu API Key de Groq</h3>
+                <button class="close-btn" onclick="closeModal('modalKeyGroq')">&times;</button>
+            </div>
+
+            <div class="alert-box info">
+                Groq es <b>gratis</b> y muy rápido. Tiene un límite diario muy generoso para responder al chat.
+            </div>
+
+            <div class="modal-step">
+                <h4><span>1</span> Crea una cuenta</h4>
+                <p>Ve a <b>https://console.groq.com/</b> y regístrate con Google o tu email.</p>
+            </div>
+
+            <div class="modal-step">
+                <h4><span>2</span> Abre la sección de keys</h4>
+                <p>Una vez dentro, en el menú lateral pulsa <b>API Keys</b>.</p>
+                <p>O ve directo a: <code>https://console.groq.com/keys</code></p>
+            </div>
+
+            <div class="modal-step">
+                <h4><span>3</span> Crea una nueva key</h4>
+                <p>Pulsa el botón <b>Create API Key</b>. Ponle un nombre (ej: <code>togi</code>) y pulsa <b>Submit</b>.</p>
+            </div>
+
+            <div class="modal-step">
+                <h4><span>4</span> Cópiala y pégala aquí</h4>
+                <p>Te mostrará una key que empieza con <code>gsk_</code>. Cópiala.</p>
+                <p style="color: #c8a94d; margin-top: 8px;"><b>Ojo:</b> solo se muestra una vez. Si la pierdes, tendrás que crear otra.</p>
+            </div>
+
+            <a href="https://console.groq.com/keys" target="_blank" class="external-link">Ir a Groq Console</a>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL: CEREBRAS KEY ==================== -->
+    <div id="modalKeyCerebras" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Obtener tu API Key de Cerebras</h3>
+                <button class="close-btn" onclick="closeModal('modalKeyCerebras')">&times;</button>
+            </div>
+
+            <div class="alert-box info">
+                Cerebras es <b>gratis</b> y da muchísimo volumen diario. Perfecto como respaldo cuando Groq no responde.
+            </div>
+
+            <div class="modal-step">
+                <h4><span>1</span> Crea una cuenta</h4>
+                <p>Ve a <b>https://cloud.cerebras.ai/</b> y regístrate con Google o tu email.</p>
+            </div>
+
+            <div class="modal-step">
+                <h4><span>2</span> Abre la sección de keys</h4>
+                <p>En el menú lateral pulsa <b>API Keys</b>.</p>
+                <p>O ve directo a: <code>https://cloud.cerebras.ai/platform/api-keys</code></p>
+            </div>
+
+            <div class="modal-step">
+                <h4><span>3</span> Crea una nueva key</h4>
+                <p>Pulsa <b>Create API Key</b>. Ponle un nombre (ej: <code>togi</code>) y confirma.</p>
+            </div>
+
+            <div class="modal-step">
+                <h4><span>4</span> Cópiala y pégala aquí</h4>
+                <p>Te mostrará una key que empieza con <code>csk-</code>. Cópiala.</p>
+                <p style="color: #c8a94d; margin-top: 8px;">Solo se muestra una vez. Guárdala bien.</p>
+            </div>
+
+            <a href="https://cloud.cerebras.ai/platform/api-keys" target="_blank" class="external-link">Ir a Cerebras Cloud</a>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL: OPENROUTER KEY ==================== -->
+    <div id="modalKeyOpenRouter" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Obtener tu API Key de OpenRouter</h3>
+                <button class="close-btn" onclick="closeModal('modalKeyOpenRouter')">&times;</button>
+            </div>
+
+            <div class="alert-box info">
+                OpenRouter es <b>gratis</b> y da acceso a 20+ modelos. Bueno como último respaldo y para probar modelos distintos.
+            </div>
+
+            <div class="modal-step">
+                <h4><span>1</span> Crea una cuenta</h4>
+                <p>Ve a <b>https://openrouter.ai/</b> y regístrate con Google o tu email.</p>
+            </div>
+
+            <div class="modal-step">
+                <h4><span>2</span> Abre la sección de keys</h4>
+                <p>Una vez dentro, ve a: <code>https://openrouter.ai/keys</code></p>
+            </div>
+
+            <div class="modal-step">
+                <h4><span>3</span> Crea una nueva key</h4>
+                <p>Pulsa <b>Create Key</b>. Ponle un nombre (ej: <code>togi</code>) y confirma.</p>
+            </div>
+
+            <div class="modal-step">
+                <h4><span>4</span> Cópiala y pégala aquí</h4>
+                <p>Te mostrará una key que empieza con <code>sk-or-</code>. Cópiala.</p>
+                <p style="color: #c8a94d; margin-top: 8px;">Solo se muestra una vez. Guárdala bien.</p>
+            </div>
+
+            <a href="https://openrouter.ai/keys" target="_blank" class="external-link">Ir a OpenRouter</a>
+        </div>
+    </div>
     <script>
         const STORAGE_KEY = 'togi_config_backup_v2';
         let hasUnsavedChanges = false;
@@ -1185,6 +1656,130 @@
             btn.title = isPassword ? 'Ocultar' : 'Mostrar';
         }
 
+        // ============================
+        // ASISTENTE: ABRIR / CERRAR
+        // ============================
+        function abrirAsistente() {
+            document.getElementById('mainConfig').classList.add('hidden');
+            document.getElementById('aiSubpage').classList.add('open');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            actualizarEstadosProveedores();
+        }
+
+        function cerrarAsistente() {
+            document.getElementById('aiSubpage').classList.remove('open');
+            document.getElementById('mainConfig').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function guardarAsistenteYVolver() {
+            cerrarAsistente();
+            saveConfig();
+        }
+
+        // ============================
+        // ASISTENTE: PROBAR KEY
+        // ============================
+        async function probarKey(proveedor, btn) {
+            const mapInput = {
+                groq: 'aiKeyGroq',
+                cerebras: 'aiKeyCerebras',
+                openrouter: 'aiKeyOpenRouter'
+            };
+            const mapResult = {
+                groq: 'testResultGroq',
+                cerebras: 'testResultCerebras',
+                openrouter: 'testResultOpenRouter'
+            };
+
+            const input = document.getElementById(mapInput[proveedor]);
+            const resultEl = document.getElementById(mapResult[proveedor]);
+            const apiKey = input.value.trim();
+
+            if (!apiKey || apiKey === '••••••••') {
+                resultEl.className = 'test-result fail show';
+                resultEl.textContent = '⚠️ Pega primero la API Key.';
+                return;
+            }
+
+            if (btn) btn.disabled = true;
+            resultEl.className = 'test-result';
+            resultEl.textContent = '';
+
+            try {
+                const resp = await fetch(`${window.SERVER_BASE}/api/ai/test-key`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ proveedor, apiKey })
+                });
+                const data = await resp.json();
+
+                if (data.ok) {
+                    resultEl.className = 'test-result ok show';
+                    resultEl.innerHTML = '✅ Key válida. Modelo: <b>' + escapeHtml(data.modelo) + '</b>. Respuesta: "' + escapeHtml(data.respuesta) + '"';
+                } else {
+                    const motivo = data.error || data.motivo || 'desconocido';
+                    let extra = '';
+                    if (motivo === 'invalida') extra = ' → La key no es válida o fue revocada.';
+                    else if (motivo === 'modelo-invalido') extra = ' → El modelo por defecto no está disponible para esta cuenta.';
+                    else if (motivo === 'timeout') extra = ' → El proveedor tardó demasiado.';
+                    else if (motivo === 'red') extra = ' → No se pudo conectar (revisa tu internet).';
+                    resultEl.className = 'test-result fail show';
+                    resultEl.textContent = '❌ Error: ' + motivo + extra;
+                }
+            } catch (e) {
+                resultEl.className = 'test-result fail show';
+                resultEl.textContent = '❌ Error de conexión con el servidor local: ' + e.message;
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        }
+
+        // ============================
+        // ASISTENTE: ESTADO DE PROVEEDORES
+        // ============================
+        async function actualizarEstadosProveedores() {
+            try {
+                const resp = await fetch(`${window.SERVER_BASE}/api/ai/status`);
+                if (!resp.ok) return;
+                const data = await resp.json();
+                if (!data.ok || !data.proveedores) return;
+
+                const mapStatus = {
+                    groq: 'statusGroq',
+                    cerebras: 'statusCerebras',
+                    openrouter: 'statusOpenRouter'
+                };
+                const labels = {
+                    'sin-key': 'sin key',
+                    'lista': 'lista',
+                    'cooldown': 'cooldown',
+                    'invalida': 'inválida'
+                };
+                const icons = {
+                    'sin-key': 'ri-circle-fill',
+                    'lista': 'ri-checkbox-circle-fill',
+                    'cooldown': 'ri-time-fill',
+                    'invalida': 'ri-close-circle-fill'
+                };
+
+                for (const [id, elId] of Object.entries(mapStatus)) {
+                    const el = document.getElementById(elId);
+                    if (!el) continue;
+                    const info = data.proveedores[id];
+                    if (!info) continue;
+                    const estado = info.estado || 'sin-key';
+                    el.className = 'provider-status ' + estado;
+                    el.innerHTML = '<i class="' + (icons[estado] || 'ri-circle-fill') + '" style="font-size:10px"></i> ' + (labels[estado] || estado);
+                }
+            } catch (e) {
+                // silencioso
+            }
+        }
+
+        // ============================
+        // TWITCH: CUENTAS
+        // ============================
         function addTwitchAccount(data) {
             const container = document.getElementById('twitchAccountsContainer');
             const id = (data && data.id) || uid();
@@ -1407,6 +2002,20 @@
             else addYouTubeUser('');
         }
 
+        function getAiCohostValues() {
+            return {
+                enabled: document.getElementById('aiEnabled').checked,
+                nombre: document.getElementById('aiNombre').value.trim(),
+                personalidad: document.getElementById('aiPersonalidad').value.trim(),
+                comando: document.getElementById('aiComando').value.trim() || '!guia',
+                proveedores: {
+                    groq:       { apiKey: document.getElementById('aiKeyGroq').value.trim(),       modelo: currentServerConfig?.aiCohost?.proveedores?.groq?.modelo       || 'openai/gpt-oss-20b' },
+                    cerebras:   { apiKey: document.getElementById('aiKeyCerebras').value.trim(),   modelo: currentServerConfig?.aiCohost?.proveedores?.cerebras?.modelo   || 'llama3.1-8b' },
+                    openrouter: { apiKey: document.getElementById('aiKeyOpenRouter').value.trim(), modelo: currentServerConfig?.aiCohost?.proveedores?.openrouter?.modelo || 'meta-llama/llama-3.1-8b-instruct:free' }
+                }
+            };
+        }
+
         function getCurrentValues() {
             return {
                 twitchAccounts: getAccountsFromDOM(),
@@ -1439,7 +2048,8 @@
                         subs:    document.getElementById('ttsEventSubs').checked,
                         donations: false
                     }
-                }
+                },
+                aiCohost: getAiCohostValues()
             };
         }
 
@@ -1490,6 +2100,17 @@
             document.getElementById('ttsEventGifts').checked   = re.gifts   === true;
             document.getElementById('ttsEventFollows').checked = re.follows === true;
             document.getElementById('ttsEventSubs').checked    = re.subs    === true;
+
+            // AI Co-Host
+            const ai = v.aiCohost || {};
+            document.getElementById('aiEnabled').checked = ai.enabled === true;
+            document.getElementById('aiNombre').value = ai.nombre || '';
+            document.getElementById('aiPersonalidad').value = ai.personalidad || '';
+            document.getElementById('aiComando').value = ai.comando || '!guia';
+            const provs = ai.proveedores || {};
+            document.getElementById('aiKeyGroq').value = (provs.groq && provs.groq.apiKey) ? provs.groq.apiKey : '';
+            document.getElementById('aiKeyCerebras').value = (provs.cerebras && provs.cerebras.apiKey) ? provs.cerebras.apiKey : '';
+            document.getElementById('aiKeyOpenRouter').value = (provs.openrouter && provs.openrouter.apiKey) ? provs.openrouter.apiKey : '';
         }
 
         function applyPlatformVisibility() {
@@ -1561,6 +2182,28 @@
                     twitchAccounts.push({ id: 'acc_legacy', clientId, oauthToken, oauthTokenChat, botUsername, channels });
                 }
             }
+
+            // Extraer AI Co-Host enmascarado (con puntos visibles)
+            let aiCohost = { enabled: false, nombre: '', personalidad: '', comando: '!guia', proveedores: { groq: { apiKey: '' }, cerebras: { apiKey: '' }, openrouter: { apiKey: '' } } };
+            if (config.aiCohost && typeof config.aiCohost === 'object') {
+                const enmascarar = (v) => {
+                    if (!v) return '';
+                    if (v === '***') return '••••••••';
+                    return v;
+                };
+                aiCohost = {
+                    enabled: config.aiCohost.enabled === true,
+                    nombre: config.aiCohost.nombre || '',
+                    personalidad: config.aiCohost.personalidad || '',
+                    comando: config.aiCohost.comando || '!guia',
+                    proveedores: {
+                        groq:       { apiKey: enmascarar(config.aiCohost.proveedores?.groq?.apiKey) },
+                        cerebras:   { apiKey: enmascarar(config.aiCohost.proveedores?.cerebras?.apiKey) },
+                        openrouter: { apiKey: enmascarar(config.aiCohost.proveedores?.openrouter?.apiKey) }
+                    }
+                };
+            }
+
             return {
                 twitchAccounts,
                 tiktokUsers: Array.isArray(config.TIKTOK_USERS) && config.TIKTOK_USERS.length > 0
@@ -1574,7 +2217,8 @@
                     : (config.YOUTUBE_USER_ID ? String(config.YOUTUBE_USER_ID).split(',').map(s => s.trim()).filter(Boolean) : []),
                 enableCensorship: config.ENABLE_CENSORSHIP || false,
                 platformsEnabled: config.PLATFORMS_ENABLED || { twitch: true, tiktok: true, kick: true, youtube: true },
-                tts: config.TTS || {}
+                tts: config.TTS || {},
+                aiCohost
             };
         }
 
@@ -1614,6 +2258,7 @@
                     originalValues = getCurrentValues();
                     saveToLocalStorage(originalValues);
                     updateUnsavedBadge();
+                    actualizarEstadosProveedores();
                 }
             } catch (e) {
                 console.log('Servidor no disponible, usando datos locales');
@@ -1628,9 +2273,10 @@
             const tieneTikTok = v.tiktokUsers.length > 0;
             const tieneKick = v.kickUsers.length > 0;
             const tieneYouTube = v.youtubeUsers.length > 0;
+            const tieneAI = v.aiCohost && v.aiCohost.enabled;
 
-            if (!tieneTwitch && !tieneTikTok && !tieneKick && !tieneYouTube) {
-                alert('No has configurado nada.\nRellena al menos una plataforma.');
+            if (!tieneTwitch && !tieneTikTok && !tieneKick && !tieneYouTube && !tieneAI) {
+                alert('No has configurado nada.\nRellena al menos una plataforma o activa el AI Co-Host.');
                 return;
             }
 
@@ -1666,6 +2312,18 @@
             const firstAcc = twitchAccounts[0] || {};
             const allChannels = twitchAccounts.flatMap(a => a.channels);
 
+            // Preservar modelo anterior si no hay cambios
+            const proveedoresPrevios = currentServerConfig?.aiCohost?.proveedores || {};
+            const proveedoresFinales = {};
+            for (const pid of ['groq', 'cerebras', 'openrouter']) {
+                const actual = v.aiCohost.proveedores[pid] || {};
+                const previo = proveedoresPrevios[pid] || {};
+                proveedoresFinales[pid] = {
+                    apiKey: actual.apiKey || '',
+                    modelo: actual.modelo || previo.modelo || ''
+                };
+            }
+
             const data = Object.assign({}, currentServerConfig, {
                 TWITCH_ACCOUNTS: twitchAccounts,
                 TWITCH_CLIENT_ID: firstAcc.clientId || '',
@@ -1682,7 +2340,14 @@
                 YOUTUBE_USERS: v.youtubeUsers,
                 ENABLE_CENSORSHIP: v.enableCensorship,
                 PLATFORMS_ENABLED: v.platformsEnabled,
-                TTS: v.tts
+                TTS: v.tts,
+                aiCohost: {
+                    enabled: v.aiCohost.enabled,
+                    nombre: v.aiCohost.nombre,
+                    personalidad: v.aiCohost.personalidad,
+                    comando: v.aiCohost.comando,
+                    proveedores: proveedoresFinales
+                }
             });
 
             try {

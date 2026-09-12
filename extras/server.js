@@ -1,4 +1,4 @@
-// server.js - VERSIÓN MULTI-CUENTA TWITCH + TikTok + Kick + YouTube + IMÁGENES DE REGALOS + TEMAS + PLATFORM TOGGLES + TTS + CRISTAL PERSISTENTE
+// server.js - VERSIÓN MULTI-CUENTA TWITCH + TikTok + Kick + YouTube + IMÁGENES DE REGALOS + TEMAS + PLATFORM TOGGLES + TTS + CRISTAL PERSISTENTE + AI CO-HOST
 require('dotenv').config();
 const express = require('express');
 const http = require('http');
@@ -12,6 +12,10 @@ const os = require('os');
 const WebSocket = require('ws');
 const { TikTokChat } = require('./tiktok');
 const { YouTubeChat } = require('./youtube');
+
+// 🤖 AI CO-HOST
+const aiKeyPool = require('./ai-key-pool');
+const aiCohost = require('./ai-cohost');
 
 // 🔊 PATCH 1 — Requires del sistema TTS
 const { TTSQueue } = require('./tts-queue');
@@ -97,9 +101,6 @@ app.get('/health', (req, res) => res.json({ status: 'ok' }));
 // ================================================================
 // 🌐 IP LOCAL (para el modo dos PC)
 // ================================================================
-// Devuelve la mejor IP local (prefiere rangos privados, descarta Tailscale
-// y link-local) y además un array con todas las IPs candidatas por si el
-// usuario quiere elegir otra.
 app.get('/api/local-ip', (req, res) => {
     const nets = os.networkInterfaces();
     const candidates = [];
@@ -115,8 +116,8 @@ app.get('/api/local-ip', (req, res) => {
     for (const name of Object.keys(nets)) {
         for (const net of nets[name] || []) {
             if (net.family !== 'IPv4' || net.internal) continue;
-            if (net.address.startsWith('169.254.')) continue; // link-local
-            if (isTailscale(net.address)) continue;            // Tailscale
+            if (net.address.startsWith('169.254.')) continue;
+            if (isTailscale(net.address)) continue;
             candidates.push({
                 iface: name,
                 ip: net.address,
@@ -125,7 +126,6 @@ app.get('/api/local-ip', (req, res) => {
         }
     }
 
-    // Preferir una IP privada de LAN; si no hay, la primera que haya
     const preferida = candidates.find(c => c.private) || candidates[0] || null;
 
     res.json({
@@ -192,10 +192,6 @@ function cargarMapaGifts() {
 }
 cargarMapaGifts();
 
-// ✅ CAMBIO: devolvemos RUTA RELATIVA, no localhost.
-// Así el navegador la resuelve contra el host actual:
-//   - Server PC: http://localhost:3000/img/gifts/...
-//   - Client PC: http://192.168.x.x:3000/img/gifts/...
 function getGiftImageUrl(nombreRegalo) {
     if (!nombreRegalo) return null;
     const clave = normalizarNombreRegalo(nombreRegalo);
@@ -205,7 +201,6 @@ function getGiftImageUrl(nombreRegalo) {
     return relativa;
 }
 
-// Helper para construir URL absoluta desde el request actual
 function buildAbsUrl(req, relativa) {
     if (!relativa) return null;
     if (/^https?:\/\//i.test(relativa)) return relativa;
@@ -410,7 +405,6 @@ function guardarJarState() {
 
 cargarJarState();
 
-// Autoguardado cada 10 segundos si hay cambios
 let jarDirty = false;
 setInterval(() => {
     if (jarDirty) {
@@ -419,7 +413,6 @@ setInterval(() => {
     }
 }, 10000);
 
-// Rutas del cristal (GET + reset, no necesitan `config`)
 app.get('/api/jar-state', (req, res) => {
     res.json(jarState);
 });
@@ -486,7 +479,6 @@ app.delete('/api/themes/:overlay', (req, res) => {
     console.log(`🎨 Tema reseteado: ${key}`);
     res.json({ success: true });
 });
-
 // ================================================================
 // 📁 CONFIGURACIÓN
 // ================================================================
@@ -541,6 +533,37 @@ function loadConfig() {
             }
         }
 
+        // 🤖 AI Co-Host — defaults
+        if (!parsed.aiCohost || typeof parsed.aiCohost !== 'object') parsed.aiCohost = {};
+        const aiDefaults = {
+            enabled: false,
+            nombre: '',
+            personalidad: '',
+            comando: '!guia',
+            proveedores: {
+                groq:       { apiKey: '', modelo: 'openai/gpt-oss-20b' },
+                cerebras:   { apiKey: '', modelo: 'llama3.1-8b' },
+                openrouter: { apiKey: '', modelo: 'meta-llama/llama-3.1-8b-instruct:free' }
+            }
+        };
+        for (const [k, v] of Object.entries(aiDefaults)) {
+            if (parsed.aiCohost[k] === undefined) parsed.aiCohost[k] = v;
+            else if (v && typeof v === 'object' && !Array.isArray(v) && !k.startsWith('proveedores')) {
+                parsed.aiCohost[k] = { ...v, ...(parsed.aiCohost[k] || {}) };
+            }
+        }
+        if (!parsed.aiCohost.proveedores || typeof parsed.aiCohost.proveedores !== 'object') {
+            parsed.aiCohost.proveedores = aiDefaults.proveedores;
+        } else {
+            for (const [pid, pdef] of Object.entries(aiDefaults.proveedores)) {
+                if (!parsed.aiCohost.proveedores[pid]) {
+                    parsed.aiCohost.proveedores[pid] = { ...pdef };
+                } else {
+                    parsed.aiCohost.proveedores[pid] = { ...pdef, ...parsed.aiCohost.proveedores[pid] };
+                }
+            }
+        }
+
         if (typeof parsed.JAR_META !== 'number' || parsed.JAR_META < 1) {
             parsed.JAR_META = 500;
         }
@@ -558,6 +581,14 @@ function loadConfig() {
             YOUTUBE_USERS: [],
             CONTROL_URL: "https://livecenter.tiktok.com/live_monitor",
             TTS: {},
+            aiCohost: {
+                enabled: false, nombre: '', personalidad: '', comando: '!guia',
+                proveedores: {
+                    groq:       { apiKey: '', modelo: 'openai/gpt-oss-20b' },
+                    cerebras:   { apiKey: '', modelo: 'llama3.1-8b' },
+                    openrouter: { apiKey: '', modelo: 'meta-llama/llama-3.1-8b-instruct:free' }
+                }
+            },
             JAR_META: 500
         };
         if (!fs.existsSync(CONFIG_PATH)) {
@@ -568,6 +599,10 @@ function loadConfig() {
 }
 
 let config = loadConfig();
+
+// 🤖 Cargar proveedores de IA con la config actual
+aiKeyPool.cargarProveedores(config);
+console.log(`🤖 AI Co-Host: ${config.aiCohost?.enabled ? 'ACTIVADO' : 'desactivado'}`);
 
 // ================================================================
 // 🏺 RUTA POST — Cambiar meta del cristal
@@ -595,6 +630,48 @@ app.post('/api/jar-state/meta', (req, res) => {
     } catch (e) {
         console.error(`❌ [META] Error:`, e.message);
         res.status(500).json({ error: e.message });
+    }
+});
+
+// ================================================================
+// 🤖 RUTAS API — AI CO-HOST
+// ================================================================
+app.get('/api/ai/status', (req, res) => {
+    try {
+        const estado = aiKeyPool.estadoProveedores();
+        const ai = config.aiCohost || {};
+        res.json({
+            ok: true,
+            enabled: !!ai.enabled,
+            nombre: ai.nombre || '',
+            comando: ai.comando || '!guia',
+            proveedores: estado
+        });
+    } catch (e) {
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+app.post('/api/ai/test-key', async (req, res) => {
+    try {
+        const { proveedor, apiKey } = req.body || {};
+        if (!proveedor) return res.status(400).json({ ok: false, error: 'Falta proveedor' });
+        const r = await aiKeyPool.probarKey(proveedor, apiKey);
+        res.json(r);
+    } catch (e) {
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+app.post('/api/ai/reload', (req, res) => {
+    try {
+        const nuevo = loadConfig();
+        config = nuevo;
+        aiKeyPool.cargarProveedores(config);
+        io.emit('ai-status', aiKeyPool.estadoProveedores());
+        res.json({ ok: true });
+    } catch (e) {
+        res.status(500).json({ ok: false, error: e.message });
     }
 });
 
@@ -716,6 +793,7 @@ console.log(`   TikTok Users: ${getTikTokUsers().join(', ') || '(ninguno)'}`);
 console.log(`   Kick Users: ${getKickUsers().join(', ') || '(ninguno)'}`);
 console.log(`   YouTube Users: ${getYouTubeUsers().join(', ') || '(ninguno)'}`);
 console.log(`   🔊 TTS: ${config.TTS?.enabled ? 'ACTIVADO' : 'desactivado'} | Voz: ${config.TTS?.voice || 'N/A'}`);
+console.log(`   🤖 AI Co-Host: ${config.aiCohost?.enabled ? 'ACTIVADO' : 'desactivado'} | Nombre: ${config.aiCohost?.nombre || '(sin nombre)'}`);
 console.log(`   🏺 Meta cristal: ${config.JAR_META} 💎`);
 
 // ================================================================
@@ -744,6 +822,54 @@ function isDuplicateMessage(msg) {
 function broadcastMessage(msgData) {
     if (isDuplicateMessage(msgData)) return;
     io.emit('chat-message', msgData);
+    if (msgData && msgData.username && msgData.message && msgData.type !== 'ai') {
+        try { aiCohost.agregarAlaMemoria(msgData.username, msgData.message); } catch (e) {}
+    }
+}
+
+// ================================================================
+// 🤖 AI CO-HOST — Helper de invocación
+// ================================================================
+async function procesarCoHost(usuario, texto, plataforma, canal) {
+    try {
+        if (!config.aiCohost || !config.aiCohost.enabled) return;
+
+        const mensaje = { usuario, texto, plataforma, canal };
+
+        if (!aiCohost.debeResponder(mensaje, config)) return;
+
+        console.log(`🤖 [AI] ${plataforma} → ${usuario}: ${texto}`);
+
+        const r = await aiCohost.responder(mensaje, config);
+
+        if (!r.ok) {
+            console.log(`⚠️ [AI] No respondió: ${r.motivo}`);
+            return;
+        }
+
+        console.log(`🤖 [AI] Respuesta (${r.proveedor}): ${r.texto}`);
+
+        io.emit('chat-message', {
+            platform: plataforma,
+            channel: canal,
+            username: config.aiCohost.nombre || 'Guía',
+            message: r.texto,
+            avatar: null,
+            color: '#a970ff',
+            type: 'ai',
+            timestamp: Date.now()
+        });
+
+        tryEnqueueTTS({
+            text: r.texto,
+            type: 'chat',
+            platform: plataforma,
+            user: config.aiCohost.nombre || 'Guía'
+        });
+
+    } catch (e) {
+        console.error('❌ [AI] Error en cohost:', e.message);
+    }
 }
 
 // ================================================================
@@ -757,7 +883,7 @@ function tryEnqueueTTS({ text, type = 'chat', platform, user }) {
         if (!tts.enabled) return;
         if (!tts.readFrom || tts.readFrom[platform] === false) return;
         if (!tts.readEvents || tts.readEvents[type] === false) return;
-        if (type === 'chat' && typeof text === 'string' && text.trim().startsWith('!')) return;
+        if (type === 'chat' && typeof text === 'string' && /(^|\s)!/.test(text)) return;
 
         ttsQueue.enqueue({
             text,
@@ -770,7 +896,6 @@ function tryEnqueueTTS({ text, type = 'chat', platform, user }) {
         console.error('❌ [TTS] Error encolando:', e.message);
     }
 }
-
 // ================================================================
 // 🎵 INSTANCIA TIKTOK
 // ================================================================
@@ -783,13 +908,15 @@ const tiktokChat = new TikTokChat({
         };
         if (isDuplicateMessage(msgData)) return;
         io.emit('chat-message', msgData);
-
+        try { aiCohost.agregarAlaMemoria(msg.username, msg.message); } catch (e) {}
         tryEnqueueTTS({
             text: `${msg.username} dice: ${msg.message}`,
             type: 'chat',
             platform: 'tiktok',
             user: msg.username
         });
+
+        procesarCoHost(msg.username, msg.message, 'tiktok', msg.channel);
     },
     onLike: (data) => { io.emit('tiktok-like', data); },
     onGift: (data) => {
@@ -927,13 +1054,15 @@ const youtubeChat = new YouTubeChat({
         };
         if (isDuplicateMessage(msgData)) return;
         io.emit('chat-message', msgData);
-
+        try { aiCohost.agregarAlaMemoria(msg.username, msg.message); } catch (e) {}
         tryEnqueueTTS({
             text: `${msg.username} dice: ${msg.message}`,
             type: 'chat',
             platform: 'youtube',
             user: msg.username
         });
+
+        procesarCoHost(msg.username, msg.message, 'youtube', msg.channel);
     },
     onGift: (data) => {
         io.emit('youtube-superchat', data);
@@ -1013,7 +1142,18 @@ app.get('/get-config', (req, res) => {
         channels: getAllTwitchChannels(),
         CONTROL_URL: config.CONTROL_URL || 'https://livecenter.tiktok.com/live_monitor',
         TTS: config.TTS || {},
-        JAR_META: config.JAR_META || 500
+        JAR_META: config.JAR_META || 500,
+        aiCohost: {
+            enabled: !!(config.aiCohost && config.aiCohost.enabled),
+            nombre: config.aiCohost?.nombre || '',
+            personalidad: config.aiCohost?.personalidad || '',
+            comando: config.aiCohost?.comando || '!guia',
+            proveedores: {
+                groq:       { modelo: config.aiCohost?.proveedores?.groq?.modelo || 'openai/gpt-oss-20b', apiKey: config.aiCohost?.proveedores?.groq?.apiKey ? '***' : '' },
+                cerebras:   { modelo: config.aiCohost?.proveedores?.cerebras?.modelo || 'llama3.1-8b', apiKey: config.aiCohost?.proveedores?.cerebras?.apiKey ? '***' : '' },
+                openrouter: { modelo: config.aiCohost?.proveedores?.openrouter?.modelo || 'meta-llama/llama-3.1-8b-instruct:free', apiKey: config.aiCohost?.proveedores?.openrouter?.apiKey ? '***' : '' }
+            }
+        }
     });
 });
 
@@ -1054,6 +1194,25 @@ app.post('/save-config', (req, res) => {
             newConfig.TTS = config.TTS || {};
         }
 
+        // 🤖 AI Co-Host — preservar keys si llegan enmascaradas
+        if (newConfig.aiCohost && typeof newConfig.aiCohost === 'object') {
+            const provs = newConfig.aiCohost.proveedores || {};
+            for (const pid of ['groq', 'cerebras', 'openrouter']) {
+                const actual = provs[pid] || {};
+                const previo = (config.aiCohost?.proveedores?.[pid] || {});
+                if (!actual.apiKey || actual.apiKey === '***' || actual.apiKey === '••••••••') {
+                    actual.apiKey = previo.apiKey || '';
+                }
+                if (!actual.modelo) {
+                    actual.modelo = previo.modelo || '';
+                }
+                provs[pid] = actual;
+            }
+            newConfig.aiCohost.proveedores = provs;
+        } else {
+            newConfig.aiCohost = config.aiCohost || {};
+        }
+
         if (typeof newConfig.JAR_META !== 'number' || newConfig.JAR_META < 1) {
             newConfig.JAR_META = config.JAR_META || 500;
         }
@@ -1069,6 +1228,14 @@ app.post('/save-config', (req, res) => {
         fs.writeFileSync(CONFIG_PATH, JSON.stringify(newConfig, null, 2));
         config = newConfig;
         console.log(`✅ Config guardado en ${CONFIG_PATH}`);
+
+        try {
+            aiKeyPool.cargarProveedores(config);
+            io.emit('ai-status', aiKeyPool.estadoProveedores());
+            console.log(`🤖 AI Co-Host: ${config.aiCohost?.enabled ? 'ACTIVADO' : 'desactivado'}`);
+        } catch (e) {
+            console.error('❌ Error recargando pool IA:', e.message);
+        }
 
         cargarMapaGifts();
 
@@ -1157,7 +1324,6 @@ app.get('/moderation', (req, res) => res.sendFile(path.join(publicDir, 'dashboar
 app.get('/config', (req, res) => res.sendFile(path.join(publicDir, 'config.html')));
 app.get('/crystal', (req, res) => res.sendFile(path.join(publicDir, 'crystal.html')));
 
-// ✅ NUEVA RUTA — Setup inicial
 app.get('/setup.html', (req, res) => res.sendFile(path.join(publicDir, 'setup.html')));
 
 app.get('/top-donadores',   (req, res) => res.sendFile(path.join(publicDir, 'top-donadores.html')));
@@ -1166,7 +1332,6 @@ app.get('/top-shares',      (req, res) => res.sendFile(path.join(publicDir, 'top
 app.get('/follows',         (req, res) => res.sendFile(path.join(publicDir, 'follows.html')));
 app.get('/last-follower',   (req, res) => res.sendFile(path.join(publicDir, 'last-follower.html')));
 app.get('/stats',           (req, res) => res.sendFile(path.join(publicDir, 'stats.html')));
-
 // ================================================================
 // 📡 FUNCIONES TWITCH
 // ================================================================
@@ -1510,13 +1675,15 @@ async function connectTwitchChannel(channelName, account) {
             };
             if (isDuplicateMessage(msgData)) return;
             io.emit('chat-message', msgData);
-
+            try { aiCohost.agregarAlaMemoria(username, message); } catch (e) {}
             tryEnqueueTTS({
                 text: `${username} dice: ${message}`,
                 type: 'chat',
                 platform: 'twitch',
                 user: username
             });
+
+            procesarCoHost(username, message, 'twitch', canal);
         });
 
         client.on('cheer', async (channel, tags, message, self) => {
@@ -1709,6 +1876,8 @@ async function connectKick() {
                         platform: 'kick',
                         user: kickUsername
                     });
+
+                    procesarCoHost(kickUsername, payload.content, 'kick', kickUser);
                 }
             }
 
@@ -1772,10 +1941,8 @@ io.on('connection', (socket) => {
     socket.on('tiktok-get-stats', () => { socket.emit('tiktok-stats-all', tiktokChat.getAllStats()); });
     socket.on('tiktok-reset-stats', (usuario) => { tiktokChat.resetStats(usuario || undefined); });
 
-    // 🏺 Enviar estado actual del cristal al cliente que se conecta
     socket.emit('jar-state', jarState);
 
-    // 🏺 Reset manual del cristal
     socket.on('jar-reset', () => {
         jarState = {
             totalDiamonds: 0,
@@ -1789,7 +1956,6 @@ io.on('connection', (socket) => {
         console.log('🏺 Cristal reseteado vía socket');
     });
 
-    // 🔊 Eventos TTS
     socket.on('tts:done', ({ filename } = {}) => {
         ttsQueue.done(filename);
         if (filename) ttsEngine.cleanupOlderThan(filename);
@@ -1811,6 +1977,8 @@ io.on('connection', (socket) => {
             socket.emit('tts:preview-error', { error: e.message });
         }
     });
+
+    socket.emit('ai-status', aiKeyPool.estadoProveedores());
 
     socket.on('disconnect', () => { console.log(`💻 Navegador desconectado: ${socket.id}`); });
 });
