@@ -7,7 +7,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nerivaleryt-afk/streamoverlay.git"
+    "url": "https://github.com/nerivaleryvt-afk/streamoverlay.git"
   },
   "scripts": {
     "start": "electron .",
@@ -23,7 +23,7 @@
     "publish": [
       {
         "provider": "github",
-        "owner": "nerivaleryt-afk",
+        "owner": "nerivaleryvt-afk",
         "repo": "streamoverlay",
         "releaseType": "release"
       }
