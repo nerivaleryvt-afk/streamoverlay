@@ -33,6 +33,10 @@ main.rar
 *.zip
 *.7z
 
+# node_modules dentro de extras (se regeneran con npm install)
+extras/modules/
+extras/node_modules/
+
 # Archivos basura (creados por error con comandos mal escritos)
 /100
 /2
