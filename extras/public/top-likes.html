@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Top Likes ★ Overlay</title>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+  <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+  <script src="/js/server-url.js"></script>
+  <style>
+    :root {
+      --msgcol: rgba(20, 24, 32, 0.95);
+      --textcolor: #ffffff;
+      --like-pink: #ff0050;
+      --like-magenta: #ec4899;
+      --bordercolor: rgba(255, 105, 180, 0.5);
+      --header-grad-a: rgba(255, 0, 80, 0.35);
+      --header-grad-b: rgba(236, 72, 153, 0.35);
+
+      --gender-masc: #38bdf8;
+      --gender-fem:  #f472b6;
+      --gender-uni:  #a78bfa;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      background: transparent !important;
+      overflow: hidden;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', system-ui, sans-serif;
+      color: var(--textcolor);
+    }
+
+    .likes-wrapper {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      width: 340px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    /* ══════════ CABECERA ══════════ */
+    .likes-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 18px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, var(--header-grad-a), var(--header-grad-b));
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      box-shadow: -4px 4px 0 var(--like-pink), 0 0 25px rgba(255, 0, 80, 0.55);
+      backdrop-filter: blur(10px);
+      animation: headerPulse 3s ease-in-out infinite;
+    }
+
+    @keyframes headerPulse {
+      0%, 100% { box-shadow: -4px 4px 0 var(--like-pink), 0 0 25px rgba(255, 0, 80, 0.55); }
+      50%      { box-shadow: -4px 4px 0 var(--like-pink), 0 0 40px rgba(255, 0, 80, 0.85); }
+    }
+
+    .header-icon {
+      font-size: 24px;
+      filter: drop-shadow(0 0 8px rgba(255, 0, 80, 0.9));
+      animation: heartBeat 1.5s ease-in-out infinite;
+    }
+
+    @keyframes heartBeat {
+      0%, 100% { transform: scale(1); }
+      15%      { transform: scale(1.18); }
+      30%      { transform: scale(1); }
+      45%      { transform: scale(1.12); }
+      60%      { transform: scale(1); }
+    }
+
+    .header-title {
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #fff;
+      text-shadow: 0 0 10px rgba(255, 0, 80, 0.8);
+    }
+
+    /* ══════════ LISTA ══════════ */
+    .likes-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .liker-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      border-radius: 14px;
+      background: var(--msgcol);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: -3px 3px 0 var(--bordercolor), 0 6px 14px rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(10px);
+      opacity: 1;
+      transform: translateX(0);
+      transition: box-shadow 0.3s ease;
+      will-change: transform, opacity;
+    }
+
+    .liker-row:hover {
+      box-shadow: -3px 3px 0 var(--like-pink), 0 0 20px rgba(255, 0, 80, 0.5);
+    }
+
+    .liker-row.entering { animation: rowEnter 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+
+    @keyframes rowEnter {
+      0% {
+        opacity: 0;
+        transform: translateX(-40px) scale(0.85);
+        box-shadow: -3px 3px 0 #fff, 0 0 40px #fff, 0 0 60px var(--like-pink);
+      }
+      60% {
+        opacity: 1;
+        transform: translateX(4px) scale(1.03);
+        box-shadow: -3px 3px 0 var(--like-pink), 0 0 30px var(--like-pink);
+      }
+      100% {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+        box-shadow: -3px 3px 0 var(--bordercolor), 0 6px 14px rgba(0, 0, 0, 0.35);
+      }
+    }
+
+    .liker-row.exiting {
+      animation: rowExit 0.55s ease forwards;
+      pointer-events: none;
+    }
+
+    @keyframes rowExit {
+      0% {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+        max-height: 60px;
+        padding-top: 8px;
+        padding-bottom: 8px;
+        margin-bottom: 8px;
+      }
+      30% {
+        opacity: 0.6;
+        transform: translateX(20px) scale(0.95);
+        box-shadow: -3px 3px 0 #ef4444, 0 0 25px #ef4444;
+      }
+      100% {
+        opacity: 0;
+        transform: translateX(60px) scale(0.7);
+        max-height: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+        margin-bottom: 0;
+        border-width: 0;
+        box-shadow: none;
+      }
+    }
+
+    .liker-row.bump { animation: bump 0.7s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+    @keyframes bump {
+      0%   { transform: scale(1); }
+      40%  { transform: scale(1.05); box-shadow: -3px 3px 0 #fff, 0 0 30px #fff; }
+      100% { transform: scale(1); }
+    }
+
+    /* ══════════ POSICIÓN ══════════ */
+    .liker-rank {
+      flex-shrink: 0;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 14px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+      border: 2px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .liker-row.rank-1 .liker-rank {
+      background: linear-gradient(135deg, #ffd700, #ff8c00);
+      color: #000;
+      box-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
+      border-color: #ffd700;
+    }
+    .liker-row.rank-2 .liker-rank {
+      background: linear-gradient(135deg, #e8e8e8, #a8a8a8);
+      color: #000;
+      box-shadow: 0 0 12px rgba(192, 192, 192, 0.7);
+      border-color: #c0c0c0;
+    }
+    .liker-row.rank-3 .liker-rank {
+      background: linear-gradient(135deg, #e0a05a, #a05a1e);
+      color: #000;
+      box-shadow: 0 0 12px rgba(205, 127, 50, 0.7);
+      border-color: #cd7f32;
+    }
+
+    /* ══════════ AVATAR ══════════ */
+    .liker-avatar {
+      flex-shrink: 0;
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      object-fit: cover;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    /* ══════════ INFO ══════════ */
+    .liker-info {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .liker-name-line {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 800;
+      line-height: 1.2;
+    }
+
+    .liker-name {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 150px;
+    }
+
+    .liker-name-line.gender-masculino .liker-name { color: var(--gender-masc); }
+    .liker-name-line.gender-femenino  .liker-name { color: var(--gender-fem);  }
+    .liker-name-line.gender-unisex    .liker-name { color: var(--gender-uni);  }
+
+    .gender-icon {
+      flex-shrink: 0;
+      font-size: 12px;
+      opacity: 0.9;
+      filter: drop-shadow(0 0 4px currentColor);
+    }
+
+    .liker-name-line.gender-masculino .gender-icon { color: var(--gender-masc); }
+    .liker-name-line.gender-femenino  .gender-icon { color: var(--gender-fem);  }
+    .liker-name-line.gender-unisex    .gender-icon { color: var(--gender-uni);  }
+
+    /* ══════════ CANTIDAD ══════════ */
+    .liker-amount {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 13px;
+      font-weight: 800;
+      color: #fff;
+      text-shadow: 0 0 8px rgba(255, 0, 80, 0.8);
+    }
+
+    .liker-heart {
+      width: 14px;
+      height: 14px;
+      display: inline-block;
+      filter: drop-shadow(0 0 4px rgba(255, 0, 80, 0.9));
+    }
+
+    /* ══════════ ESTADO VACÍO ══════════ */
+    .empty-state {
+      text-align: center;
+      padding: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.5);
+      background: var(--msgcol);
+      border-radius: 14px;
+      box-shadow: -3px 3px 0 var(--bordercolor);
+      backdrop-filter: blur(10px);
+      animation: fadeInSimple 0.4s ease;
+    }
+
+    @keyframes fadeInSimple { from { opacity: 0; } to { opacity: 1; } }
+  </style>
+</head>
+<body>
+
+  <div class="likes-wrapper">
+    <div class="likes-header">
+      <span class="header-icon">❤️</span>
+      <span class="header-title">Top Likes</span>
+    </div>
+    <div class="likes-list" id="likesList">
+      <div class="empty-state">Conectando...</div>
+    </div>
+  </div>
+
+  <script>
+    // ═══════════════════════════════════════════════════════════════
+    // ⚙️ CONFIGURACIÓN POR URL
+    // ═══════════════════════════════════════════════════════════════
+    const params       = new URLSearchParams(window.location.search);
+
+    // 🌐 SERVER_BASE viene de /js/server-url.js (autodetectado)
+
+    const TOP_LIMIT    = parseInt(params.get('top')) || 10;
+    const GENDER_FORCE = params.get('gender');
+    const SHOW_GENDER  = params.get('showGender') !== '0';
+    const SHOW_AVATAR  = params.get('showAvatar') !== '0';
+    const DEFAULT_AVATAR = 'https://i.imgur.com/OmnpuQH.png';
+
+    // ═══════════════════════════════════════════════════════════════
+    // 👤 MAPA DE GÉNERO
+    // ═══════════════════════════════════════════════════════════════
+    const GENDER_MAP = {
+      // 'perez':          'masculino',
+      // 'renacenti uwu':  'femenino',
+    };
+
+    const GENDER_ICONS = {
+      'masculino': '♂',
+      'femenino':  '♀',
+      'unisex':    '⚥',
+    };
+
+    // ═══════════════════════════════════════════════════════════════
+    // 🔌 SOCKET.IO
+    // ═══════════════════════════════════════════════════════════════
+    const socket = io(window.SERVER_BASE, { transports: ['websocket', 'polling'] });
+    const likesList = document.getElementById('likesList');
+
+    // ═══════════════════════════════════════════════════════════════
+    // 🧠 ESTADO INTERNO
+    // ═══════════════════════════════════════════════════════════════
+    const filasActivas = new Map();
+
+    // ═══════════════════════════════════════════════════════════════
+    // 🧠 HELPERS
+    // ═══════════════════════════════════════════════════════════════
+    function getGender(username) {
+      if (GENDER_FORCE && ['masculino', 'femenino', 'unisex'].includes(GENDER_FORCE)) {
+        return GENDER_FORCE;
+      }
+      const key = String(username || '').toLowerCase().trim();
+      return GENDER_MAP[key] || 'unisex';
+    }
+
+    function formatNumber(n) {
+      const num = Number(n) || 0;
+      if (num >= 1000000) return (num / 1000000).toFixed(1).replace('.0','') + 'M';
+      if (num >= 1000)    return (num / 1000).toFixed(1).replace('.0','') + 'k';
+      return String(num);
+    }
+
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    const HEART_SVG = `
+      <svg class="liker-heart" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+              fill="#ff0050" stroke="#fff" stroke-width="1" stroke-linejoin="round"/>
+      </svg>
+    `;
+
+    // ═══════════════════════════════════════════════════════════════
+    // 🏗️ CREAR FILA
+    // ═══════════════════════════════════════════════════════════════
+    function crearFila(liker, rank) {
+      const gender   = getGender(liker.username);
+      const icon     = GENDER_ICONS[gender] || '⚥';
+      const cantidad = liker.likes || liker.cantidad || 0;
+      const avatar   = liker.avatar || DEFAULT_AVATAR;
+      const username = liker.username || 'Anónimo';
+
+      const row = document.createElement('div');
+      row.className = `liker-row rank-${rank}`;
+      row.dataset.username = String(username).toLowerCase();
+      row.dataset.rank = String(rank);
+
+      row.innerHTML = `
+        <div class="liker-rank">${rank}</div>
+        ${SHOW_AVATAR ? `<img class="liker-avatar" src="${escapeHtml(avatar)}" alt="" onerror="this.src='${DEFAULT_AVATAR}'">` : ''}
+        <div class="liker-info">
+          <div class="liker-name-line gender-${gender}">
+            ${SHOW_GENDER ? `<span class="gender-icon">${icon}</span>` : ''}
+            <span class="liker-name">${escapeHtml(username)}</span>
+          </div>
+        </div>
+        <div class="liker-amount">
+          ${HEART_SVG}
+          <span class="liker-amount-value">${formatNumber(cantidad)}</span>
+        </div>
+      `;
+
+      return row;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // 🎨 ACTUALIZAR FILA
+    // ═══════════════════════════════════════════════════════════════
+    function actualizarFila(row, liker, rank) {
+      const oldRank = parseInt(row.dataset.rank) || 0;
+
+      row.classList.remove('rank-1', 'rank-2', 'rank-3');
+      if (rank <= 3) row.classList.add(`rank-${rank}`);
+      row.dataset.rank = String(rank);
+
+      const rankEl = row.querySelector('.liker-rank');
+      if (rankEl) rankEl.textContent = String(rank);
+
+      const avatarEl = row.querySelector('.liker-avatar');
+      if (avatarEl && liker.avatar && avatarEl.src !== liker.avatar) {
+        avatarEl.src = liker.avatar;
+      }
+
+      const amountEl = row.querySelector('.liker-amount-value');
+      if (amountEl) {
+        const newAmount = formatNumber(liker.likes || liker.cantidad || 0);
+        if (amountEl.textContent !== newAmount) {
+          amountEl.textContent = newAmount;
+        }
+      }
+
+      const nameLine = row.querySelector('.liker-name-line');
+      if (nameLine) {
+        const gender = getGender(liker.username);
+        nameLine.classList.remove('gender-masculino', 'gender-femenino', 'gender-unisex');
+        nameLine.classList.add(`gender-${gender}`);
+      }
+
+      if (oldRank > 0 && rank < oldRank) {
+        row.classList.add('bump');
+        setTimeout(() => row.classList.remove('bump'), 750);
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // 🎨 RENDER PRINCIPAL CON FLIP
+    // ═══════════════════════════════════════════════════════════════
+    function renderTopLikes(likers) {
+      const top = (Array.isArray(likers) ? likers : []).slice(0, TOP_LIMIT);
+      const usernamesActuales = top.map(l => String(l.username || '').toLowerCase());
+
+      const empty = likesList.querySelector('.empty-state');
+      if (empty) empty.remove();
+
+      if (top.length === 0) {
+        if (filasActivas.size === 0 && !likesList.querySelector('.empty-state')) {
+          const div = document.createElement('div');
+          div.className = 'empty-state';
+          div.textContent = 'Aún no hay likes ❤️';
+          likesList.appendChild(div);
+        }
+        return;
+      }
+
+      const posicionesPrevias = new Map();
+      filasActivas.forEach((info, username) => {
+        if (info.row.isConnected) {
+          posicionesPrevias.set(username, info.row.getBoundingClientRect().top);
+        }
+      });
+
+      const salientes = [];
+      filasActivas.forEach((info, username) => {
+        if (!usernamesActuales.includes(username)) salientes.push(username);
+      });
+
+      salientes.forEach(username => {
+        const info = filasActivas.get(username);
+        if (!info || !info.row.isConnected) {
+          filasActivas.delete(username);
+          return;
+        }
+        info.row.classList.add('exiting');
+        info.row.dataset.exiting = 'true';
+        filasActivas.delete(username);
+
+        setTimeout(() => {
+          if (info.row.parentNode) info.row.remove();
+        }, 550);
+      });
+
+      top.forEach((liker, index) => {
+        const rank = index + 1;
+        const username = String(liker.username || '').toLowerCase();
+        let info = filasActivas.get(username);
+
+        if (info && info.row.isConnected) {
+          actualizarFila(info.row, liker, rank);
+          info.rank = rank;
+        } else {
+          const row = crearFila(liker, rank);
+          row.classList.add('entering');
+          likesList.appendChild(row);
+          filasActivas.set(username, { row, rank });
+
+          setTimeout(() => row.classList.remove('entering'), 750);
+        }
+      });
+
+      top.forEach((liker, index) => {
+        const username = String(liker.username || '').toLowerCase();
+        const info = filasActivas.get(username);
+        if (!info || !info.row.isConnected) return;
+
+        const row = info.row;
+        const currentAtIndex = likesList.children[index];
+        if (currentAtIndex !== row) {
+          likesList.insertBefore(row, currentAtIndex || null);
+        }
+      });
+
+      filasActivas.forEach((info, username) => {
+        const prevTop = posicionesPrevias.get(username);
+        if (prevTop === undefined) return;
+
+        const newTop = info.row.getBoundingClientRect().top;
+        const delta = prevTop - newTop;
+        if (Math.abs(delta) < 2) return;
+
+        info.row.style.transition = 'none';
+        info.row.style.transform = `translateY(${delta}px)`;
+        void info.row.offsetHeight;
+
+        requestAnimationFrame(() => {
+          info.row.style.transition = 'transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1)';
+          info.row.style.transform = '';
+
+          setTimeout(() => {
+            if (info.row) {
+              info.row.style.transition = '';
+              info.row.style.transform = '';
+            }
+          }, 600);
+        });
+      });
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // 📡 EVENTOS DEL SERVER
+    // ═══════════════════════════════════════════════════════════════
+    socket.on('tiktok-stats-all', (todos) => {
+      if (!todos || typeof todos !== 'object') return;
+
+      const fusionados = new Map();
+      Object.values(todos).forEach((stats) => {
+        const likers = stats?.topLikers || [];
+        likers.forEach((l) => {
+          const key = String(l.username || '').toLowerCase();
+          if (!key) return;
+          const prev = fusionados.get(key) || {
+            username: l.username,
+            avatar: l.avatar,
+            likes: 0
+          };
+          prev.likes += (l.likes || 0);
+          if (!prev.avatar && l.avatar) prev.avatar = l.avatar;
+          fusionados.set(key, prev);
+        });
+      });
+
+      const ordenados = Array.from(fusionados.values())
+        .sort((a, b) => b.likes - a.likes);
+
+      renderTopLikes(ordenados);
+    });
+
+    socket.on('tiktok-like', () => {
+      clearTimeout(window.__likeRefreshTimer);
+      window.__likeRefreshTimer = setTimeout(() => {
+        socket.emit('tiktok-get-stats');
+      }, 400);
+    });
+
+    socket.on('connect', () => {
+      console.log('✅ Top-Likes conectado al server');
+      socket.emit('tiktok-get-stats');
+    });
+
+    socket.on('disconnect', () => {
+      console.warn('⚠️ Top-Likes desconectado');
+    });
+
+    setInterval(() => {
+      if (socket.connected) socket.emit('tiktok-get-stats');
+    }, 15000);
+
+    // ═══════════════════════════════════════════════════════════════
+    // 🎨 SISTEMA DE TEMAS DESDE EL SERVER
+    // ═══════════════════════════════════════════════════════════════
+    (function() {
+      const OVERLAY_KEY = 'top-likes';
+
+      function aplicarVars(vars) {
+        Object.entries(vars || {}).forEach(([k, v]) => {
+          if (k === '--msgcol-hex') {
+            const hex = v.replace('#', '');
+            const r = parseInt(hex.substr(0, 2), 16) || 0;
+            const g = parseInt(hex.substr(2, 2), 16) || 0;
+            const b = parseInt(hex.substr(4, 2), 16) || 0;
+            document.documentElement.style.setProperty('--msgcol', `rgba(${r}, ${g}, ${b}, 0.95)`);
+          } else {
+            document.documentElement.style.setProperty(k, v);
+          }
+        });
+      }
+
+      fetch(`${window.SERVER_BASE}/api/themes/${OVERLAY_KEY}`)
+        .then(r => r.json())
+        .then(vars => {
+          aplicarVars(vars);
+          console.log(`🎨 Tema cargado: ${OVERLAY_KEY} (${Object.keys(vars || {}).length} vars)`);
+        })
+        .catch(() => console.log(`🎨 Sin tema guardado para ${OVERLAY_KEY}`));
+
+      if (typeof socket !== 'undefined' && socket.on) {
+        socket.on('theme-updated', (data) => {
+          if (data && data.overlay === OVERLAY_KEY) {
+            aplicarVars(data.vars);
+            console.log(`🎨 Tema actualizado en vivo: ${OVERLAY_KEY}`);
+          }
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

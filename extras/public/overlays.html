@@ -1,0 +1,1997 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Overlays</title>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+  <style>
+    :root {
+      --bg-app: #0d0e11;
+      --bg-panel: #14161b;
+      --bg-card: #14161b;
+      --bg-elevated: #17191f;
+      --bg-input: #0f1115;
+      --bg-hover: #1a1d23;
+      --border: #23262e;
+      --border-strong: #2f3542;
+
+      --primary: #4d7cc7;
+      --primary-soft: #8badd8;
+      --secondary: #d67ba8;
+      --warning: #d6a84a;
+      --success: #4fa87a;
+      --info: #5a8ad6;
+      --danger: #c26a6a;
+
+      --text: #e4e6eb;
+      --text-dim: #9198a4;
+      --text-muted: #6b7280;
+
+      --r-sm: 6px;
+      --r-md: 8px;
+      --r-lg: 10px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg-app);
+      background-image:
+        linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+      background-size: 32px 32px;
+      color: var(--text);
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       LAYOUT PRINCIPAL — SIDEBAR + CONTENIDO
+       ═══════════════════════════════════════════════════════════ */
+    .app {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      min-height: 100vh;
+    }
+
+    /* ─── SIDEBAR ─── */
+    .sidebar {
+      background: #0f1115;
+      border-right: 1px solid var(--border);
+      padding: 22px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    .sidebar::-webkit-scrollbar { width: 6px; }
+    .sidebar::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+
+    .sidebar-brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 0 6px;
+    }
+
+    .brand-logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 7px;
+      background: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      color: white;
+      flex-shrink: 0;
+      transition: background 0.15s;
+    }
+    .brand-logo:hover { background: #5a8ad6; }
+
+    .brand-text h1 {
+      font-size: 15px;
+      font-weight: 600;
+      color: #f1f2f4;
+      letter-spacing: -0.01em;
+      margin: 0;
+    }
+
+    .sidebar-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .nav-section-title {
+      font-size: 10.5px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 10px 10px 6px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 8px 10px;
+      border-radius: var(--r-sm);
+      color: var(--text-dim);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      border: none;
+      background: transparent;
+      font-family: inherit;
+      width: 100%;
+      text-align: left;
+    }
+    .nav-item:hover {
+      background: var(--bg-hover);
+      color: var(--text);
+    }
+    .nav-item.active {
+      background: rgba(77,124,199,0.1);
+      color: var(--primary-soft);
+    }
+    .nav-item .nav-count {
+      margin-left: auto;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 1px 7px;
+      background: rgba(255,255,255,0.04);
+      border-radius: 10px;
+      color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
+    }
+    .nav-item.active .nav-count {
+      background: rgba(77,124,199,0.18);
+      color: var(--primary-soft);
+    }
+    .nav-item i {
+      font-size: 15px;
+      flex-shrink: 0;
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 12px 6px 0;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .sidebar-link {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 9px;
+      border-radius: var(--r-sm);
+      color: var(--text-dim);
+      font-size: 12.5px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: all 0.15s ease;
+    }
+    .sidebar-link:hover {
+      background: var(--bg-hover);
+      color: var(--text);
+    }
+    .sidebar-link i { font-size: 15px; }
+
+    /* ─── CONTENIDO ─── */
+    .content {
+      padding: 28px 32px 60px;
+      max-width: 1400px;
+    }
+
+    .content-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 24px;
+      gap: 20px;
+      flex-wrap: wrap;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .content-header h2 {
+      font-size: 19px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      margin-bottom: 3px;
+      color: #f1f2f4;
+    }
+    .content-header p {
+      color: var(--text-dim);
+      font-size: 12.5px;
+    }
+
+    /* ─── BUSCADOR ─── */
+    .search-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      padding: 8px 14px;
+      min-width: 240px;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .search-box:focus-within {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(77,124,199,0.12);
+    }
+    .search-box i {
+      color: var(--text-muted);
+      font-size: 15px;
+    }
+    .search-box input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-size: 13px;
+      font-family: inherit;
+    }
+    .search-box input::placeholder {
+      color: var(--text-muted);
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       GRID DE OVERLAYS
+       ═══════════════════════════════════════════════════════════ */
+    .overlay-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 12px;
+      align-items: start;
+    }
+
+    .overlay-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: border-color 0.15s ease;
+      position: relative;
+    }
+
+    .overlay-card:hover {
+      border-color: var(--border-strong);
+    }
+
+    /* ─── CABECERA DEL CARD ─── */
+    .card-top {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+    }
+
+    .card-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .card-icon.purple { background: rgba(77,124,199,0.12); color: var(--primary-soft); border: 1px solid rgba(77,124,199,0.22); }
+    .card-icon.pink   { background: rgba(214,123,168,0.1); color: var(--secondary);   border: 1px solid rgba(214,123,168,0.22); }
+    .card-icon.green  { background: rgba(79,168,122,0.1);  color: var(--success);     border: 1px solid rgba(79,168,122,0.22); }
+    .card-icon.blue   { background: rgba(90,138,214,0.1);  color: var(--info);        border: 1px solid rgba(90,138,214,0.22); }
+    .card-icon.amber  { background: rgba(214,168,74,0.1);  color: var(--warning);     border: 1px solid rgba(214,168,74,0.22); }
+
+    .card-title {
+      flex: 1;
+      min-width: 0;
+    }
+    .card-title h3 {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .card-title p {
+      font-size: 12px;
+      color: var(--text-dim);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-top: 2px;
+    }
+
+    /* ─── BOTONES DEL HEADER ─── */
+    .card-header-actions {
+      display: flex;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .icon-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: var(--r-sm);
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+      font-size: 14px;
+    }
+    .icon-btn:hover {
+      background: var(--bg-hover);
+      color: var(--text);
+      border-color: var(--border-strong);
+    }
+    .icon-btn.danger:hover {
+      color: var(--danger);
+      border-color: rgba(194,106,106,0.4);
+      background: rgba(194,106,106,0.08);
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       PREVIEW CON PROPORCIÓN REAL DEL OVERLAY
+       ═══════════════════════════════════════════════════════════ */
+    .preview-box {
+      background: #000;
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      overflow: hidden;
+      position: relative;
+      cursor: pointer;
+      transition: border-color 0.15s ease;
+      /* La altura real la calcula JS según data-w y data-h */
+      width: 100%;
+    }
+    .preview-box:hover { border-color: var(--border-strong); }
+
+    /* Placeholder tenue detrás (se ve si el overlay es transparente/vacío) */
+    .preview-box .preview-empty-hint {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(255,255,255,0.25);
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      pointer-events: none;
+      z-index: 0;
+      text-align: center;
+      padding: 20px;
+    }
+
+    /* Contenedor interno que mantiene el tamaño virtual y aplica el scale */
+    .preview-box .preview-frame {
+      position: absolute;
+      top: 0;
+      left: 0;
+      transform-origin: top left;
+      transform: scale(0);
+      pointer-events: none;
+      z-index: 1;
+      will-change: transform;
+    }
+
+    .preview-box iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+      background: transparent;
+    }
+
+    /* Placeholder especial (TTS y similares que no son iframe) */
+    .preview-box .preview-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: var(--text-muted);
+      font-size: 12px;
+      text-align: center;
+      padding: 20px;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(180deg, #0f1115, #0b0d10);
+      position: absolute;
+      inset: 0;
+    }
+    .preview-box .preview-placeholder i {
+      font-size: 32px;
+      color: var(--text-muted);
+      opacity: 0.6;
+    }
+    .preview-box .preview-placeholder span {
+      max-width: 220px;
+      line-height: 1.5;
+    }
+
+    /* Overlay inferior con la URL */
+    .preview-footer {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 6px 10px;
+      background: linear-gradient(180deg, transparent, rgba(0,0,0,0.85));
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s ease;
+      z-index: 5;
+    }
+    .preview-box:hover .preview-footer { opacity: 1; }
+    .preview-footer .url-text {
+      font-size: 11px;
+      font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+      color: rgba(255,255,255,0.85);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .preview-footer .open-hint {
+      font-size: 11px;
+      color: rgba(255,255,255,0.7);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    /* ─── ACCIONES DEL CARD ─── */
+    .card-actions {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .action-btn {
+      flex: 1;
+      padding: 8px 12px;
+      border-radius: var(--r-sm);
+      border: 1px solid transparent;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+      font-family: inherit;
+    }
+
+    .action-btn.primary {
+      background: var(--primary);
+      color: white;
+    }
+    .action-btn.primary:hover { background: #5a8ad6; }
+
+    .action-btn.secondary {
+      background: transparent;
+      border-color: var(--border);
+      color: var(--text-dim);
+    }
+    .action-btn.secondary:hover {
+      background: var(--bg-hover);
+      color: var(--text);
+      border-color: var(--border-strong);
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       DRAWER LATERAL (configuración)
+       ═══════════════════════════════════════════════════════════ */
+    .drawer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(8,9,11,0.7);
+      backdrop-filter: blur(3px);
+      z-index: 900;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    .drawer-overlay.show { opacity: 1; pointer-events: auto; }
+
+    .drawer {
+      position: fixed;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 460px;
+      max-width: 92vw;
+      background: var(--bg-panel);
+      border-left: 1px solid var(--border-strong);
+      box-shadow: -12px 0 40px rgba(0,0,0,0.5);
+      z-index: 901;
+      transform: translateX(100%);
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+    }
+    .drawer.show { transform: translateX(0); }
+
+    .drawer-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--border);
+    }
+    .drawer-head h3 {
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      color: #f1f2f4;
+    }
+    .drawer-head h3 i { color: var(--text-muted); font-size: 16px; }
+
+    .close-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      width: 30px;
+      height: 30px;
+      border-radius: var(--r-sm);
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+      font-size: 15px;
+    }
+    .close-btn:hover {
+      background: var(--bg-hover);
+      color: var(--text);
+      border-color: var(--border-strong);
+    }
+
+    .drawer-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .drawer-body::-webkit-scrollbar { width: 6px; }
+    .drawer-body::-webkit-scrollbar-thumb {
+      background: var(--border-strong);
+      border-radius: 3px;
+    }
+
+    .drawer-foot {
+      padding: 14px 22px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      background: var(--bg-card);
+    }
+    .drawer-foot .hint {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      flex: 1;
+    }
+
+    .drawer-actions { display: flex; gap: 6px; }
+
+    /* ─── Grupos de configuración ─── */
+    .cfg-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .cfg-group-title {
+      font-size: 10.5px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .cfg-row {
+      display: grid;
+      grid-template-columns: 1fr 42px 88px;
+      gap: 10px;
+      align-items: center;
+    }
+    .cfg-row label {
+      font-size: 12.5px;
+      color: var(--text-dim);
+      font-weight: 500;
+    }
+    .cfg-row input[type="color"] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 42px;
+      height: 30px;
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      cursor: pointer;
+      background: transparent;
+      padding: 2px;
+      transition: border-color 0.15s;
+    }
+    .cfg-row input[type="color"]:hover { border-color: var(--border-strong); }
+    .cfg-row input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+    .cfg-row input[type="color"]::-webkit-color-swatch {
+      border: none;
+      border-radius: 3px;
+    }
+    .cfg-row input[type="text"],
+    .cfg-row input[type="number"] {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      padding: 7px 10px;
+      color: var(--text);
+      font-size: 12px;
+      font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+      outline: none;
+      text-align: center;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      width: 100%;
+    }
+    .cfg-row input[type="text"]:focus,
+    .cfg-row input[type="number"]:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(77,124,199,0.12);
+    }
+
+    .cfg-input-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .cfg-input-row label {
+      font-size: 12px;
+      color: var(--text-dim);
+      font-weight: 500;
+    }
+    .cfg-input-row > div { display: flex; gap: 6px; }
+    .cfg-input-row input {
+      flex: 1;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      padding: 8px 11px;
+      color: var(--text);
+      font-size: 12.5px;
+      outline: none;
+      font-family: inherit;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .cfg-input-row input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(77,124,199,0.12);
+    }
+
+    .cfg-check-row {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 5px 0;
+      cursor: pointer;
+    }
+    .cfg-check-row input[type="checkbox"] {
+      width: 15px;
+      height: 15px;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+    .cfg-check-row label {
+      font-size: 12.5px;
+      color: var(--text-dim);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    /* ─── Presets ─── */
+    .presets {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+    .preset-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      padding: 8px 10px;
+      color: var(--text-dim);
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      transition: all 0.15s ease;
+      font-family: inherit;
+    }
+    .preset-btn:hover {
+      border-color: var(--primary);
+      color: var(--text);
+    }
+    .preset-swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+      flex-shrink: 0;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    /* ─── Botones del drawer ─── */
+    .btn {
+      padding: 9px 14px;
+      border-radius: var(--r-sm);
+      border: 1px solid transparent;
+      font-size: 12.5px;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-family: inherit;
+      transition: all 0.15s ease;
+    }
+    .btn.primary { background: var(--primary); color: white; }
+    .btn.primary:hover { background: #5a8ad6; }
+    .btn.ghost {
+      background: transparent;
+      border-color: var(--border);
+      color: var(--text-dim);
+    }
+    .btn.ghost:hover {
+      background: var(--bg-hover);
+      color: var(--text);
+      border-color: var(--border-strong);
+    }
+    .btn-sm { padding: 6px 11px; font-size: 11.5px; }
+
+    /* ═══════════════════════════════════════════════════════════
+       TOAST
+       ═══════════════════════════════════════════════════════════ */
+    .toast {
+      position: fixed;
+      bottom: 26px;
+      left: 50%;
+      transform: translateX(-50%) translateY(90px);
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--success);
+      color: var(--text);
+      padding: 11px 18px;
+      border-radius: var(--r-sm);
+      font-size: 13px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 1000;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    .toast i { color: var(--success); font-size: 15px; }
+    .toast.error { border-left-color: var(--danger); }
+    .toast.error i { color: var(--danger); }
+
+    /* ═══════════════════════════════════════════════════════════
+       RESPONSIVE
+       ═══════════════════════════════════════════════════════════ */
+    @media (max-width: 900px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar {
+        position: relative;
+        height: auto;
+        flex-direction: row;
+        overflow-x: auto;
+        padding: 14px;
+        gap: 14px;
+      }
+      .sidebar-brand { padding: 0; }
+      .brand-text { display: none; }
+      .sidebar-nav { flex-direction: row; gap: 4px; }
+      .nav-section-title { display: none; }
+      .nav-item .nav-count { display: none; }
+      .sidebar-footer {
+        flex-direction: row;
+        border-top: none;
+        padding: 0;
+        margin-top: 0;
+        margin-left: auto;
+      }
+      .sidebar-link span { display: none; }
+      .content { padding: 20px; }
+      .overlay-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SIDEBAR
+       ═══════════════════════════════════════════════════════════ -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-logo">
+        <i class="ri-layout-masonry-line"></i>
+      </div>
+      <div class="brand-text">
+        <h1>Overlays</h1>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-title">Categorías</div>
+      <button class="nav-item active" data-filter="all" onclick="filtrar('all', this)">
+        <i class="ri-apps-2-line"></i>
+        <span>Todos</span>
+        <span class="nav-count">8</span>
+      </button>
+      <button class="nav-item" data-filter="crystal" onclick="filtrar('crystal', this)">
+        <i class="ri-vip-diamond-line"></i>
+        <span>Meta</span>
+        <span class="nav-count">1</span>
+      </button>
+      <button class="nav-item" data-filter="chat" onclick="filtrar('chat', this)">
+        <i class="ri-chat-3-line"></i>
+        <span>Chat</span>
+        <span class="nav-count">1</span>
+      </button>
+      <button class="nav-item" data-filter="top" onclick="filtrar('top', this)">
+        <i class="ri-trophy-line"></i>
+        <span>Tops</span>
+        <span class="nav-count">3</span>
+      </button>
+      <button class="nav-item" data-filter="seguidor" onclick="filtrar('seguidor', this)">
+        <i class="ri-user-follow-line"></i>
+        <span>Seguidores</span>
+        <span class="nav-count">1</span>
+      </button>
+      <button class="nav-item" data-filter="stats" onclick="filtrar('stats', this)">
+        <i class="ri-bar-chart-2-line"></i>
+        <span>Stats</span>
+        <span class="nav-count">1</span>
+      </button>
+      <button class="nav-item" data-filter="tts" onclick="filtrar('tts', this)">
+        <i class="ri-volume-up-line"></i>
+        <span>TTS</span>
+        <span class="nav-count">1</span>
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <a href="http://localhost:3000/moderation" class="sidebar-link">
+        <i class="ri-dashboard-3-line"></i>
+        <span>Dashboard</span>
+      </a>
+      <a href="http://localhost:3000/config" class="sidebar-link">
+        <i class="ri-settings-3-line"></i>
+        <span>Configuración</span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       CONTENIDO
+       ═══════════════════════════════════════════════════════════ -->
+  <main class="content">
+
+    <div class="content-header">
+      <div>
+        <h2>Galería de Overlays</h2>
+        <p>Cada overlay tiene su propia URL para OBS. Personaliza los colores sin tocar código.</p>
+      </div>
+      <div class="search-box">
+        <i class="ri-search-line"></i>
+        <input type="text" id="searchInput" placeholder="Buscar overlay..." oninput="buscar(this.value)">
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         GRID — PREVIEWS CON PROPORCIÓN REAL
+         ═══════════════════════════════════════════════════════════ -->
+    <div class="overlay-grid">
+
+      <!-- CHAT -->
+      <div class="overlay-card" data-category="chat">
+        <div class="card-top">
+          <div class="card-icon purple"><i class="ri-chat-3-line"></i></div>
+          <div class="card-title">
+            <h3>Chat Unificado</h3>
+            <p>Todos tus chats en una sola ventana</p>
+          </div>
+          <div class="card-header-actions">
+            <button class="icon-btn" onclick="probar('http://localhost:3000/overlay')" title="Abrir en nueva pestaña">
+              <i class="ri-external-link-line"></i>
+            </button>
+          </div>
+        </div>
+        <div class="preview-box" data-w="380" data-h="640" onclick="probar('http://localhost:3000/overlay')">
+          <div class="preview-empty-hint">Chat en vivo · sin mensajes todavía</div>
+          <div class="preview-frame">
+            <iframe data-src="http://localhost:3000/overlay?preview=1" loading="lazy"></iframe>
+          </div>
+          <div class="preview-footer">
+            <span class="url-text">localhost:3000/overlay</span>
+            <span class="open-hint"><i class="ri-external-link-line"></i> Abrir</span>
+          </div>
+        </div>
+        <div class="card-actions">
+          <button class="action-btn secondary" onclick="probar('http://localhost:3000/overlay')">
+            <i class="ri-eye-line"></i> Ver
+          </button>
+        </div>
+      </div>
+
+      <!-- TOP DONADORES -->
+      <div class="overlay-card" data-category="top">
+        <div class="card-top">
+          <div class="card-icon pink"><i class="ri-vip-diamond-line"></i></div>
+          <div class="card-title">
+            <h3>Top Donadores</h3>
+            <p>Quién más ha donado durante el directo</p>
+          </div>
+          <div class="card-header-actions">
+            <button class="icon-btn" onclick="probar('http://localhost:3000/top-donadores')" title="Abrir en nueva pestaña">
+              <i class="ri-external-link-line"></i>
+            </button>
+          </div>
+        </div>
+        <div class="preview-box" data-w="380" data-h="620" onclick="probar('http://localhost:3000/top-donadores')">
+          <div class="preview-frame">
+            <iframe data-src="http://localhost:3000/top-donadores?preview=1" loading="lazy"></iframe>
+          </div>
+          <div class="preview-footer">
+            <span class="url-text">localhost:3000/top-donadores</span>
+            <span class="open-hint"><i class="ri-external-link-line"></i> Abrir</span>
+          </div>
+        </div>
+        <div class="card-actions">
+          <button class="action-btn primary" onclick="abrirConfig('top-donadores', 'Top Donadores')">
+            <i class="ri-palette-line"></i> Configurar
+          </button>
+        </div>
+      </div>
+
+      <!-- TOP LIKES -->
+      <div class="overlay-card" data-category="top">
+        <div class="card-top">
+          <div class="card-icon pink"><i class="ri-heart-3-line"></i></div>
+          <div class="card-title">
+            <h3>Top Likes</h3>
+            <p>Los que más corazones han enviado</p>
+          </div>
+          <div class="card-header-actions">
+            <button class="icon-btn" onclick="probar('http://localhost:3000/top-likes')" title="Abrir en nueva pestaña">
+              <i class="ri-external-link-line"></i>
+            </button>
+          </div>
+        </div>
+        <div class="preview-box" data-w="380" data-h="620" onclick="probar('http://localhost:3000/top-likes')">
+          <div class="preview-frame">
+            <iframe data-src="http://localhost:3000/top-likes?preview=1" loading="lazy"></iframe>
+          </div>
+          <div class="preview-footer">
+            <span class="url-text">localhost:3000/top-likes</span>
+            <span class="open-hint"><i class="ri-external-link-line"></i> Abrir</span>
+          </div>
+        </div>
+        <div class="card-actions">
+          <button class="action-btn primary" onclick="abrirConfig('top-likes', 'Top Likes')">
+            <i class="ri-palette-line"></i> Configurar
+          </button>
+        </div>
+      </div>
+
+      <!-- TOP COMPARTIDOS -->
+      <div class="overlay-card" data-category="top">
+        <div class="card-top">
+          <div class="card-icon pink"><i class="ri-share-forward-line"></i></div>
+          <div class="card-title">
+            <h3>Top Compartidos</h3>
+            <p>Los que más han compartido el live</p>
+          </div>
+          <div class="card-header-actions">
+            <button class="icon-btn" onclick="probar('http://localhost:3000/top-shares')" title="Abrir en nueva pestaña">
+              <i class="ri-external-link-line"></i>
+            </button>
+          </div>
+        </div>
+        <div class="preview-box" data-w="380" data-h="620" onclick="probar('http://localhost:3000/top-shares')">
+          <div class="preview-frame">
+            <iframe data-src="http://localhost:3000/top-shares?preview=1" loading="lazy"></iframe>
+          </div>
+          <div class="preview-footer">
+            <span class="url-text">localhost:3000/top-shares</span>
+            <span class="open-hint"><i class="ri-external-link-line"></i> Abrir</span>
+          </div>
+        </div>
+        <div class="card-actions">
+          <button class="action-btn primary" onclick="abrirConfig('top-shares', 'Top Compartidos')">
+            <i class="ri-palette-line"></i> Configurar
+          </button>
+        </div>
+      </div>
+
+      <!-- ÚLTIMO FOLLOW -->
+      <div class="overlay-card" data-category="seguidor">
+        <div class="card-top">
+          <div class="card-icon blue"><i class="ri-heart-3-fill"></i></div>
+          <div class="card-title">
+            <h3>Último Follow</h3>
+            <p>Aparece en pantalla al recibir un seguidor</p>
+          </div>
+          <div class="card-header-actions">
+            <button class="icon-btn" onclick="probar('http://localhost:3000/follows')" title="Abrir en nueva pestaña">
+              <i class="ri-external-link-line"></i>
+            </button>
+          </div>
+        </div>
+        <div class="preview-box" data-w="420" data-h="260" onclick="probar('http://localhost:3000/follows')">
+          <div class="preview-frame">
+            <iframe data-src="http://localhost:3000/follows?preview=1" loading="lazy"></iframe>
+          </div>
+          <div class="preview-footer">
+            <span class="url-text">localhost:3000/follows</span>
+            <span class="open-hint"><i class="ri-external-link-line"></i> Abrir</span>
+          </div>
+        </div>
+        <div class="card-actions">
+          <button class="action-btn primary" onclick="abrirConfig('follows', 'Último Follow')">
+            <i class="ri-palette-line"></i> Configurar
+          </button>
+        </div>
+      </div>
+
+      <!-- STATS -->
+      <div class="overlay-card" data-category="stats">
+        <div class="card-top">
+          <div class="card-icon amber"><i class="ri-bar-chart-2-line"></i></div>
+          <div class="card-title">
+            <h3>Estadísticas en Vivo</h3>
+            <p>Todos los contadores del directo de un vistazo</p>
+          </div>
+          <div class="card-header-actions">
+            <button class="icon-btn" onclick="probar('http://localhost:3000/stats')" title="Abrir en nueva pestaña">
+              <i class="ri-external-link-line"></i>
+            </button>
+          </div>
+        </div>
+        <div class="preview-box" data-w="560" data-h="120" onclick="probar('http://localhost:3000/stats')">
+          <div class="preview-frame">
+            <iframe data-src="http://localhost:3000/stats?preview=1" loading="lazy"></iframe>
+          </div>
+          <div class="preview-footer">
+            <span class="url-text">localhost:3000/stats</span>
+            <span class="open-hint"><i class="ri-external-link-line"></i> Abrir</span>
+          </div>
+        </div>
+        <div class="card-actions">
+          <button class="action-btn primary" onclick="abrirConfig('stats', 'Estadísticas en Vivo')">
+            <i class="ri-palette-line"></i> Configurar
+          </button>
+        </div>
+      </div>
+
+      <!-- TTS -->
+      <div class="overlay-card" data-category="tts">
+        <div class="card-top">
+          <div class="card-icon green"><i class="ri-volume-up-line"></i></div>
+          <div class="card-title">
+            <h3>Overlay TTS</h3>
+            <p>Lee el chat en voz alta, sin mostrarse en pantalla</p>
+          </div>
+          <div class="card-header-actions">
+            <button class="icon-btn" onclick="probar('http://localhost:3000/overlays/tts.html')" title="Abrir en nueva pestaña">
+              <i class="ri-external-link-line"></i>
+            </button>
+          </div>
+        </div>
+        <div class="preview-box" data-w="420" data-h="200">
+          <div class="preview-placeholder">
+            <i class="ri-volume-up-line"></i>
+            <span>Este overlay solo emite audio, no tiene previsualización visual</span>
+          </div>
+        </div>
+        <div class="card-actions">
+          <button class="action-btn secondary" onclick="probar('http://localhost:3000/overlays/tts.html')">
+            <i class="ri-external-link-line"></i> Abrir en OBS
+          </button>
+        </div>
+      </div>
+
+      <!-- META DE DONACIONES -->
+      <div class="overlay-card" data-category="crystal">
+        <div class="card-top">
+          <div class="card-icon purple"><i class="ri-vip-diamond-line"></i></div>
+          <div class="card-title">
+            <h3>Meta de Donaciones</h3>
+            <p>Muestra cuánto falta para llegar a la meta de diamantes</p>
+          </div>
+          <div class="card-header-actions">
+            <button class="icon-btn" onclick="probar('http://localhost:3000/crystal')" title="Abrir en nueva pestaña">
+              <i class="ri-external-link-line"></i>
+            </button>
+            <button class="icon-btn danger" onclick="resetearCristal()" title="Resetear meta">
+              <i class="ri-refresh-line"></i>
+            </button>
+          </div>
+        </div>
+        <div class="preview-box" data-w="500" data-h="680" onclick="probar('http://localhost:3000/crystal')">
+          <div class="preview-frame">
+            <iframe data-src="http://localhost:3000/crystal?preview=1" loading="lazy"></iframe>
+          </div>
+          <div class="preview-footer">
+            <span class="url-text">localhost:3000/crystal</span>
+            <span class="open-hint"><i class="ri-external-link-line"></i> Abrir</span>
+          </div>
+        </div>
+        <div class="card-actions">
+          <button class="action-btn primary" onclick="abrirConfigCristal()">
+            <i class="ri-palette-line"></i> Configurar
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     DRAWER: Configuración de colores
+     ═══════════════════════════════════════════════════════════ -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="cerrarDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-head">
+    <h3><i class="ri-palette-line"></i> <span id="drawerTitle">Configurar</span></h3>
+    <button class="close-btn" onclick="cerrarDrawer()"><i class="ri-close-line"></i></button>
+  </div>
+  <div class="drawer-body" id="drawerBody"></div>
+  <div class="drawer-foot">
+    <span class="hint">Los cambios se aplican en vivo</span>
+    <div class="drawer-actions">
+      <button class="btn ghost btn-sm" onclick="resetearConfig()">
+        <i class="ri-refresh-line"></i> Resetear
+      </button>
+      <button class="btn primary btn-sm" onclick="guardarConfig()">
+        <i class="ri-check-line"></i> Guardar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     DRAWER: Configuración de la Meta
+     ═══════════════════════════════════════════════════════════ -->
+<div class="drawer-overlay" id="crystalDrawerOverlay" onclick="cerrarConfigCristal()"></div>
+<div class="drawer" id="crystalDrawer">
+  <div class="drawer-head">
+    <h3><i class="ri-vip-diamond-line"></i> Configurar Meta</h3>
+    <button class="close-btn" onclick="cerrarConfigCristal()"><i class="ri-close-line"></i></button>
+  </div>
+  <div class="drawer-body" id="crystalDrawerBody"></div>
+  <div class="drawer-foot">
+    <span class="hint">Meta y colores se guardan en el servidor</span>
+    <div class="drawer-actions">
+      <button class="btn ghost btn-sm" onclick="resetearTemaCristal()">
+        <i class="ri-refresh-line"></i> Resetear
+      </button>
+      <button class="btn primary btn-sm" onclick="guardarTemaCristal()">
+        <i class="ri-check-line"></i> Guardar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <i class="ri-checkbox-circle-fill"></i>
+  <span id="toastText">Listo</span>
+</div>
+
+<script>
+  const SERVER_BASE = 'http://localhost:3000';
+
+  // ═══════════════════════════════════════════════════
+  // CONFIGURACIÓN DE VARIABLES POR OVERLAY
+  // ═══════════════════════════════════════════════════
+  const OVERLAY_CONFIGS = {
+    'top-donadores': {
+      groups: [
+        { title: 'Cabecera', vars: [
+          { key: '--tiktok-pink', label: 'Rosa principal', default: '#ff0050' },
+          { key: '--tiktok-cyan', label: 'Cyan',           default: '#00e5ff' }
+        ]},
+        { title: 'Filas', vars: [
+          { key: '--bordercolor', label: 'Borde fila',     default: '#ff69b4' },
+          { key: '--msgcol-hex',  label: 'Fondo fila',     default: '#141820' }
+        ]},
+        { title: 'Géneros', vars: [
+          { key: '--gender-masc', label: 'Masculino', default: '#38bdf8' },
+          { key: '--gender-fem',  label: 'Femenino',  default: '#f472b6' },
+          { key: '--gender-uni',  label: 'Unisex',    default: '#a78bfa' }
+        ]}
+      ],
+      presets: {
+        original: { '--tiktok-pink': '#ff0050', '--tiktok-cyan': '#00e5ff', '--bordercolor': '#ff69b4', '--gender-masc': '#38bdf8', '--gender-fem': '#f472b6', '--gender-uni': '#a78bfa', '--msgcol-hex': '#141820' },
+        gold:     { '--tiktok-pink': '#ffd700', '--tiktok-cyan': '#ff8c00', '--bordercolor': '#ffd700', '--gender-masc': '#ffd700', '--gender-fem': '#ffa500', '--gender-uni': '#ffec8b', '--msgcol-hex': '#1a1408' },
+        neon:     { '--tiktok-pink': '#00ff88', '--tiktok-cyan': '#00bfff', '--bordercolor': '#00ff88', '--gender-masc': '#00bfff', '--gender-fem': '#00ff88', '--gender-uni': '#7fff00', '--msgcol-hex': '#001a10' }
+      }
+    },
+    'top-likes': {
+      groups: [
+        { title: 'Cabecera', vars: [
+          { key: '--like-pink',    label: 'Rojo corazón', default: '#ff0050' },
+          { key: '--like-magenta', label: 'Magenta',      default: '#ec4899' }
+        ]},
+        { title: 'Filas', vars: [
+          { key: '--bordercolor', label: 'Borde fila', default: '#ff69b4' },
+          { key: '--msgcol-hex',  label: 'Fondo fila', default: '#141820' }
+        ]},
+        { title: 'Géneros', vars: [
+          { key: '--gender-masc', label: 'Masculino', default: '#38bdf8' },
+          { key: '--gender-fem',  label: 'Femenino',  default: '#f472b6' },
+          { key: '--gender-uni',  label: 'Unisex',    default: '#a78bfa' }
+        ]}
+      ],
+      presets: {
+        original: { '--like-pink': '#ff0050', '--like-magenta': '#ec4899', '--bordercolor': '#ff69b4', '--gender-masc': '#38bdf8', '--gender-fem': '#f472b6', '--gender-uni': '#a78bfa', '--msgcol-hex': '#141820' },
+        gold:     { '--like-pink': '#ffd700', '--like-magenta': '#ff8c00', '--bordercolor': '#ffd700', '--gender-masc': '#ffd700', '--gender-fem': '#ffa500', '--gender-uni': '#ffec8b', '--msgcol-hex': '#1a1408' },
+        neon:     { '--like-pink': '#00ff88', '--like-magenta': '#00bfff', '--bordercolor': '#00ff88', '--gender-masc': '#00bfff', '--gender-fem': '#00ff88', '--gender-uni': '#7fff00', '--msgcol-hex': '#001a10' }
+      }
+    },
+    'top-shares': {
+      groups: [
+        { title: 'Cabecera', vars: [
+          { key: '--share-cyan', label: 'Cyan', default: '#00e5ff' },
+          { key: '--share-teal', label: 'Teal', default: '#14b8a6' }
+        ]},
+        { title: 'Filas', vars: [
+          { key: '--bordercolor', label: 'Borde fila', default: '#00e5ff' },
+          { key: '--msgcol-hex',  label: 'Fondo fila', default: '#141820' }
+        ]},
+        { title: 'Géneros', vars: [
+          { key: '--gender-masc', label: 'Masculino', default: '#38bdf8' },
+          { key: '--gender-fem',  label: 'Femenino',  default: '#f472b6' },
+          { key: '--gender-uni',  label: 'Unisex',    default: '#a78bfa' }
+        ]}
+      ],
+      presets: {
+        original: { '--share-cyan': '#00e5ff', '--share-teal': '#14b8a6', '--bordercolor': '#00e5ff', '--gender-masc': '#38bdf8', '--gender-fem': '#f472b6', '--gender-uni': '#a78bfa', '--msgcol-hex': '#141820' },
+        gold:     { '--share-cyan': '#ffd700', '--share-teal': '#ff8c00', '--bordercolor': '#ffd700', '--gender-masc': '#ffd700', '--gender-fem': '#ffa500', '--gender-uni': '#ffec8b', '--msgcol-hex': '#1a1408' },
+        neon:     { '--share-cyan': '#00ff88', '--share-teal': '#00bfff', '--bordercolor': '#00ff88', '--gender-masc': '#00bfff', '--gender-fem': '#00ff88', '--gender-uni': '#7fff00', '--msgcol-hex': '#001a10' }
+      }
+    },
+    'follows': {
+      groups: [
+        { title: 'Colores', vars: [
+          { key: '--accent-purple', label: 'Morado',        default: '#a78bfa' },
+          { key: '--accent-pink',   label: 'Rosa',          default: '#f472b6' },
+          { key: '--msgcol-hex',    label: 'Fondo tarjeta', default: '#141820' }
+        ]},
+        { title: 'Géneros', vars: [
+          { key: '--gender-masc', label: 'Masculino', default: '#38bdf8' },
+          { key: '--gender-fem',  label: 'Femenino',  default: '#f472b6' },
+          { key: '--gender-uni',  label: 'Unisex',    default: '#a78bfa' }
+        ]}
+      ],
+      presets: {
+        original: { '--accent-purple': '#a78bfa', '--accent-pink': '#f472b6', '--msgcol-hex': '#141820', '--gender-masc': '#38bdf8', '--gender-fem': '#f472b6', '--gender-uni': '#a78bfa' },
+        gold:     { '--accent-purple': '#ffd700', '--accent-pink': '#ff8c00', '--msgcol-hex': '#1a1408', '--gender-masc': '#ffd700', '--gender-fem': '#ffa500', '--gender-uni': '#ffec8b' },
+        neon:     { '--accent-purple': '#00ff88', '--accent-pink': '#00bfff', '--msgcol-hex': '#001a10', '--gender-masc': '#00bfff', '--gender-fem': '#00ff88', '--gender-uni': '#7fff00' }
+      }
+    },
+    'stats': {
+      groups: [
+        { title: 'Colores', vars: [
+          { key: '--stat-pink',   label: 'Rosa',   default: '#f472b6' },
+          { key: '--stat-purple', label: 'Morado', default: '#a78bfa' }
+        ]}
+      ],
+      presets: {
+        original: { '--stat-pink': '#f472b6', '--stat-purple': '#a78bfa' },
+        gold:     { '--stat-pink': '#ffd700', '--stat-purple': '#ff8c00' },
+        neon:     { '--stat-pink': '#00ff88', '--stat-purple': '#00bfff' }
+      }
+    }
+  };
+
+  // ═══════════════════════════════════════════════════
+  // CONFIGURACIÓN DE LA META
+  // ═══════════════════════════════════════════════════
+  const CRYSTAL_CONFIG = {
+    groups: [
+      {
+        title: '🏺 Meta',
+        inputs: [
+          { key: 'meta', label: 'Meta (diamantes)', type: 'number', default: 500, min: 1 }
+        ]
+      },
+      {
+        title: '🏷️ Etiquetas',
+        inputs: [
+          { key: '--meta-label',     label: 'Texto etiqueta meta', type: 'text', default: '🎯 Meta' },
+          { key: '--topdonor-label', label: 'Texto etiqueta top',  type: 'text', default: '🏆 Top Donador' }
+        ],
+        checks: [
+          { key: '--meta-label-visible',     label: 'Mostrar etiqueta meta', default: true },
+          { key: '--topdonor-label-visible', label: 'Mostrar etiqueta top',  default: true }
+        ]
+      },
+      {
+        title: '💎 Cristal',
+        vars: [
+          { key: '--crystal-core-1',   label: 'Núcleo 1', default: '#ffffff' },
+          { key: '--crystal-core-2',   label: 'Núcleo 2', default: '#c4b5fd' },
+          { key: '--crystal-core-3',   label: 'Núcleo 3', default: '#7c3aed' },
+          { key: '--crystal-stroke-1', label: 'Borde 1',  default: '#f472b6' },
+          { key: '--crystal-stroke-2', label: 'Borde 2',  default: '#a78bfa' },
+          { key: '--crystal-stroke-3', label: 'Borde 3',  default: '#7c3aed' },
+          { key: '--crystal-aura-1',   label: 'Aura 1',   default: '#a78bfa66' },
+          { key: '--crystal-aura-2',   label: 'Aura 2',   default: '#f472b633' }
+        ]
+      },
+      {
+        title: '✨ Partículas',
+        vars: [
+          { key: '--particle-1', label: 'Partícula 1', default: '#ffffff' },
+          { key: '--particle-2', label: 'Partícula 2', default: '#c4b5fd' },
+          { key: '--particle-3', label: 'Partícula 3', default: '#a78bfa' },
+          { key: '--gold-1',     label: 'Dorada 1',    default: '#ffffff' },
+          { key: '--gold-2',     label: 'Dorada 2',    default: '#ffd700' },
+          { key: '--gold-3',     label: 'Dorada 3',    default: '#f59e0b' }
+        ]
+      },
+      {
+        title: '📊 Progreso',
+        vars: [
+          { key: '--progress-1', label: 'Progreso 1', default: '#7c3aed' },
+          { key: '--progress-2', label: 'Progreso 2', default: '#a78bfa' },
+          { key: '--progress-3', label: 'Progreso 3', default: '#f472b6' }
+        ]
+      },
+      {
+        title: '🏷️ Color de etiquetas',
+        vars: [
+          { key: '--label-color', label: 'Color etiqueta', default: '#c4b5fd' }
+        ]
+      }
+    ],
+    presets: {
+      original: {
+        '--crystal-core-1': '#ffffff', '--crystal-core-2': '#c4b5fd', '--crystal-core-3': '#7c3aed',
+        '--crystal-stroke-1': '#f472b6', '--crystal-stroke-2': '#a78bfa', '--crystal-stroke-3': '#7c3aed',
+        '--crystal-aura-1': '#a78bfa66', '--crystal-aura-2': '#f472b633',
+        '--particle-1': '#ffffff', '--particle-2': '#c4b5fd', '--particle-3': '#a78bfa',
+        '--gold-1': '#ffffff', '--gold-2': '#ffd700', '--gold-3': '#f59e0b',
+        '--progress-1': '#7c3aed', '--progress-2': '#a78bfa', '--progress-3': '#f472b6',
+        '--label-color': '#c4b5fd'
+      },
+      gold: {
+        '--crystal-core-1': '#ffffff', '--crystal-core-2': '#ffe066', '--crystal-core-3': '#b45309',
+        '--crystal-stroke-1': '#ffd700', '--crystal-stroke-2': '#f59e0b', '--crystal-stroke-3': '#b45309',
+        '--crystal-aura-1': '#ffd70066', '--crystal-aura-2': '#f59e0b33',
+        '--particle-1': '#fff8dc', '--particle-2': '#ffd700', '--particle-3': '#b45309',
+        '--gold-1': '#ffffff', '--gold-2': '#ffd700', '--gold-3': '#f59e0b',
+        '--progress-1': '#b45309', '--progress-2': '#ffd700', '--progress-3': '#f59e0b',
+        '--label-color': '#ffd700'
+      },
+      neon: {
+        '--crystal-core-1': '#ffffff', '--crystal-core-2': '#7fffdd', '--crystal-core-3': '#00bfff',
+        '--crystal-stroke-1': '#00ff88', '--crystal-stroke-2': '#00bfff', '--crystal-stroke-3': '#7fff00',
+        '--crystal-aura-1': '#00ff8866', '--crystal-aura-2': '#00bfff33',
+        '--particle-1': '#ffffff', '--particle-2': '#00ff88', '--particle-3': '#00bfff',
+        '--gold-1': '#ffffff', '--gold-2': '#7fff00', '--gold-3': '#00bfff',
+        '--progress-1': '#00bfff', '--progress-2': '#00ff88', '--progress-3': '#7fff00',
+        '--label-color': '#00ff88'
+      }
+    }
+  };
+
+  // ═══════════════════════════════════════════════════
+  // ESTADO
+  // ═══════════════════════════════════════════════════
+  let overlayActual = null;
+  let valoresActuales = {};
+  let cristalValores = {};
+  let cristalMeta = 500;
+
+  // ═══════════════════════════════════════════════════
+  // NAVEGACIÓN
+  // ═══════════════════════════════════════════════════
+  function filtrar(categoria, boton) {
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    boton.classList.add('active');
+    
+    document.querySelectorAll('.overlay-card').forEach(card => {
+      const cardCat = card.dataset.category || '';
+      const visible = categoria === 'all' || cardCat === categoria;
+      card.style.display = visible ? '' : 'none';
+    });
+  }
+
+  function buscar(query) {
+    query = query.toLowerCase().trim();
+    document.querySelectorAll('.overlay-card').forEach(card => {
+      const title = card.querySelector('h3')?.textContent.toLowerCase() || '';
+      const desc = card.querySelector('p')?.textContent.toLowerCase() || '';
+      const match = !query || title.includes(query) || desc.includes(query);
+      card.style.display = match ? '' : 'none';
+    });
+  }
+
+  // ═══════════════════════════════════════════════════
+  // PREVIEWS: PROPORCIÓN REAL + ESCALADO AUTOMÁTICO
+  // ═══════════════════════════════════════════════════
+  /**
+   * Ajusta la altura de cada .preview-box según su data-w/data-h,
+   * y calcula el scale del iframe para que el contenido encaje
+   * perfectamente al ancho de la caja.
+   */
+  function ajustarProporcionesYEscala() {
+    document.querySelectorAll('.preview-box').forEach(box => {
+      const w = parseInt(box.dataset.w, 10) || 380;
+      const h = parseInt(box.dataset.h, 10) || 620;
+
+      // El ancho lo fija el layout (grid), así que calculamos
+      // la altura proporcional al aspect ratio del overlay
+      const boxW = box.clientWidth;
+      if (!boxW) return;
+
+      const aspect = w / h;
+      const boxH = Math.round(boxW / aspect);
+      box.style.height = boxH + 'px';
+
+      // Ahora ajustamos el iframe dentro del .preview-frame
+      const frame = box.querySelector('.preview-frame');
+      if (!frame) return;
+
+      const scale = boxW / w;
+
+      frame.style.width  = w + 'px';
+      frame.style.height = h + 'px';
+      frame.style.transform = `scale(${scale})`;
+    });
+  }
+
+  function cargarPreviewsDiferido() {
+    // Primero calcular proporciones (con lo que se ve inmediatamente)
+    ajustarProporcionesYEscala();
+
+    const iframes = document.querySelectorAll('.preview-box iframe[data-src]');
+    iframes.forEach((iframe, i) => {
+      setTimeout(() => {
+        const src = iframe.dataset.src;
+        if (src && !iframe.src) {
+          iframe.src = src;
+          iframe.removeAttribute('data-src');
+        }
+        // Reajustar tras carga
+        setTimeout(ajustarProporcionesYEscala, 50);
+      }, i * 400);
+    });
+  }
+
+  window.addEventListener('resize', () => {
+    clearTimeout(window.__previewResizeTimer);
+    window.__previewResizeTimer = setTimeout(ajustarProporcionesYEscala, 120);
+  });
+
+  document.addEventListener('DOMContentLoaded', cargarPreviewsDiferido);
+  if (document.readyState !== 'loading') cargarPreviewsDiferido();
+
+  // ═══════════════════════════════════════════════════
+  // CONFIGURACIÓN DE TOPS
+  // ═══════════════════════════════════════════════════
+  async function abrirConfig(overlayKey, titulo) {
+    const config = OVERLAY_CONFIGS[overlayKey];
+    if (!config) {
+      mostrarToast('Este overlay no tiene configuración');
+      return;
+    }
+
+    overlayActual = overlayKey;
+    document.getElementById('drawerTitle').textContent = titulo;
+
+    let actuales = {};
+    try {
+      const r = await fetch(`${SERVER_BASE}/api/themes/${overlayKey}`);
+      actuales = await r.json() || {};
+    } catch (e) {}
+
+    valoresActuales = { ...actuales };
+
+    const body = document.getElementById('drawerBody');
+    body.innerHTML = '';
+
+    config.groups.forEach(group => {
+      const groupDiv = document.createElement('div');
+      groupDiv.className = 'cfg-group';
+
+      const title = document.createElement('div');
+      title.className = 'cfg-group-title';
+      title.textContent = group.title;
+      groupDiv.appendChild(title);
+
+      group.vars.forEach(v => {
+        const valor = actuales[v.key] || v.default;
+        const hexOnly = valor.length === 7 ? valor : valor.substring(0, 7);
+
+        const row = document.createElement('div');
+        row.className = 'cfg-row';
+        row.innerHTML = `
+          <label>${v.label}</label>
+          <input type="color" data-var="${v.key}" value="${hexOnly}">
+          <input type="text" data-var-text="${v.key}" value="${hexOnly}" maxlength="7">
+        `;
+        groupDiv.appendChild(row);
+      });
+
+      body.appendChild(groupDiv);
+    });
+
+    const presetsDiv = document.createElement('div');
+    presetsDiv.className = 'cfg-group';
+    const presetTitle = document.createElement('div');
+    presetTitle.className = 'cfg-group-title';
+    presetTitle.textContent = 'Presets';
+    presetsDiv.appendChild(presetTitle);
+
+    const presetGrid = document.createElement('div');
+    presetGrid.className = 'presets';
+
+    Object.entries(config.presets).forEach(([name, vars]) => {
+      const btn = document.createElement('button');
+      btn.className = 'preset-btn';
+
+      const swatch = document.createElement('span');
+      swatch.className = 'preset-swatch';
+      const colores = Object.values(vars).slice(0, 2);
+      swatch.style.background = `linear-gradient(135deg, ${colores[0]}, ${colores[1]})`;
+
+      btn.appendChild(swatch);
+      btn.appendChild(document.createTextNode(name.charAt(0).toUpperCase() + name.slice(1)));
+      btn.onclick = () => aplicarPresetLocal(name);
+
+      presetGrid.appendChild(btn);
+    });
+
+    presetsDiv.appendChild(presetGrid);
+    body.appendChild(presetsDiv);
+
+    body.querySelectorAll('input[data-var]').forEach(input => {
+      input.addEventListener('input', (e) => {
+        const key = e.target.dataset.var;
+        const val = e.target.value;
+        valoresActuales[key] = val;
+        const txt = body.querySelector(`input[data-var-text="${key}"]`);
+        if (txt) txt.value = val;
+      });
+    });
+
+    body.querySelectorAll('input[data-var-text]').forEach(input => {
+      input.addEventListener('input', (e) => {
+        const key = e.target.dataset.varText;
+        let val = e.target.value.trim();
+        if (!val.startsWith('#')) val = '#' + val;
+        if (!/^#[0-9a-fA-F]{6}$/.test(val)) return;
+        valoresActuales[key] = val;
+        const col = body.querySelector(`input[data-var="${key}"]`);
+        if (col) col.value = val;
+      });
+    });
+
+    document.getElementById('drawerOverlay').classList.add('show');
+    document.getElementById('drawer').classList.add('show');
+  }
+
+  function cerrarDrawer() {
+    document.getElementById('drawerOverlay').classList.remove('show');
+    document.getElementById('drawer').classList.remove('show');
+    overlayActual = null;
+    valoresActuales = {};
+  }
+
+  async function guardarConfig() {
+    if (!overlayActual) return;
+    try {
+      const r = await fetch(`${SERVER_BASE}/api/themes/${overlayActual}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(valoresActuales)
+      });
+      const data = await r.json();
+      if (data.success) {
+        mostrarToast('Colores guardados');
+        cerrarDrawer();
+      } else {
+        mostrarToast('Error al guardar');
+      }
+    } catch (e) {
+      mostrarToast('Error de red');
+    }
+  }
+
+  async function resetearConfig() {
+    if (!overlayActual) return;
+    if (!confirm('¿Resetear los colores de este overlay?')) return;
+    try {
+      await fetch(`${SERVER_BASE}/api/themes/${overlayActual}`, { method: 'DELETE' });
+      mostrarToast('Colores reseteados');
+      cerrarDrawer();
+    } catch (e) {
+      mostrarToast('Error');
+    }
+  }
+
+  function aplicarPresetLocal(name) {
+    if (!overlayActual) return;
+    const config = OVERLAY_CONFIGS[overlayActual];
+    const preset = config.presets[name];
+    if (!preset) return;
+
+    valoresActuales = { ...valoresActuales, ...preset };
+
+    Object.entries(preset).forEach(([key, val]) => {
+      const col = document.querySelector(`#drawerBody input[data-var="${key}"]`);
+      const txt = document.querySelector(`#drawerBody input[data-var-text="${key}"]`);
+      if (col) col.value = val;
+      if (txt) txt.value = val;
+    });
+
+    mostrarToast(`Preset "${name}" aplicado`);
+  }
+
+  // ═══════════════════════════════════════════════════
+  // CONFIGURACIÓN DE LA META
+  // ═══════════════════════════════════════════════════
+  async function abrirConfigCristal() {
+    let temaActual = {};
+    try {
+      const r = await fetch(`${SERVER_BASE}/api/themes/crystal`);
+      temaActual = await r.json() || {};
+    } catch (e) {}
+
+    let metaActual = 500;
+    try {
+      const r = await fetch(`${SERVER_BASE}/get-config`);
+      const cfg = await r.json();
+      if (cfg.JAR_META) metaActual = cfg.JAR_META;
+    } catch (e) {}
+
+    cristalMeta = metaActual;
+    cristalValores = { ...temaActual };
+
+    const body = document.getElementById('crystalDrawerBody');
+    body.innerHTML = '';
+
+    CRYSTAL_CONFIG.groups.forEach(group => {
+      const groupDiv = document.createElement('div');
+      groupDiv.className = 'cfg-group';
+
+      const title = document.createElement('div');
+      title.className = 'cfg-group-title';
+      title.textContent = group.title;
+      groupDiv.appendChild(title);
+
+      if (group.inputs) {
+        group.inputs.forEach(inp => {
+          const row = document.createElement('div');
+          row.className = 'cfg-input-row';
+          const value = inp.key === 'meta' ? metaActual : (cristalValores[inp.key] || inp.default);
+          row.innerHTML = `
+            <label>${inp.label}</label>
+            <div>
+              <input type="${inp.type}" data-crystal-key="${inp.key}" value="${value}"
+                     ${inp.type === 'number' ? `min="${inp.min || 1}"` : ''}>
+              ${inp.key === 'meta' ? `<button class="btn primary btn-sm" onclick="guardarMetaCristal()"><i class="ri-save-line"></i> Guardar</button>` : ''}
+            </div>
+          `;
+          groupDiv.appendChild(row);
+        });
+      }
+
+      if (group.checks) {
+        group.checks.forEach(chk => {
+          const val = cristalValores[chk.key];
+          const checked = val === undefined ? chk.default : val !== 'false';
+          const row = document.createElement('div');
+          row.className = 'cfg-check-row';
+          row.innerHTML = `
+            <input type="checkbox" data-crystal-check="${chk.key}" ${checked ? 'checked' : ''}>
+            <label>${chk.label}</label>
+          `;
+          groupDiv.appendChild(row);
+        });
+      }
+
+      if (group.vars) {
+        group.vars.forEach(v => {
+          const valor = cristalValores[v.key] || v.default;
+          const hexOnly = valor.length === 7 ? valor : valor.substring(0, 7);
+
+          const row = document.createElement('div');
+          row.className = 'cfg-row';
+          row.innerHTML = `
+            <label>${v.label}</label>
+            <input type="color" data-crystal-var="${v.key}" value="${hexOnly}">
+            <input type="text" data-crystal-text="${v.key}" value="${hexOnly}" maxlength="7">
+          `;
+          groupDiv.appendChild(row);
+        });
+      }
+
+      body.appendChild(groupDiv);
+    });
+
+    const presetsDiv = document.createElement('div');
+    presetsDiv.className = 'cfg-group';
+    const presetTitle = document.createElement('div');
+    presetTitle.className = 'cfg-group-title';
+    presetTitle.textContent = 'Presets';
+    presetsDiv.appendChild(presetTitle);
+
+    const presetGrid = document.createElement('div');
+    presetGrid.className = 'presets';
+
+    Object.entries(CRYSTAL_CONFIG.presets).forEach(([name, vars]) => {
+      const btn = document.createElement('button');
+      btn.className = 'preset-btn';
+
+      const swatch = document.createElement('span');
+      swatch.className = 'preset-swatch';
+      swatch.style.background = `linear-gradient(135deg, ${vars['--crystal-stroke-1']}, ${vars['--crystal-stroke-2']})`;
+
+      btn.appendChild(swatch);
+      btn.appendChild(document.createTextNode(name.charAt(0).toUpperCase() + name.slice(1)));
+      btn.onclick = () => aplicarPresetCristal(name);
+
+      presetGrid.appendChild(btn);
+    });
+
+    presetsDiv.appendChild(presetGrid);
+    body.appendChild(presetsDiv);
+
+    body.querySelectorAll('input[data-crystal-var]').forEach(input => {
+      input.addEventListener('input', (e) => {
+        const key = e.target.dataset.crystalVar;
+        const val = e.target.value;
+        cristalValores[key] = val;
+        const txt = body.querySelector(`input[data-crystal-text="${key}"]`);
+        if (txt) txt.value = val;
+      });
+    });
+
+    body.querySelectorAll('input[data-crystal-text]').forEach(input => {
+      input.addEventListener('input', (e) => {
+        const key = e.target.dataset.crystalText;
+        let val = e.target.value.trim();
+        if (!val.startsWith('#')) val = '#' + val;
+        if (!/^#[0-9a-fA-F]{6}$/.test(val)) return;
+        cristalValores[key] = val;
+        const col = body.querySelector(`input[data-crystal-var="${key}"]`);
+        if (col) col.value = val;
+      });
+    });
+
+    body.querySelectorAll('input[data-crystal-check]').forEach(input => {
+      input.addEventListener('change', (e) => {
+        const key = e.target.dataset.crystalCheck;
+        cristalValores[key] = e.target.checked ? 'true' : 'false';
+      });
+    });
+
+    document.getElementById('crystalDrawerOverlay').classList.add('show');
+    document.getElementById('crystalDrawer').classList.add('show');
+  }
+
+  function cerrarConfigCristal() {
+    document.getElementById('crystalDrawerOverlay').classList.remove('show');
+    document.getElementById('crystalDrawer').classList.remove('show');
+  }
+
+  async function guardarTemaCristal() {
+    document.querySelectorAll('#crystalDrawerBody input[data-crystal-key]').forEach(inp => {
+      const key = inp.dataset.crystalKey;
+      if (key !== 'meta') cristalValores[key] = inp.value;
+    });
+
+    if (!cristalValores['--meta-label']) cristalValores['--meta-label'] = '🎯 Meta';
+    if (!cristalValores['--topdonor-label']) cristalValores['--topdonor-label'] = '🏆 Top Donador';
+
+    try {
+      const r = await fetch(`${SERVER_BASE}/api/themes/crystal`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(cristalValores)
+      });
+      const data = await r.json();
+      if (data.success) {
+        mostrarToast('Meta actualizada');
+        cerrarConfigCristal();
+      } else {
+        mostrarToast('Error al guardar');
+      }
+    } catch (e) {
+      mostrarToast('Error de red');
+    }
+  }
+
+  async function guardarMetaCristal() {
+    const inp = document.querySelector('#crystalDrawerBody input[data-crystal-key="meta"]');
+    if (!inp) return;
+    const meta = parseInt(inp.value, 10);
+    if (!meta || meta < 1) {
+      mostrarToast('Meta inválida');
+      return;
+    }
+    try {
+      const r = await fetch(`${SERVER_BASE}/api/jar-state/meta`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ meta })
+      });
+      const data = await r.json();
+      if (data.success) {
+        cristalMeta = meta;
+        mostrarToast(`Meta actualizada: ${meta} 💎`);
+      } else {
+        mostrarToast('Error: ' + (data.error || 'desconocido'));
+      }
+    } catch (e) {
+      mostrarToast('Error de red');
+    }
+  }
+
+  async function resetearTemaCristal() {
+    if (!confirm('¿Resetear los colores de la meta?')) return;
+    try {
+      await fetch(`${SERVER_BASE}/api/themes/crystal`, { method: 'DELETE' });
+      mostrarToast('Colores reseteados');
+      cerrarConfigCristal();
+    } catch (e) {
+      mostrarToast('Error');
+    }
+  }
+
+  async function resetearCristal() {
+    if (!confirm('¿Resetear la meta?\n\nSe borrarán TODOS los diamantes y el top donador.')) return;
+    try {
+      const r = await fetch(`${SERVER_BASE}/api/jar-state/reset`, { method: 'POST' });
+      const data = await r.json();
+      if (data.success) mostrarToast('Meta reseteada');
+      else mostrarToast('Error al resetear');
+    } catch (e) {
+      mostrarToast('Error de red');
+    }
+  }
+
+  function aplicarPresetCristal(name) {
+    const preset = CRYSTAL_CONFIG.presets[name];
+    if (!preset) return;
+    Object.assign(cristalValores, preset);
+
+    Object.entries(preset).forEach(([key, val]) => {
+      const col = document.querySelector(`#crystalDrawerBody input[data-crystal-var="${key}"]`);
+      const txt = document.querySelector(`#crystalDrawerBody input[data-crystal-text="${key}"]`);
+      if (col) col.value = val.substring(0, 7);
+      if (txt) txt.value = val.substring(0, 7);
+    });
+
+    mostrarToast(`Preset "${name}" aplicado`);
+  }
+
+  // ═══════════════════════════════════════════════════
+  // UTILIDADES
+  // ═══════════════════════════════════════════════════
+  function copiar(texto, boton) {
+    const finalizar = () => {
+      if (boton) {
+        const original = boton.innerHTML;
+        boton.innerHTML = '<i class="ri-check-line"></i> Copiado';
+        boton.style.color = 'var(--success)';
+        setTimeout(() => {
+          boton.innerHTML = original;
+          boton.style.color = '';
+        }, 1500);
+      }
+      mostrarToast('Copiado al portapapeles');
+    };
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(texto).then(finalizar).catch(() => {
+        fallbackCopy(texto);
+        finalizar();
+      });
+    } else {
+      fallbackCopy(texto);
+      finalizar();
+    }
+  }
+
+  function fallbackCopy(texto) {
+    const ta = document.createElement('textarea');
+    ta.value = texto;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+
+  function probar(url) {
+    window.open(url, '_blank');
+  }
+
+  let toastTimer = null;
+  function mostrarToast(texto) {
+    const toast = document.getElementById('toast');
+    const text = document.getElementById('toastText');
+    if (!toast || !text) return;
+    text.textContent = texto;
+    const isError = /error/i.test(texto);
+    toast.classList.toggle('error', isError);
+    toast.classList.add('show');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 2400);
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      cerrarDrawer();
+      cerrarConfigCristal();
+    }
+  });
+</script>
+
+</body>
+</html>

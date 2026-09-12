@@ -1,0 +1,1769 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuración del Sistema</title>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+    <script src="/js/server-url.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #0d0e11;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+            background-size: 32px 32px;
+            color: #e4e6eb;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            margin: 0;
+            padding: 40px 20px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .card {
+            background: #14161b;
+            padding: 36px 40px;
+            border-radius: 10px;
+            width: 780px;
+            max-width: 100%;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.4), 0 8px 32px rgba(0,0,0,0.35);
+            border: 1px solid #23262e;
+        }
+
+        h2 {
+            text-align: left;
+            color: #f1f2f4;
+            margin: 0 0 6px;
+            font-size: 22px;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+        }
+        p.subtitle {
+            text-align: left;
+            color: #7b8090;
+            font-size: 13px;
+            margin: 0 0 28px;
+        }
+
+        .unsaved-badge {
+            display: none;
+            background: #2a2418;
+            color: #d6a84a;
+            border: 1px solid #443823;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-bottom: 20px;
+        }
+        .unsaved-badge.show { display: inline-block; }
+
+        .guide-banner {
+            background: #161a22;
+            border: 1px solid #1f2836;
+            border-left: 3px solid #4d7cc7;
+            border-radius: 6px;
+            padding: 12px 16px;
+            margin-bottom: 22px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .guide-banner i { font-size: 18px; color: #4d7cc7; margin-top: 1px; }
+        .guide-banner div { flex: 1; }
+        .guide-banner h3 {
+            font-size: 13px;
+            color: #c8cdd6;
+            margin: 0 0 3px;
+            font-weight: 600;
+        }
+        .guide-banner p {
+            font-size: 12.5px;
+            color: #7b8090;
+            margin: 0;
+            line-height: 1.55;
+        }
+        .guide-banner p b { color: #b8bdc7; font-weight: 600; }
+
+        .token-info {
+            background: #16181d;
+            border: 1px solid #23262e;
+            border-radius: 8px;
+            padding: 16px 18px;
+            margin-bottom: 24px;
+        }
+        .token-info h4 {
+            color: #c8cdd6;
+            margin: 0 0 8px;
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+        .token-info h4 i { color: #7b8090; font-size: 15px; }
+        .token-info p {
+            font-size: 12.5px;
+            color: #9198a4;
+            line-height: 1.6;
+            margin: 0 0 6px;
+        }
+        .token-info ul {
+            margin: 6px 0 6px 18px;
+            padding: 0;
+            font-size: 12.5px;
+            color: #9198a4;
+            line-height: 1.75;
+        }
+        .token-info li::marker { color: #4d7cc7; }
+        .token-info code {
+            background: #1c1f26;
+            padding: 1px 6px;
+            border-radius: 3px;
+            color: #a4b0c4;
+            font-size: 12px;
+            font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+        }
+        .token-info .highlight {
+            color: #c8a94d;
+            font-size: 12px;
+            margin-top: 8px;
+            display: block;
+        }
+
+        .input-group { margin-bottom: 20px; }
+
+        .label-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 7px;
+        }
+
+        label {
+            font-size: 13px;
+            color: #b8bdc7;
+            font-weight: 500;
+        }
+
+        .btn-help {
+            font-size: 12px;
+            color: #6b8fbf;
+            cursor: pointer;
+            text-decoration: none;
+            background: none;
+            border: none;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-family: inherit;
+            transition: color 0.15s;
+        }
+        .btn-help:hover { color: #8badd8; text-decoration: underline; }
+        .btn-help i { font-size: 13px; }
+
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 6px;
+            border: 1px solid #2a2e37;
+            background: #0f1115;
+            color: #e4e6eb;
+            font-size: 13px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        input[type="text"]:focus, input[type="password"]:focus {
+            border-color: #4d7cc7;
+            box-shadow: 0 0 0 3px rgba(77,124,199,0.12);
+        }
+        input[type="text"]::placeholder, input[type="password"]::placeholder {
+            color: #4a4f5a;
+        }
+        input.border-green { border-color: #2f855a !important; }
+        input.border-red { border-color: #a03a3a !important; }
+
+        select {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 6px;
+            border: 1px solid #2a2e37;
+            background: #0f1115;
+            color: #e4e6eb;
+            font-size: 13px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.15s;
+            cursor: pointer;
+        }
+        select:focus { border-color: #4d7cc7; }
+
+        .field-help {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 6px;
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+            line-height: 1.5;
+        }
+        .field-help i { font-size: 13px; margin-top: 1px; }
+        .field-help.green { color: #4fa87a; }
+        .field-help.red { color: #c26a6a; }
+
+        .hint-oauth,
+        .hint-chat,
+        .hint-kick,
+        .hint-youtube {
+            border-radius: 6px;
+            padding: 9px 12px;
+            margin-top: 8px;
+            font-size: 12px;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            line-height: 1.55;
+        }
+        .hint-oauth i,
+        .hint-chat i,
+        .hint-kick i,
+        .hint-youtube i { font-size: 14px; margin-top: 1px; flex-shrink: 0; }
+
+        .hint-oauth {
+            background: #171a22;
+            border-left: 2px solid #4d7cc7;
+            color: #8b96a8;
+        }
+        .hint-oauth i { color: #4d7cc7; }
+
+        .hint-chat {
+            background: #141a18;
+            border-left: 2px solid #3f9b78;
+            color: #8ba89c;
+        }
+        .hint-chat i { color: #3f9b78; }
+
+        .hint-kick {
+            background: #141a14;
+            border-left: 2px solid #4a9c3a;
+            color: #8ba88b;
+        }
+        .hint-kick i { color: #4a9c3a; }
+
+        .hint-youtube {
+            background: #1c1414;
+            border-left: 2px solid #a03a3a;
+            color: #c09090;
+        }
+        .hint-youtube i { color: #a03a3a; }
+        .hint-youtube code,
+        .hint-oauth code,
+        .hint-chat code {
+            background: #0f1115;
+            padding: 1px 5px;
+            border-radius: 3px;
+            font-size: 11.5px;
+            font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+            color: #a4b0c4;
+        }
+        .hint-chat b, .hint-oauth b, .hint-kick b, .hint-youtube b {
+            color: #c8cdd6;
+            font-weight: 600;
+        }
+
+        .multi-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+        .multi-row { display: flex; gap: 6px; align-items: center; }
+        .multi-row input { flex: 1; }
+
+        .remove-item-btn {
+            background: #14161b;
+            border: 1px solid #2a2e37;
+            color: #6b7280;
+            width: 38px;
+            height: 38px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.15s;
+            font-size: 16px;
+        }
+        .remove-item-btn:hover {
+            border-color: #a03a3a;
+            color: #c26a6a;
+            background: #1a1414;
+        }
+
+        .add-item-btn {
+            background: transparent;
+            border: 1px dashed #2a2e37;
+            color: #7b8090;
+            padding: 9px;
+            width: 100%;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 12.5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.15s;
+            font-family: inherit;
+        }
+        .add-item-btn:hover {
+            border-color: #4d7cc7;
+            color: #8badd8;
+            background: #141820;
+        }
+
+        .section-divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 32px 0 18px;
+            color: #7b8090;
+            font-weight: 600;
+            font-size: 11.5px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        .section-divider::before,
+        .section-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #23262e;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #16181d;
+            padding: 12px 14px;
+            border-radius: 6px;
+            border: 1px solid #23262e;
+            cursor: pointer;
+            transition: border-color 0.15s;
+            margin-bottom: 18px;
+        }
+        .checkbox-container:hover { border-color: #2f3542; }
+        .checkbox-container input {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            accent-color: #4d7cc7;
+            flex-shrink: 0;
+        }
+        .checkbox-container label {
+            cursor: pointer;
+            color: #c8cdd6;
+            user-select: none;
+            font-size: 13px;
+        }
+        .checkbox-container label b { color: #e4e6eb; font-weight: 600; }
+
+        .action-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .action-row .btn-restore {
+            flex: 0 0 auto;
+            padding: 12px 18px;
+            background: transparent;
+            border: 1px solid #2a2e37;
+            border-radius: 6px;
+            color: #9198a4;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 13px;
+            transition: all 0.15s;
+            font-family: inherit;
+        }
+        .action-row .btn-restore:hover {
+            border-color: #4d7cc7;
+            color: #8badd8;
+        }
+
+        button.main-btn {
+            flex: 1;
+            padding: 12px;
+            background: #4d7cc7;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            font-family: inherit;
+            transition: background 0.15s;
+        }
+        button.main-btn:hover { background: #5a8ad6; }
+        button.main-btn:active { background: #3f6bb0; }
+
+        button.secondary-btn {
+            width: 100%;
+            padding: 11px;
+            background: #14161b;
+            color: #b8bdc7;
+            border: 1px solid #2a2e37;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 13px;
+            margin-top: 8px;
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            font-family: inherit;
+        }
+        button.secondary-btn:hover {
+            background: #1a1d23;
+            border-color: #3a4150;
+            color: #e4e6eb;
+        }
+        button.secondary-btn:disabled { opacity: 0.6; cursor: wait; }
+
+        .footer {
+            text-align: center;
+            margin-top: 22px;
+            padding-top: 18px;
+            border-top: 1px solid #1e2229;
+            font-size: 11.5px;
+            color: #565b66;
+        }
+
+        .account-card {
+            background: #101216;
+            border: 1px solid #23262e;
+            border-radius: 8px;
+            padding: 18px;
+            margin-bottom: 14px;
+        }
+        .account-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #1e2229;
+        }
+        .account-card-header h3 {
+            font-size: 13px;
+            color: #c8cdd6;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            margin: 0;
+        }
+        .account-card-header h3 .account-num {
+            background: #23262e;
+            color: #9198a4;
+            width: 22px;
+            height: 22px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11.5px;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+        }
+        .account-remove-btn {
+            background: transparent;
+            border: 1px solid #2a2e37;
+            color: #7b8090;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 11.5px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.15s;
+            font-family: inherit;
+        }
+        .account-remove-btn:hover {
+            border-color: #a03a3a;
+            color: #c26a6a;
+            background: #1a1414;
+        }
+        .account-card .input-group { margin-bottom: 14px; }
+        .account-card label { font-size: 12.5px; }
+
+        .password-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .password-wrap input {
+            padding-right: 40px !important;
+            width: 100%;
+        }
+        .toggle-eye-btn {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            border: none;
+            color: #6b7280;
+            cursor: pointer;
+            font-size: 15px;
+            padding: 5px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.15s;
+            line-height: 1;
+        }
+        .toggle-eye-btn:hover { color: #b8bdc7; }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(8,9,11,0.85);
+            backdrop-filter: blur(4px);
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .modal.open { display: flex; }
+        .modal-content {
+            background: #14161b;
+            padding: 26px 28px;
+            border-radius: 10px;
+            width: 600px;
+            max-width: 100%;
+            border: 1px solid #2a2e37;
+            color: #e4e6eb;
+            max-height: 88vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid #1e2229;
+        }
+        .modal-header h3 {
+            font-size: 15px;
+            color: #e4e6eb;
+            margin: 0;
+            font-weight: 600;
+        }
+        .close-btn {
+            color: #6b7280;
+            font-size: 22px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            line-height: 1;
+            padding: 0 4px;
+            transition: color 0.15s;
+        }
+        .close-btn:hover { color: #e4e6eb; }
+
+        .modal-step { margin-bottom: 18px; }
+        .modal-step h4 {
+            font-size: 13.5px;
+            color: #c8cdd6;
+            margin: 0 0 7px;
+            display: flex;
+            align-items: flex-start;
+            gap: 9px;
+            font-weight: 600;
+        }
+        .modal-step h4 span {
+            background: #23262e;
+            color: #9198a4;
+            width: 22px;
+            height: 22px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11.5px;
+            font-weight: 600;
+            flex-shrink: 0;
+            font-variant-numeric: tabular-nums;
+        }
+        .modal-step p {
+            font-size: 13px;
+            color: #9198a4;
+            line-height: 1.7;
+            margin: 0 0 6px;
+        }
+        .modal-step code {
+            background: #0f1115;
+            padding: 2px 7px;
+            border-radius: 3px;
+            color: #a4b0c4;
+            font-size: 12px;
+            word-break: break-all;
+            font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+            border: 1px solid #1e2229;
+        }
+        .modal-step ul {
+            margin: 8px 0 0 18px;
+            padding: 0;
+        }
+        .modal-step li {
+            margin-bottom: 6px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #9198a4;
+        }
+        .modal-step li code { color: #a4b0c4; }
+        .modal-step li::marker { color: #4d7cc7; }
+
+        .external-link {
+            display: inline-block;
+            margin-top: 16px;
+            padding: 10px 18px;
+            background: #4d7cc7;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            transition: background 0.15s;
+        }
+        .external-link:hover { background: #5a8ad6; }
+
+        .alert-box {
+            background: #1a1414;
+            border: 1px solid #3a2222;
+            border-left: 3px solid #a03a3a;
+            padding: 11px 14px;
+            border-radius: 6px;
+            font-size: 12.5px;
+            color: #c09090;
+            margin-bottom: 16px;
+            line-height: 1.6;
+        }
+        .alert-box.info {
+            background: #141820;
+            border-color: #1f2836;
+            border-left-color: #4d7cc7;
+            color: #8ba0c0;
+        }
+
+        .platform-toggles {
+            background: #101216;
+            border: 1px solid #23262e;
+            border-radius: 8px;
+            padding: 16px 18px;
+            margin-bottom: 24px;
+        }
+        .platform-toggles-title {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-weight: 600;
+            color: #c8cdd6;
+            font-size: 13px;
+            margin-bottom: 5px;
+        }
+        .platform-toggles-title i { font-size: 15px; color: #7b8090; }
+        .platform-toggles-hint {
+            font-size: 12px;
+            color: #6b7280;
+            margin: 0 0 14px;
+            line-height: 1.55;
+        }
+        .toggle-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 8px;
+        }
+        .toggle-item {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            background: #0f1115;
+            border: 1px solid #23262e;
+            border-radius: 6px;
+            padding: 9px 12px;
+            cursor: pointer;
+            transition: border-color 0.15s;
+            user-select: none;
+        }
+        .toggle-item:hover { border-color: #3a4150; }
+        .toggle-item input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            accent-color: #4d7cc7;
+            flex-shrink: 0;
+        }
+        .toggle-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #c8cdd6;
+        }
+        .toggle-label i { font-size: 15px; }
+        .platform-section.hidden { display: none; }
+
+        .tts-panel {
+            background: #101216;
+            border: 1px solid #23262e;
+            border-radius: 8px;
+            padding: 18px;
+            margin-bottom: 20px;
+        }
+        .tts-slider-row {
+            display: grid;
+            grid-template-columns: 1fr 70px;
+            gap: 12px;
+            align-items: center;
+        }
+        .tts-slider-val {
+            font-size: 12px;
+            color: #8badd8;
+            font-weight: 600;
+            text-align: right;
+            font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+            font-variant-numeric: tabular-nums;
+        }
+        input[type="range"] {
+            width: 100%;
+            accent-color: #4d7cc7;
+            cursor: pointer;
+            height: 4px;
+        }
+
+        @media (max-width: 640px) {
+            body { padding: 16px 12px; }
+            .card { padding: 24px 20px; }
+            h2 { font-size: 19px; }
+            .action-row { flex-direction: column; }
+            .action-row .btn-restore { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h2>Configuración</h2>
+        <p class="subtitle">Completa los apartados que necesites. Nada es obligatorio excepto lo que uses.</p>
+
+        <div id="unsavedBadge" class="unsaved-badge">Cambios sin guardar</div>
+
+        <div class="token-info">
+            <h4><i class="ri-key-2-line"></i> Varias cuentas de Twitch</h4>
+            <p>Puedes registrar más de una cuenta de Twitch, cada una con sus tokens, su bot y sus canales. Útil cuando:</p>
+            <ul>
+                <li>Moderas canales donde no eres editor (el dueño te pasa su token).</li>
+                <li>Quieres tener varias identidades de bot.</li>
+                <li>Necesitas cambiar título o categoría en canales con permisos distintos.</li>
+            </ul>
+            <span class="highlight">Si solo usas una cuenta, deja la primera y ya está.</span>
+        </div>
+
+        <div class="guide-banner">
+            <i class="ri-information-line"></i>
+            <div>
+                <h3>Cada plataforma es independiente</h3>
+                <p>Puedes configurar solo Twitch, solo TikTok, solo Kick o solo YouTube. <b>No hace falta llenar todo.</b></p>
+            </div>
+        </div>
+
+        <div class="platform-toggles">
+            <div class="platform-toggles-title">
+                <i class="ri-toggle-line"></i> Plataformas activas
+            </div>
+            <p class="platform-toggles-hint">
+                Desactiva las que no uses. Si están apagadas, el servidor no intentará conectarse
+                y no verás errores en la terminal.
+            </p>
+            <div class="toggle-grid">
+                <label class="toggle-item">
+                    <input type="checkbox" id="platformTwitch" onchange="onPlatformToggle()">
+                    <span class="toggle-label"><i class="ri-twitch-fill" style="color:#a78bfa"></i> Twitch</span>
+                </label>
+                <label class="toggle-item">
+                    <input type="checkbox" id="platformTikTok" onchange="onPlatformToggle()">
+                    <span class="toggle-label"><i class="ri-tiktok-fill" style="color:#fe2c55"></i> TikTok</span>
+                </label>
+                <label class="toggle-item">
+                    <input type="checkbox" id="platformKick" onchange="onPlatformToggle()">
+                    <span class="toggle-label"><i class="ri-live-fill" style="color:#53fc18"></i> Kick</span>
+                </label>
+                <label class="toggle-item">
+                    <input type="checkbox" id="platformYouTube" onchange="onPlatformToggle()">
+                    <span class="toggle-label"><i class="ri-youtube-fill" style="color:#ff0000"></i> YouTube</span>
+                </label>
+            </div>
+        </div>
+
+        <div id="section-twitch" class="platform-section">
+            <div class="section-divider"><span>Cuentas de Twitch</span></div>
+
+            <div id="twitchAccountsContainer"></div>
+
+            <button class="add-item-btn" type="button" onclick="addTwitchAccount()" style="margin-bottom: 22px;">
+                <i class="ri-add-line"></i> Añadir otra cuenta de Twitch
+            </button>
+        </div>
+
+        <div id="section-tiktok" class="platform-section">
+            <div class="section-divider"><span>TikTok (opcional)</span></div>
+
+            <div class="input-group">
+                <div class="label-row">
+                    <label>TikTok Users:</label>
+                    <span style="font-size: 12px; color: #6b7280;">0 o más</span>
+                </div>
+                <div id="tiktokUsersList" class="multi-list"></div>
+                <button class="add-item-btn" type="button" onclick="addTikTokUser()"><i class="ri-add-line"></i> Añadir otro usuario de TikTok</button>
+                <div class="field-help" id="tiktokUsersHelp"><i class="ri-information-line"></i> Sin @, solo el nombre. Necesitas estar en vivo para que aparezcan mensajes.</div>
+            </div>
+        </div>
+
+        <div id="section-kick" class="platform-section">
+            <div class="section-divider"><span>Kick (opcional)</span></div>
+
+            <div class="input-group">
+                <div class="label-row">
+                    <label>Kick Users:</label>
+                    <span style="font-size: 12px; color: #6b7280;">0 o más</span>
+                </div>
+                <div id="kickUsersList" class="multi-list"></div>
+                <button class="add-item-btn" type="button" onclick="addKickUser()"><i class="ri-add-line"></i> Añadir otro usuario de Kick</button>
+                <div class="hint-kick">
+                    <i class="ri-information-line"></i>
+                    <span>Solo necesitas el nombre de usuario de Kick. <b>Sin tokens ni APIs.</b></span>
+                </div>
+            </div>
+        </div>
+
+        <div id="section-youtube" class="platform-section">
+            <div class="section-divider"><span>YouTube (opcional)</span></div>
+
+            <div class="input-group">
+                <div class="label-row">
+                    <label>YouTube Canales:</label>
+                    <button class="btn-help" type="button" onclick="toggleModal('modalYouTube')"><i class="ri-question-line"></i> ¿Cómo obtenerlo?</button>
+                </div>
+                <div id="youtubeUsersList" class="multi-list"></div>
+                <button class="add-item-btn" type="button" onclick="addYouTubeUser()"><i class="ri-add-line"></i> Añadir otro canal de YouTube</button>
+                <div class="hint-youtube">
+                    <i class="ri-information-line"></i>
+                    <span>Acepta <code>@handle</code>, URL completa del canal o ID <code>UC...</code>. <b>Sin API Key ni OAuth.</b></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-divider"><span>Texto a Voz</span></div>
+
+        <div class="checkbox-container">
+            <input type="checkbox" id="ttsEnabled" onchange="onFieldChange()">
+            <label for="ttsEnabled"><b>Activar TTS</b> — lee los mensajes en voz alta</label>
+        </div>
+
+        <div class="tts-panel">
+            <div class="input-group" style="margin-bottom: 16px;">
+                <div class="label-row">
+                    <label>Voz:</label>
+                    <span style="font-size: 12px; color: #6b7280;">Español + inglés</span>
+                </div>
+                <select id="ttsVoice" onchange="onFieldChange()">
+                    <option value="es-ES-AlvaroNeural">Álvaro — Español (España) ♂</option>
+                    <option value="es-ES-ElviraNeural">Elvira — Español (España) ♀</option>
+                    <option value="es-MX-DaliaNeural">Dalia — Español (México) ♀</option>
+                    <option value="es-MX-JorgeNeural">Jorge — Español (México) ♂</option>
+                    <option value="es-AR-ElenaNeural">Elena — Español (Argentina) ♀</option>
+                    <option value="es-AR-TomasNeural">Tomás — Español (Argentina) ♂</option>
+                    <option value="es-CO-SalomeNeural">Salomé — Español (Colombia) ♀</option>
+                    <option value="es-CO-GonzaloNeural">Gonzalo — Español (Colombia) ♂</option>
+                    <option value="es-PE-CamilaNeural">Camila — Español (Perú) ♀</option>
+                    <option value="es-CL-CatalinaNeural">Catalina — Español (Chile) ♀</option>
+                    <option value="es-VE-PaolaNeural">Paola — Español (Venezuela) ♀</option>
+                    <option value="en-US-AriaNeural">Aria — English (US) ♀</option>
+                    <option value="en-US-GuyNeural">Guy — English (US) ♂</option>
+                </select>
+            </div>
+
+            <div class="input-group" style="margin-bottom: 14px;">
+                <div class="label-row">
+                    <label>Velocidad:</label>
+                    <span class="tts-slider-val" id="ttsRateVal">+0%</span>
+                </div>
+                <input type="range" id="ttsRate" min="-50" max="50" value="0"
+                    oninput="document.getElementById('ttsRateVal').textContent=(this.value>0?'+':'')+this.value+'%'; onFieldChange();">
+            </div>
+
+            <div class="input-group" style="margin-bottom: 14px;">
+                <div class="label-row">
+                    <label>Tono:</label>
+                    <span class="tts-slider-val" id="ttsPitchVal">+0Hz</span>
+                </div>
+                <input type="range" id="ttsPitch" min="-50" max="50" value="0"
+                    oninput="document.getElementById('ttsPitchVal').textContent=(this.value>0?'+':'')+this.value+'Hz'; onFieldChange();">
+            </div>
+
+            <div class="input-group" style="margin-bottom: 4px;">
+                <div class="label-row">
+                    <label>Volumen:</label>
+                    <span class="tts-slider-val" id="ttsVolumeVal">80%</span>
+                </div>
+                <input type="range" id="ttsVolume" min="0" max="100" value="80"
+                    oninput="document.getElementById('ttsVolumeVal').textContent=this.value+'%'; onFieldChange();">
+            </div>
+        </div>
+
+        <div class="input-group">
+            <div class="label-row">
+                <label>Leer de estas plataformas:</label>
+            </div>
+            <div class="toggle-grid">
+                <label class="toggle-item">
+                    <input type="checkbox" id="ttsFromTwitch" onchange="onFieldChange()">
+                    <span class="toggle-label"><i class="ri-twitch-fill" style="color:#a78bfa"></i> Twitch</span>
+                </label>
+                <label class="toggle-item">
+                    <input type="checkbox" id="ttsFromTikTok" onchange="onFieldChange()">
+                    <span class="toggle-label"><i class="ri-tiktok-fill" style="color:#fe2c55"></i> TikTok</span>
+                </label>
+                <label class="toggle-item">
+                    <input type="checkbox" id="ttsFromKick" onchange="onFieldChange()">
+                    <span class="toggle-label"><i class="ri-live-fill" style="color:#53fc18"></i> Kick</span>
+                </label>
+                <label class="toggle-item">
+                    <input type="checkbox" id="ttsFromYouTube" onchange="onFieldChange()">
+                    <span class="toggle-label"><i class="ri-youtube-fill" style="color:#ff0000"></i> YouTube</span>
+                </label>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <div class="label-row">
+                <label>Leer estos eventos:</label>
+            </div>
+            <div class="toggle-grid">
+                <label class="toggle-item">
+                    <input type="checkbox" id="ttsEventChat" onchange="onFieldChange()">
+                    <span class="toggle-label">Chat</span>
+                </label>
+                <label class="toggle-item">
+                    <input type="checkbox" id="ttsEventGifts" onchange="onFieldChange()">
+                    <span class="toggle-label">Regalos</span>
+                </label>
+                <label class="toggle-item">
+                    <input type="checkbox" id="ttsEventFollows" onchange="onFieldChange()">
+                    <span class="toggle-label">Follows</span>
+                </label>
+                <label class="toggle-item">
+                    <input type="checkbox" id="ttsEventSubs" onchange="onFieldChange()">
+                    <span class="toggle-label">Subs</span>
+                </label>
+            </div>
+        </div>
+
+        <button class="secondary-btn" id="btnProbarTTS" onclick="probarVozTTS(this)" style="margin-bottom: 22px;">
+            <i class="ri-volume-up-line"></i> Probar voz (solo en este navegador)
+        </button>
+
+        <div class="checkbox-container">
+            <input type="checkbox" id="enableCensorship" onchange="onFieldChange()">
+            <label for="enableCensorship">Activar Filtro de Censura Positiva (cambia palabras feas por bonitas)</label>
+        </div>
+
+        <div class="action-row">
+            <button class="main-btn" onclick="saveConfig()">Guardar y abrir panel</button>
+            <button class="btn-restore" onclick="restoreFromServer()" title="Restaurar datos guardados en el servidor">Restaurar</button>
+        </div>
+
+        <button class="secondary-btn" onclick="window.location.href = window.SERVER_BASE + '/'"><i class="ri-arrow-left-line"></i> Volver al panel sin guardar</button>
+
+        <div class="footer">
+            Tus datos se guardan en <code style="color:#7b8090;">config.json</code>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL: TWITCH CLIENT ID ==================== -->
+    <div id="modalClient" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Obtener el Twitch Client ID</h3>
+                <button class="close-btn" onclick="closeModal('modalClient')">&times;</button>
+            </div>
+
+            <div class="alert-box info">
+                Todo se saca desde el mismo sitio: <code>twitchtokengenerator.com</code>. Ahí generas el token y también te da el <b>Client ID</b>. No hace falta ir a ningún otro lado.
+            </div>
+
+            <div class="modal-step">
+                <h4><span>1</span> Abre el generador</h4>
+                <p>Ve a <b>https://twitchtokengenerator.com/</b> y pulsa <b>Generate Token</b>.</p>
+            </div>
+
+            <div class="modal-step">
+                <h4><span>2</span> Inicia sesión con Twitch</h4>
+                <p>Te pedirá iniciar sesión con tu cuenta. Acepta los permisos que muestra.</p>
+            </div>
+
+            <div class="modal-step">
+                <h4><span>3</span> Elige Custom Scope Token</h4>
+                <p>Cuando aparezcan las opciones, pulsa <b>Custom Scope Token</b> (no elijas Bot Chat Token, porque no te dejará banear ni crear encuestas).</p>
+            </div>
+
+            <div class="modal-step">
+                <h4><span>4</span> Marca estos permisos</h4>
+                <ul>
+                    <li><code>chat:read</code> y <code>chat:edit</code></li>
+                    <li><code>channel:manage:broadcast</code></li>
+                    <li><code>channel:manage:polls</code></li>
+                    <li><code>channel:manage:predictions</code></li>
+                    <li><code>moderator:manage:banned_users</code></li>
+                </ul>
+            </div>
+
+            <div class="modal-step">
+                <h4><span>5</span> Copia tus datos</h4>
+                <p>La página te mostrará dos cosas:</p>
+                <ul>
+                    <li><b>Client ID</b> → pégalo en el campo correspondiente.</li>
+                    <li><b>Access Token</b> → pégalo en el campo <b>Twitch Token (API)</b>.</li>
+                </ul>
+                <p style="margin-top: 8px; color: #c8a94d;">Copia el <b>Access Token</b>, no el Refresh Token.</p>
+            </div>
+
+            <a href="https://twitchtokengenerator.com/" target="_blank" class="external-link">Ir al generador</a>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL: TWITCH TOKEN ==================== -->
+    <div id="modalToken" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Generar el Twitch OAuth Token</h3>
+                <button class="close-btn" onclick="closeModal('modalToken')">&times;</button>
+            </div>
+
+            <div class="alert-box info">
+                Todo se saca desde el mismo sitio: <code>twitchtokengenerator.com</code>. Si ya generaste el Client ID ahí, esta vez solo necesitas copiar el <b>Access Token</b>.
+            </div>
+
+            <div class="alert-box">
+                <b>Importante:</b> debes elegir <b>Custom Scope Token</b>. Si eliges Bot Chat Token, no podrás banear ni crear encuestas.
+            </div>
+
+            <div class="modal-step">
+                <h4><span>1</span> Abre el generador</h4>
+                <p>Ve a <b>https://twitchtokengenerator.com/</b> y pulsa <b>Generate Token</b>. Inicia sesión con la cuenta correcta.</p>
+            </div>
+
+            <div class="modal-step">
+                <h4><span>2</span> Elige el tipo correcto</h4>
+                <p>Cuando aparezcan las opciones, pulsa <b>Custom Scope Token</b>.</p>
+            </div>
+
+            <div class="modal-step">
+                <h4><span>3</span> Marca estos permisos</h4>
+                <ul>
+                    <li><code>chat:read</code> y <code>chat:edit</code></li>
+                    <li><code>channel:manage:broadcast</code></li>
+                    <li><code>channel:manage:polls</code></li>
+                    <li><code>channel:manage:predictions</code></li>
+                    <li><code>moderator:manage:banned_users</code></li>
+                </ul>
+            </div>
+
+            <div class="modal-step">
+                <h4><span>4</span> Copia tu Access Token</h4>
+                <p>Copia el <b>Access Token</b> (empieza sin "oauth:") y pégalo en el campo <b>Twitch Token (API)</b>.</p>
+                <p style="margin-top: 8px; color: #c8a94d;">No copies el Refresh Token ni el Client Secret. Solo el <b>Access Token</b>.</p>
+            </div>
+
+            <a href="https://twitchtokengenerator.com/" target="_blank" class="external-link">Ir al generador de tokens</a>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL: YOUTUBE ==================== -->
+    <div id="modalYouTube" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Obtener el canal de YouTube</h3>
+                <button class="close-btn" onclick="closeModal('modalYouTube')">&times;</button>
+            </div>
+
+            <div class="alert-box info">
+                No necesitas API Key ni OAuth. Solo el identificador del canal. Tienes tres formas, elige la que prefieras.
+            </div>
+
+            <div class="modal-step">
+                <h4><span>1</span> Forma fácil: el @handle</h4>
+                <p>Abre tu canal en YouTube. En la barra de direcciones verás algo como:</p>
+                <p><code>https://www.youtube.com/@tucanal</code></p>
+                <p>Copia desde la @ hasta el final y pégalo en el campo.</p>
+                <p style="margin-top: 6px; color: #c8a94d;">Si no sabes cuál es tu @handle, ve a <b>https://www.youtube.com/account</b> y aparece ahí.</p>
+            </div>
+
+            <div class="modal-step">
+                <h4><span>2</span> Forma estable: el Channel ID</h4>
+                <p>El @handle puede cambiar, pero el Channel ID nunca cambia. Es más confiable.</p>
+                <p><b>Paso A:</b> Abre tu canal en YouTube y pulsa <code>F12</code> para abrir DevTools.</p>
+                <p><b>Paso B:</b> Ve a la pestaña <code>Console</code> y pega esto:</p>
+                <p><code>document.querySelector('meta[itemprop="channelId"]').content</code></p>
+                <p><b>Paso C:</b> Te devuelve algo como <code>UCq0wtwcAmYtS3VUCgh1BWAg</code>. Copia ese valor.</p>
+            </div>
+
+            <div class="modal-step">
+                <h4><span>3</span> Forma rápida: la URL completa</h4>
+                <p>También puedes pegar la URL completa del canal, el sistema la procesa igual:</p>
+                <p><code>https://www.youtube.com/@tucanal</code></p>
+            </div>
+
+            <div class="modal-step">
+                <h4><span>4</span> ¿Varios canales?</h4>
+                <p>Puedes añadir tantos como quieras con el botón <b>Añadir otro canal de YouTube</b>. Cada uno en su propia línea.</p>
+            </div>
+
+            <a href="https://www.youtube.com/account" target="_blank" class="external-link" style="background: #a03a3a;">Ver mi cuenta de YouTube</a>
+        </div>
+    </div>
+
+    <script>
+        const STORAGE_KEY = 'togi_config_backup_v2';
+        let hasUnsavedChanges = false;
+        let originalValues = {};
+        let currentServerConfig = {};
+        let accountCounter = 0;
+
+        function escapeHtml(s) {
+            return String(s || '').replace(/[&<>"']/g, c => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            })[c]);
+        }
+
+        function uid() {
+            accountCounter++;
+            return 'acc_' + Date.now() + '_' + accountCounter;
+        }
+
+        function toggleTokenVisibility(btn) {
+            const wrapper = btn.closest('.password-wrap');
+            if (!wrapper) return;
+            const input = wrapper.querySelector('input');
+            if (!input) return;
+            const isPassword = input.type === 'password';
+            input.type = isPassword ? 'text' : 'password';
+            const icon = btn.querySelector('i');
+            if (icon) {
+                icon.className = isPassword ? 'ri-eye-off-line' : 'ri-eye-line';
+            }
+            btn.title = isPassword ? 'Ocultar' : 'Mostrar';
+        }
+
+        function addTwitchAccount(data) {
+            const container = document.getElementById('twitchAccountsContainer');
+            const id = (data && data.id) || uid();
+            const card = document.createElement('div');
+            card.className = 'account-card';
+            card.dataset.accountId = id;
+
+            const clientId = escapeHtml((data && data.clientId) || '');
+            const oauthToken = escapeHtml(((data && data.oauthToken) || '').replace('oauth:', ''));
+            const oauthTokenChat = escapeHtml(((data && data.oauthTokenChat) || '').replace('oauth:', ''));
+            const botUsername = escapeHtml((data && data.botUsername) || '');
+
+            card.innerHTML = '' +
+                '<div class="account-card-header">' +
+                '  <h3><span class="account-num"></span> Cuenta de Twitch</h3>' +
+                '  <button class="account-remove-btn" type="button" onclick="removeTwitchAccount(\'' + id + '\')">' +
+                '    <i class="ri-delete-bin-line"></i> Quitar cuenta' +
+                '  </button>' +
+                '</div>' +
+                '<div class="input-group">' +
+                '  <div class="label-row">' +
+                '    <label>Twitch Client ID:</label>' +
+                '    <button class="btn-help" type="button" onclick="toggleModal(\'modalClient\')"><i class="ri-question-line"></i> ¿Cómo obtenerlo?</button>' +
+                '  </div>' +
+                '  <div class="password-wrap">' +
+                '    <input type="password" class="acc-client-id" placeholder="Pega aquí el Client ID" value="' + clientId + '" oninput="onFieldChange()" autocomplete="off" spellcheck="false">' +
+                '    <button class="toggle-eye-btn" type="button" onclick="toggleTokenVisibility(this)" title="Mostrar"><i class="ri-eye-line"></i></button>' +
+                '  </div>' +
+                '</div>' +
+                '<div class="input-group">' +
+                '  <div class="label-row">' +
+                '    <label>Twitch Token (API):</label>' +
+                '    <button class="btn-help" type="button" onclick="toggleModal(\'modalToken\')"><i class="ri-question-line"></i> ¿Cómo generarlo?</button>' +
+                '  </div>' +
+                '  <div class="password-wrap">' +
+                '    <input type="password" class="acc-oauth-token" placeholder="Pega el token API (sin oauth:)" value="' + oauthToken + '" oninput="onFieldChange()" autocomplete="off" spellcheck="false">' +
+                '    <button class="toggle-eye-btn" type="button" onclick="toggleTokenVisibility(this)" title="Mostrar"><i class="ri-eye-line"></i></button>' +
+                '  </div>' +
+                '  <div class="hint-oauth">' +
+                '    <i class="ri-information-line"></i>' +
+                '    <span><b>No escribas "oauth:"</b>. El sistema lo agrega solo.</span>' +
+                '  </div>' +
+                '</div>' +
+                '<div class="input-group">' +
+                '  <div class="label-row">' +
+                '    <label>Twitch Token (Chat):</label>' +
+                '    <span style="font-size: 12px; color: #6b7280;">Opcional</span>' +
+                '  </div>' +
+                '  <div class="password-wrap">' +
+                '    <input type="password" class="acc-oauth-token-chat" placeholder="Pega el token de chat (sin oauth:)" value="' + oauthTokenChat + '" oninput="onFieldChange()" autocomplete="off" spellcheck="false">' +
+                '    <button class="toggle-eye-btn" type="button" onclick="toggleTokenVisibility(this)" title="Mostrar"><i class="ri-eye-line"></i></button>' +
+                '  </div>' +
+                '  <div class="hint-chat">' +
+                '    <i class="ri-information-line"></i>' +
+                '    <span>Solo necesita <code>chat:read</code> y <code>chat:edit</code>. Si no lo pones, se usa el token API.</span>' +
+                '  </div>' +
+                '</div>' +
+                '<div class="input-group">' +
+                '  <div class="label-row">' +
+                '    <label>Twitch Bot Username:</label>' +
+                '    <span style="font-size: 12px; color: #6b7280;">El usuario de esta cuenta</span>' +
+                '  </div>' +
+                '  <input type="text" class="acc-bot-username" placeholder="usuario" value="' + botUsername + '" oninput="onFieldChange()">' +
+                '</div>' +
+                '<div class="input-group" style="margin-bottom: 0;">' +
+                '  <div class="label-row">' +
+                '    <label>Canales de esta cuenta:</label>' +
+                '    <span style="font-size: 12px; color: #6b7280;">1 o más</span>' +
+                '  </div>' +
+                '  <div class="multi-list acc-channels-list"></div>' +
+                '  <button class="add-item-btn" type="button" onclick="addChannelToAccount(\'' + id + '\')"><i class="ri-add-line"></i> Añadir otro canal</button>' +
+                '</div>';
+
+            container.appendChild(card);
+
+            const channels = (data && Array.isArray(data.channels)) ? data.channels : [];
+            if (channels.length === 0) {
+                addChannelToAccount(id, '');
+            } else {
+                channels.forEach(c => addChannelToAccount(id, c));
+            }
+
+            renumberAccounts();
+        }
+
+        function removeTwitchAccount(id) {
+            const container = document.getElementById('twitchAccountsContainer');
+            const card = container.querySelector('[data-account-id="' + id + '"]');
+            if (!card) return;
+            const total = container.querySelectorAll('.account-card').length;
+            if (total === 1) {
+                alert('Debes tener al menos una cuenta de Twitch (aunque esté vacía).');
+                return;
+            }
+            if (!confirm('¿Quitar esta cuenta de Twitch y todos sus canales?')) return;
+            card.remove();
+            renumberAccounts();
+            onFieldChange();
+        }
+
+        function renumberAccounts() {
+            const cards = document.querySelectorAll('#twitchAccountsContainer .account-card');
+            cards.forEach((card, i) => {
+                const num = card.querySelector('.account-num');
+                if (num) num.textContent = (i + 1);
+            });
+        }
+
+        function addChannelToAccount(accountId, value) {
+            const card = document.querySelector('[data-account-id="' + accountId + '"]');
+            if (!card) return;
+            const list = card.querySelector('.acc-channels-list');
+            const row = document.createElement('div');
+            row.className = 'multi-row';
+            row.innerHTML = '' +
+                '<input type="text" class="twitch-channel-input" placeholder="nombre_del_canal" value="' + escapeHtml(value || '') + '" oninput="onFieldChange()">' +
+                '<button class="remove-item-btn" type="button" onclick="removeChannelFromAccount(this)" title="Quitar"><i class="ri-close-line"></i></button>';
+            list.appendChild(row);
+            if (!value) {
+                const input = row.querySelector('input');
+                if (input) input.focus();
+            }
+        }
+
+        function removeChannelFromAccount(btn) {
+            const row = btn.closest('.multi-row');
+            if (!row) return;
+            const list = row.parentElement;
+            row.remove();
+            if (list.children.length === 0) {
+                const accountCard = list.closest('.account-card');
+                if (accountCard) addChannelToAccount(accountCard.dataset.accountId, '');
+            }
+            onFieldChange();
+        }
+
+        function getAccountsFromDOM() {
+            const cards = document.querySelectorAll('#twitchAccountsContainer .account-card');
+            const accounts = [];
+            cards.forEach(card => {
+                const id = card.dataset.accountId;
+                const clientId = card.querySelector('.acc-client-id').value.trim();
+                const oauthToken = card.querySelector('.acc-oauth-token').value.trim();
+                const oauthTokenChat = card.querySelector('.acc-oauth-token-chat').value.trim();
+                const botUsername = card.querySelector('.acc-bot-username').value.trim();
+                const channels = [];
+                card.querySelectorAll('.twitch-channel-input').forEach(inp => {
+                    const v = inp.value.trim();
+                    if (v) channels.push(v);
+                });
+                if (clientId || oauthToken || botUsername || channels.length > 0) {
+                    accounts.push({ id, clientId, oauthToken, oauthTokenChat, botUsername, channels });
+                }
+            });
+            return accounts;
+        }
+
+        function addMultiInput(containerId, value, placeholder, inputClass) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            const row = document.createElement('div');
+            row.className = 'multi-row';
+            row.innerHTML = '' +
+                '<input type="text" class="' + inputClass + '" placeholder="' + escapeHtml(placeholder) + '" value="' + escapeHtml(value || '') + '" oninput="onFieldChange()">' +
+                '<button class="remove-item-btn" type="button" onclick="removeMultiInput(this)" title="Quitar"><i class="ri-close-line"></i></button>';
+            container.appendChild(row);
+            if (!value) {
+                const newInput = row.querySelector('input');
+                if (newInput) newInput.focus();
+            }
+        }
+
+        function removeMultiInput(btn) {
+            const row = btn.closest('.multi-row');
+            if (!row) return;
+            const container = row.parentElement;
+            const containerId = container.id;
+            row.remove();
+            if (container.children.length === 0) {
+                if (containerId === 'tiktokUsersList') addMultiInput(containerId, '', '@usuario', 'tiktok-user-input');
+                else if (containerId === 'kickUsersList') addMultiInput(containerId, '', 'usuario_kick', 'kick-user-input');
+                else if (containerId === 'youtubeUsersList') addMultiInput(containerId, '', '@canal o UCxxxx', 'youtube-user-input');
+            }
+            onFieldChange();
+        }
+
+        function getMultiValues(containerId, inputClass) {
+            const container = document.getElementById(containerId);
+            if (!container) return [];
+            const values = [];
+            container.querySelectorAll('input.' + inputClass).forEach(i => {
+                const v = i.value.trim();
+                if (v) values.push(v);
+            });
+            return values;
+        }
+
+        function clearMultiInputs(containerId) {
+            const container = document.getElementById(containerId);
+            if (container) container.innerHTML = '';
+        }
+
+        function addTikTokUser(value) { addMultiInput('tiktokUsersList', value || '', '@usuario', 'tiktok-user-input'); }
+        function addKickUser(value) { addMultiInput('kickUsersList', value || '', 'usuario_kick', 'kick-user-input'); }
+        function addYouTubeUser(value) { addMultiInput('youtubeUsersList', value || '', '@canal o UCxxxx', 'youtube-user-input'); }
+
+        function loadTikTokUsers(users) {
+            clearMultiInputs('tiktokUsersList');
+            if (Array.isArray(users) && users.length > 0) users.forEach(u => addTikTokUser(u));
+            else addTikTokUser('');
+        }
+        function loadKickUsers(users) {
+            clearMultiInputs('kickUsersList');
+            if (Array.isArray(users) && users.length > 0) users.forEach(u => addKickUser(u));
+            else addKickUser('');
+        }
+        function loadYouTubeUsers(users) {
+            clearMultiInputs('youtubeUsersList');
+            if (Array.isArray(users) && users.length > 0) users.forEach(u => addYouTubeUser(u));
+            else addYouTubeUser('');
+        }
+
+        function getCurrentValues() {
+            return {
+                twitchAccounts: getAccountsFromDOM(),
+                tiktokUsers: getMultiValues('tiktokUsersList', 'tiktok-user-input').map(s => s.replace(/^@/, '')),
+                kickUsers: getMultiValues('kickUsersList', 'kick-user-input').map(s => s.replace(/^@/, '')),
+                youtubeUsers: getMultiValues('youtubeUsersList', 'youtube-user-input'),
+                enableCensorship: document.getElementById('enableCensorship').checked,
+                platformsEnabled: {
+                    twitch:  document.getElementById('platformTwitch').checked,
+                    tiktok:  document.getElementById('platformTikTok').checked,
+                    kick:    document.getElementById('platformKick').checked,
+                    youtube: document.getElementById('platformYouTube').checked
+                },
+                tts: {
+                    enabled: document.getElementById('ttsEnabled').checked,
+                    voice:   document.getElementById('ttsVoice').value,
+                    rate:    (document.getElementById('ttsRate').value >= 0 ? '+' : '') + document.getElementById('ttsRate').value + '%',
+                    pitch:   (document.getElementById('ttsPitch').value >= 0 ? '+' : '') + document.getElementById('ttsPitch').value + 'Hz',
+                    volume:  parseInt(document.getElementById('ttsVolume').value, 10) / 100,
+                    readFrom: {
+                        twitch:  document.getElementById('ttsFromTwitch').checked,
+                        tiktok:  document.getElementById('ttsFromTikTok').checked,
+                        kick:    document.getElementById('ttsFromKick').checked,
+                        youtube: document.getElementById('ttsFromYouTube').checked
+                    },
+                    readEvents: {
+                        chat:    document.getElementById('ttsEventChat').checked,
+                        gifts:   document.getElementById('ttsEventGifts').checked,
+                        follows: document.getElementById('ttsEventFollows').checked,
+                        subs:    document.getElementById('ttsEventSubs').checked,
+                        donations: false
+                    }
+                }
+            };
+        }
+
+        function applyValues(v) {
+            const container = document.getElementById('twitchAccountsContainer');
+            container.innerHTML = '';
+            const accounts = Array.isArray(v.twitchAccounts) && v.twitchAccounts.length > 0
+                ? v.twitchAccounts
+                : [{ id: uid(), clientId: '', oauthToken: '', oauthTokenChat: '', botUsername: '', channels: [] }];
+            accounts.forEach(acc => addTwitchAccount(acc));
+            document.getElementById('enableCensorship').checked = v.enableCensorship || false;
+
+            const pe = v.platformsEnabled || { twitch: true, tiktok: true, kick: true, youtube: true };
+            document.getElementById('platformTwitch').checked  = pe.twitch  !== false;
+            document.getElementById('platformTikTok').checked  = pe.tiktok  !== false;
+            document.getElementById('platformKick').checked    = pe.kick    !== false;
+            document.getElementById('platformYouTube').checked = pe.youtube !== false;
+            applyPlatformVisibility();
+
+            loadTikTokUsers(v.tiktokUsers || []);
+            loadKickUsers(v.kickUsers || []);
+            loadYouTubeUsers(v.youtubeUsers || []);
+
+            const tts = v.tts || {};
+            document.getElementById('ttsEnabled').checked = tts.enabled !== false;
+            document.getElementById('ttsVoice').value = tts.voice || 'es-ES-AlvaroNeural';
+
+            const rate = parseInt(String(tts.rate || '+0%').replace(/[^\-0-9]/g, ''), 10) || 0;
+            document.getElementById('ttsRate').value = rate;
+            document.getElementById('ttsRateVal').textContent = (rate > 0 ? '+' : '') + rate + '%';
+
+            const pitch = parseInt(String(tts.pitch || '+0Hz').replace(/[^\-0-9]/g, ''), 10) || 0;
+            document.getElementById('ttsPitch').value = pitch;
+            document.getElementById('ttsPitchVal').textContent = (pitch > 0 ? '+' : '') + pitch + 'Hz';
+
+            const vol = Math.round((tts.volume != null ? tts.volume : 0.8) * 100);
+            document.getElementById('ttsVolume').value = vol;
+            document.getElementById('ttsVolumeVal').textContent = vol + '%';
+
+            const rf = tts.readFrom || {};
+            document.getElementById('ttsFromTwitch').checked  = rf.twitch  !== false;
+            document.getElementById('ttsFromTikTok').checked  = rf.tiktok  !== false;
+            document.getElementById('ttsFromKick').checked    = rf.kick    !== false;
+            document.getElementById('ttsFromYouTube').checked = rf.youtube !== false;
+
+            const re = tts.readEvents || {};
+            document.getElementById('ttsEventChat').checked    = re.chat    !== false;
+            document.getElementById('ttsEventGifts').checked   = re.gifts   === true;
+            document.getElementById('ttsEventFollows').checked = re.follows === true;
+            document.getElementById('ttsEventSubs').checked    = re.subs    === true;
+        }
+
+        function applyPlatformVisibility() {
+            const map = {
+                twitch:  'section-twitch',
+                tiktok:  'section-tiktok',
+                kick:    'section-kick',
+                youtube: 'section-youtube'
+            };
+            for (const [plat, id] of Object.entries(map)) {
+                const el = document.getElementById(id);
+                if (!el) continue;
+                const cb = document.getElementById('platform' + plat.charAt(0).toUpperCase() + plat.slice(1));
+                const visible = cb ? cb.checked : true;
+                el.classList.toggle('hidden', !visible);
+            }
+        }
+
+        function onPlatformToggle() {
+            applyPlatformVisibility();
+            onFieldChange();
+        }
+
+        function saveToLocalStorage(values) {
+            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(values)); } catch (e) {}
+        }
+        function loadFromLocalStorage() {
+            try {
+                const data = localStorage.getItem(STORAGE_KEY);
+                if (data) return JSON.parse(data);
+            } catch (e) {}
+            return null;
+        }
+
+        function updateUnsavedBadge() {
+            const current = getCurrentValues();
+            const hasChanges = JSON.stringify(current) !== JSON.stringify(originalValues);
+            const badge = document.getElementById('unsavedBadge');
+            if (hasChanges) badge.classList.add('show');
+            else badge.classList.remove('show');
+            hasUnsavedChanges = hasChanges;
+        }
+
+        function onFieldChange() {
+            updateUnsavedBadge();
+            saveToLocalStorage(getCurrentValues());
+        }
+
+        function extractFromServerConfig(config) {
+            let twitchAccounts = [];
+            if (Array.isArray(config.TWITCH_ACCOUNTS) && config.TWITCH_ACCOUNTS.length > 0) {
+                twitchAccounts = config.TWITCH_ACCOUNTS.map((acc, i) => ({
+                    id: acc.id || ('acc_migrated_' + i),
+                    clientId: acc.clientId || '',
+                    oauthToken: acc.oauthToken || '',
+                    oauthTokenChat: acc.oauthTokenChat || '',
+                    botUsername: acc.botUsername || '',
+                    channels: Array.isArray(acc.channels) ? acc.channels : []
+                }));
+            } else {
+                const clientId = config.TWITCH_CLIENT_ID || '';
+                const oauthToken = config.TWITCH_OAUTH_TOKEN || '';
+                const oauthTokenChat = config.TWITCH_OAUTH_TOKEN_CHAT || '';
+                const botUsername = config.TWITCH_BOT_USERNAME || '';
+                const channels = Array.isArray(config.channels) && config.channels.length > 0
+                    ? config.channels
+                    : (config.TWITCH_CHANNEL ? [config.TWITCH_CHANNEL] : []);
+                if (clientId || oauthToken || botUsername || channels.length > 0) {
+                    twitchAccounts.push({ id: 'acc_legacy', clientId, oauthToken, oauthTokenChat, botUsername, channels });
+                }
+            }
+            return {
+                twitchAccounts,
+                tiktokUsers: Array.isArray(config.TIKTOK_USERS) && config.TIKTOK_USERS.length > 0
+                    ? config.TIKTOK_USERS
+                    : (config.TIKTOK_USER_ID ? String(config.TIKTOK_USER_ID).split(',').map(s => s.trim()).filter(Boolean) : []),
+                kickUsers: Array.isArray(config.KICK_USERS) && config.KICK_USERS.length > 0
+                    ? config.KICK_USERS
+                    : (config.KICK_USERNAME ? [config.KICK_USERNAME] : []),
+                youtubeUsers: Array.isArray(config.YOUTUBE_USERS) && config.YOUTUBE_USERS.length > 0
+                    ? config.YOUTUBE_USERS
+                    : (config.YOUTUBE_USER_ID ? String(config.YOUTUBE_USER_ID).split(',').map(s => s.trim()).filter(Boolean) : []),
+                enableCensorship: config.ENABLE_CENSORSHIP || false,
+                platformsEnabled: config.PLATFORMS_ENABLED || { twitch: true, tiktok: true, kick: true, youtube: true },
+                tts: config.TTS || {}
+            };
+        }
+
+        async function restoreFromServer() {
+            try {
+                const response = await fetch(`${window.SERVER_BASE}/get-config`);
+                if (response.ok) {
+                    const config = await response.json();
+                    currentServerConfig = config;
+                    applyValues(extractFromServerConfig(config));
+                    originalValues = getCurrentValues();
+                    saveToLocalStorage(originalValues);
+                    updateUnsavedBadge();
+                    alert('Datos restaurados desde el servidor.');
+                } else {
+                    alert('Error al restaurar desde el servidor.');
+                }
+            } catch (e) {
+                alert('Error de conexión al restaurar.');
+            }
+        }
+
+        async function loadConfigData() {
+            applyValues({ twitchAccounts: [] });
+            const localData = loadFromLocalStorage();
+            if (localData) {
+                applyValues(localData);
+                originalValues = getCurrentValues();
+                updateUnsavedBadge();
+            }
+            try {
+                const response = await fetch(`${window.SERVER_BASE}/get-config`);
+                if (response.ok) {
+                    const config = await response.json();
+                    currentServerConfig = config;
+                    applyValues(extractFromServerConfig(config));
+                    originalValues = getCurrentValues();
+                    saveToLocalStorage(originalValues);
+                    updateUnsavedBadge();
+                }
+            } catch (e) {
+                console.log('Servidor no disponible, usando datos locales');
+            }
+        }
+
+        async function saveConfig() {
+            const v = getCurrentValues();
+            const accounts = v.twitchAccounts;
+
+            const tieneTwitch = accounts.length > 0;
+            const tieneTikTok = v.tiktokUsers.length > 0;
+            const tieneKick = v.kickUsers.length > 0;
+            const tieneYouTube = v.youtubeUsers.length > 0;
+
+            if (!tieneTwitch && !tieneTikTok && !tieneKick && !tieneYouTube) {
+                alert('No has configurado nada.\nRellena al menos una plataforma.');
+                return;
+            }
+
+            if (tieneTwitch && v.platformsEnabled.twitch) {
+                const incompletas = accounts.filter(acc =>
+                    !acc.clientId || !acc.oauthToken || !acc.botUsername || acc.channels.length === 0
+                );
+                if (incompletas.length > 0) {
+                    const continuar = confirm(
+                        'Hay ' + incompletas.length + ' cuenta(s) de Twitch incompleta(s).\n' +
+                        'Se guardarán igual, pero esas cuentas no se conectarán.\n\n¿Continuar?'
+                    );
+                    if (!continuar) return;
+                }
+            }
+
+            const twitchAccounts = accounts.map(acc => {
+                let oauthToken = acc.oauthToken;
+                if (oauthToken && !oauthToken.startsWith('oauth:')) oauthToken = 'oauth:' + oauthToken;
+                let oauthTokenChat = acc.oauthTokenChat;
+                if (oauthTokenChat && !oauthTokenChat.startsWith('oauth:')) oauthTokenChat = 'oauth:' + oauthTokenChat;
+                if (!oauthTokenChat) oauthTokenChat = oauthToken;
+                return {
+                    id: acc.id,
+                    clientId: acc.clientId,
+                    oauthToken,
+                    oauthTokenChat,
+                    botUsername: acc.botUsername,
+                    channels: acc.channels
+                };
+            });
+
+            const firstAcc = twitchAccounts[0] || {};
+            const allChannels = twitchAccounts.flatMap(a => a.channels);
+
+            const data = Object.assign({}, currentServerConfig, {
+                TWITCH_ACCOUNTS: twitchAccounts,
+                TWITCH_CLIENT_ID: firstAcc.clientId || '',
+                TWITCH_OAUTH_TOKEN: firstAcc.oauthToken || '',
+                TWITCH_OAUTH_TOKEN_CHAT: firstAcc.oauthTokenChat || '',
+                TWITCH_BOT_USERNAME: firstAcc.botUsername || '',
+                TWITCH_CHANNEL: allChannels[0] || '',
+                channels: allChannels,
+                TIKTOK_USER_ID: v.tiktokUsers.join(', '),
+                TIKTOK_USERS: v.tiktokUsers,
+                KICK_USERNAME: v.kickUsers[0] || '',
+                KICK_USERS: v.kickUsers,
+                YOUTUBE_USER_ID: v.youtubeUsers.join(', '),
+                YOUTUBE_USERS: v.youtubeUsers,
+                ENABLE_CENSORSHIP: v.enableCensorship,
+                PLATFORMS_ENABLED: v.platformsEnabled,
+                TTS: v.tts
+            });
+
+            try {
+                const response = await fetch(`${window.SERVER_BASE}/save-config`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+                alert(result.message);
+                if (result.success) {
+                    originalValues = getCurrentValues();
+                    saveToLocalStorage(originalValues);
+                    updateUnsavedBadge();
+                    window.location.href = window.SERVER_BASE + '/';
+                }
+            } catch (error) {
+                alert('Error al conectar con el servidor. Asegúrate de que esté iniciado.');
+            }
+        }
+
+        async function probarVozTTS(btn) {
+            if (btn) btn.disabled = true;
+
+            const payload = {
+                text: 'Hola, esta es una prueba de la voz seleccionada en el panel.',
+                voice: document.getElementById('ttsVoice').value,
+                rate:  (document.getElementById('ttsRate').value >= 0 ? '+' : '') + document.getElementById('ttsRate').value + '%',
+                pitch: (document.getElementById('ttsPitch').value >= 0 ? '+' : '') + document.getElementById('ttsPitch').value + 'Hz'
+            };
+
+            try {
+                const socket = io(window.SERVER_BASE, { transports: ['websocket', 'polling'] });
+
+                const cleanup = () => {
+                    try { socket.disconnect(); } catch(e) {}
+                    if (btn) btn.disabled = false;
+                };
+
+                socket.on('connect', () => {
+                    socket.emit('tts:preview', payload);
+                });
+
+                socket.on('tts:preview-ready', ({ url }) => {
+                    const audio = new Audio(url);
+                    audio.volume = parseInt(document.getElementById('ttsVolume').value, 10) / 100;
+                    audio.play().catch(err => {
+                        console.error('Error reproduciendo:', err);
+                        alert('El navegador bloqueó la reproducción. Haz clic primero en la página.');
+                    });
+                    cleanup();
+                });
+
+                socket.on('tts:preview-error', ({ error }) => {
+                    alert('Error al generar voz: ' + error);
+                    cleanup();
+                });
+
+                socket.on('connect_error', (err) => {
+                    alert('No se pudo conectar al servidor: ' + err.message);
+                    cleanup();
+                });
+
+                setTimeout(() => { if (btn && btn.disabled) cleanup(); }, 15000);
+            } catch (e) {
+                alert('Error: ' + e.message);
+                if (btn) btn.disabled = false;
+            }
+        }
+
+        function toggleModal(id) { document.getElementById(id).classList.add('open'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) event.target.classList.remove('open');
+        };
+
+        window.onload = function() {
+            loadConfigData();
+            updateUnsavedBadge();
+        };
+    </script>
+
+</body>
+</html>

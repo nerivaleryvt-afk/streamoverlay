@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stats en Vivo ★ Overlay</title>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+  <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+  <script src="/js/server-url.js"></script>
+  <style>
+    :root {
+      --msgcol: rgba(20, 24, 32, 0.95);
+      --textcolor: #ffffff;
+      --stat-pink: #f472b6;
+      --stat-purple: #a78bfa;
+      --header-grad-a: rgba(167, 139, 250, 0.35);
+      --header-grad-b: rgba(244, 114, 182, 0.35);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      background: transparent !important;
+      overflow: hidden;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', system-ui, sans-serif;
+      color: var(--textcolor);
+    }
+
+    .stats-wrapper {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: row;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, var(--header-grad-a), var(--header-grad-b));
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      box-shadow: -4px 4px 0 var(--stat-pink), 0 0 25px rgba(244, 114, 182, 0.5);
+      backdrop-filter: blur(10px);
+      animation: headerPulse 3s ease-in-out infinite;
+      align-items: center;
+    }
+
+    .stats-wrapper.vertical {
+      flex-direction: column;
+      align-items: stretch;
+      min-width: 200px;
+    }
+
+    @keyframes headerPulse {
+      0%, 100% { box-shadow: -4px 4px 0 var(--stat-pink), 0 0 25px rgba(244, 114, 182, 0.5); }
+      50%      { box-shadow: -4px 4px 0 var(--stat-pink), 0 0 40px rgba(244, 114, 182, 0.85); }
+    }
+
+    .stat {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 12px;
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      transition: all 0.3s ease;
+      min-width: 90px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat:hover {
+      background: rgba(0, 0, 0, 0.35);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .stat.pop {
+      animation: statPop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes statPop {
+      0%   { transform: scale(1); box-shadow: none; }
+      30%  { transform: scale(1.12); box-shadow: 0 0 25px var(--stat-pink), 0 0 40px rgba(255,255,255,0.4); }
+      100% { transform: scale(1); box-shadow: none; }
+    }
+
+    .stat-icon {
+      font-size: 20px;
+      line-height: 1;
+      flex-shrink: 0;
+      filter: drop-shadow(0 0 6px currentColor);
+      transition: transform 0.3s ease;
+    }
+
+    .stat:hover .stat-icon {
+      transform: scale(1.15);
+    }
+
+    .stat[data-type="likes"]       .stat-icon { color: #ff0050; }
+    .stat[data-type="follows"]     .stat-icon { color: #a78bfa; }
+    .stat[data-type="shares"]      .stat-icon { color: #00e5ff; }
+    .stat[data-type="diamonds"]    .stat-icon { color: #00e5ff; }
+    .stat[data-type="gifts"]       .stat-icon { color: #f472b6; }
+    .stat[data-type="subs"]        .stat-icon { color: #ffd700; }
+    .stat[data-type="viewers"]     .stat-icon { color: #34d399; }
+    .stat[data-type="members"]     .stat-icon { color: #fb923c; }
+
+    .stat-body {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      line-height: 1;
+    }
+
+    .stat-value {
+      font-size: 16px;
+      font-weight: 900;
+      color: #fff;
+      text-shadow: 0 0 8px rgba(244, 114, 182, 0.6);
+      letter-spacing: -0.5px;
+      transition: color 0.3s ease;
+    }
+
+    .stat-label {
+      font-size: 9px;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.55);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 3px;
+    }
+
+    .stat-delta {
+      position: absolute;
+      top: 4px;
+      right: 6px;
+      font-size: 10px;
+      font-weight: 800;
+      color: #34d399;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .stat-delta.show {
+      opacity: 1;
+      animation: deltaFloat 1.4s ease forwards;
+    }
+
+    @keyframes deltaFloat {
+      0%   { opacity: 0; transform: translateY(4px); }
+      20%  { opacity: 1; transform: translateY(0); }
+      80%  { opacity: 1; transform: translateY(-2px); }
+      100% { opacity: 0; transform: translateY(-6px); }
+    }
+
+    .stat-sep {
+      width: 1px;
+      height: 24px;
+      background: rgba(255, 255, 255, 0.1);
+      flex-shrink: 0;
+    }
+
+    .stats-wrapper.vertical .stat-sep {
+      width: 100%;
+      height: 1px;
+    }
+
+    .loading-state {
+      text-align: center;
+      padding: 8px 20px;
+      font-size: 12px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.5);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="stats-wrapper" id="statsWrapper">
+    <div class="loading-state" id="loadingState">Conectando...</div>
+  </div>
+
+  <script>
+    const params       = new URLSearchParams(window.location.search);
+
+    // 🌐 SERVER_BASE viene de /js/server-url.js (autodetectado)
+
+    const LAYOUT       = params.get('layout') === 'vertical' ? 'vertical' : 'horizontal';
+    const SHOW_SEPS    = params.get('separators') !== '0';
+    const STATS_CUSTOM = params.get('stats');
+
+    const STAT_DEFS = {
+      likes:    { id: 'likes',    label: 'Likes',     icon: 'ri-heart-3-fill',       campo: 'likes' },
+      follows:  { id: 'follows',  label: 'Follows',   icon: 'ri-user-add-fill',      campo: 'follows' },
+      shares:   { id: 'shares',   label: 'Shares',    icon: 'ri-share-forward-fill', campo: 'shares' },
+      diamonds: { id: 'diamonds', label: 'Diamantes', icon: 'ri-vip-diamond-fill',   campo: 'diamantes' },
+      gifts:    { id: 'gifts',    label: 'Regalos',   icon: 'ri-gift-fill',          campo: 'regalosRecibidos' },
+      subs:     { id: 'subs',     label: 'Subs',      icon: 'ri-star-fill',          campo: 'subs' },
+      viewers:  { id: 'viewers',  label: 'Viewers',   icon: 'ri-eye-fill',           campo: 'espectadores' },
+      members:  { id: 'members',  label: 'Miembros',  icon: 'ri-group-fill',         campo: 'miembros' }
+    };
+
+    const STATS_DEFAULT = ['likes', 'follows', 'shares', 'diamonds', 'viewers'];
+
+    const STATS_ORDER = STATS_CUSTOM
+      ? STATS_CUSTOM.split(',').map(s => s.trim().toLowerCase()).filter(s => STAT_DEFS[s])
+      : STATS_DEFAULT.slice();
+
+    const socket = io(window.SERVER_BASE, { transports: ['websocket', 'polling'] });
+    const statsWrapper = document.getElementById('statsWrapper');
+
+    const valoresActuales = {};
+    const refsDOM = {};
+
+    function formatNumber(n) {
+      const num = Number(n) || 0;
+      if (num >= 1000000000) return (num / 1000000000).toFixed(1).replace('.0','') + 'B';
+      if (num >= 1000000)    return (num / 1000000).toFixed(1).replace('.0','') + 'M';
+      if (num >= 1000)       return (num / 1000).toFixed(1).replace('.0','') + 'k';
+      return String(num);
+    }
+
+    function construirBarra() {
+      statsWrapper.innerHTML = '';
+      if (LAYOUT === 'vertical') statsWrapper.classList.add('vertical');
+
+      STATS_ORDER.forEach((statId, index) => {
+        const def = STAT_DEFS[statId];
+        if (!def) return;
+
+        if (index > 0 && SHOW_SEPS) {
+          const sep = document.createElement('div');
+          sep.className = 'stat-sep';
+          statsWrapper.appendChild(sep);
+        }
+
+        const stat = document.createElement('div');
+        stat.className = 'stat';
+        stat.dataset.type = statId;
+        stat.innerHTML = `
+          <i class="stat-icon ${def.icon}"></i>
+          <div class="stat-body">
+            <div class="stat-value">0</div>
+            <div class="stat-label">${def.label}</div>
+          </div>
+          <span class="stat-delta"></span>
+        `;
+        statsWrapper.appendChild(stat);
+
+        refsDOM[statId] = {
+          statEl: stat,
+          valueEl: stat.querySelector('.stat-value'),
+          deltaEl: stat.querySelector('.stat-delta')
+        };
+      });
+    }
+
+    function actualizarStat(statId, valor) {
+      const ref = refsDOM[statId];
+      if (!ref) return;
+
+      const anterior = valoresActuales[statId] || 0;
+      const nuevo = Number(valor) || 0;
+
+      if (anterior === nuevo) return;
+
+      ref.valueEl.textContent = formatNumber(nuevo);
+      valoresActuales[statId] = nuevo;
+
+      if (nuevo > anterior) {
+        ref.statEl.classList.remove('pop');
+        void ref.statEl.offsetWidth;
+        ref.statEl.classList.add('pop');
+        setTimeout(() => ref.statEl.classList.remove('pop'), 750);
+
+        const delta = nuevo - anterior;
+        if (ref.deltaEl) {
+          ref.deltaEl.textContent = '+' + formatNumber(delta);
+          ref.deltaEl.classList.remove('show');
+          void ref.deltaEl.offsetWidth;
+          ref.deltaEl.classList.add('show');
+          setTimeout(() => ref.deltaEl.classList.remove('show'), 1400);
+        }
+      }
+    }
+
+    socket.on('tiktok-stats-all', (todos) => {
+      if (!todos || typeof todos !== 'object') return;
+
+      const acumulado = {};
+      Object.values(todos).forEach((stats) => {
+        if (!stats) return;
+        Object.keys(STAT_DEFS).forEach(statId => {
+          const campo = STAT_DEFS[statId].campo;
+          const valor = Number(stats[campo]) || 0;
+          acumulado[statId] = (acumulado[statId] || 0) + valor;
+        });
+      });
+
+      Object.entries(acumulado).forEach(([statId, valor]) => {
+        actualizarStat(statId, valor);
+      });
+    });
+
+    socket.on('connect', () => {
+      console.log('✅ Stats en Vivo conectado al server');
+      socket.emit('tiktok-get-stats');
+    });
+
+    socket.on('disconnect', () => {
+      console.warn('⚠️ Stats en Vivo desconectado');
+    });
+
+    setInterval(() => {
+      if (socket.connected) socket.emit('tiktok-get-stats');
+    }, 10000);
+
+    (function() {
+      const OVERLAY_KEY = 'stats';
+
+      function aplicarVars(vars) {
+        Object.entries(vars || {}).forEach(([k, v]) => {
+          if (k === '--msgcol-hex') {
+            const hex = v.replace('#', '');
+            const r = parseInt(hex.substr(0, 2), 16) || 0;
+            const g = parseInt(hex.substr(2, 2), 16) || 0;
+            const b = parseInt(hex.substr(4, 2), 16) || 0;
+            document.documentElement.style.setProperty('--msgcol', `rgba(${r}, ${g}, ${b}, 0.95)`);
+          } else {
+            document.documentElement.style.setProperty(k, v);
+          }
+        });
+      }
+
+      fetch(`${window.SERVER_BASE}/api/themes/${OVERLAY_KEY}`)
+        .then(r => r.json())
+        .then(vars => {
+          aplicarVars(vars);
+          console.log(`🎨 Tema cargado: ${OVERLAY_KEY} (${Object.keys(vars || {}).length} vars)`);
+        })
+        .catch(() => console.log(`🎨 Sin tema guardado para ${OVERLAY_KEY}`));
+
+      if (typeof socket !== 'undefined' && socket.on) {
+        socket.on('theme-updated', (data) => {
+          if (data && data.overlay === OVERLAY_KEY) {
+            aplicarVars(data.vars);
+            console.log(`🎨 Tema actualizado en vivo: ${OVERLAY_KEY}`);
+          }
+        });
+      }
+    })();
+
+    document.addEventListener('DOMContentLoaded', construirBarra);
+    construirBarra();
+  </script>
+</body>
+</html>

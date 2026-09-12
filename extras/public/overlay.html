@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat Overlay ★ Full Professional</title>
+  <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+  <script src="/js/server-url.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+  <style>
+    :root {
+      --alertstext: #07171a;
+      --alertsbg: #a78bfa;
+      --mainiconbg: #a78bfa;
+      --msgcol: rgba(20, 24, 32, 0.95);
+      --namescolor: #a78bfa;
+      --textcolor: #ffffff;
+      --bordercolor: rgba(167, 139, 250, 0.5);
+    }
+    body { background: transparent !important; overflow: hidden; margin: 0; padding: 0; font-family: 'Inter', system-ui, sans-serif; }
+    .main-container { display: flex; height: 98vh; flex-direction: column; justify-content: flex-end; padding-left: 10px; padding-bottom: 10px; width: 100%; }
+    .message-row { position: relative; flex: 0 0 auto; width: fit-content; max-width: 380px; word-wrap: break-word; word-break: break-word; padding-bottom: 15px; padding-top: 15px; padding-left: 55px; padding-right: 15px; }
+    .anim { opacity: 0; animation: fadeIn 0.5s linear 0.1s forwards; }
+    .msgcont { width: 100%; position: relative; z-index: 1; transform-origin: left top; }
+    .mainiconcont { position: absolute; width: 50px; height: 50px; background: var(--mainiconbg); border-radius: 15px; z-index: 50; top: 15px; left: -5px; box-shadow: 0 4px 12px var(--bordercolor); display: flex; align-items: center; justify-content: center; overflow: hidden; border: 2px solid rgba(255,255,255,0.2); }
+    .cathead { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40px; height: 40px; object-fit: cover; border-radius: 50%; }
+    .messagebox { padding: 10px 14px 10px 14px; border-radius: 16px; background: var(--msgcol); box-shadow: -4px 4px 0 var(--bordercolor), 0 8px 20px rgba(0,0,0,0.4); color: var(--textcolor); width: 100%; position: relative; z-index: 2; font-size: 13px; line-height: 1.5; margin-left: 50px; backdrop-filter: blur(10px); }
+    .namebox { color: var(--namescolor); margin-bottom: 2px; width: fit-content; display: inline-flex; font-size: 13px; font-weight: 800; align-items: center; gap: 6px; }
+    .name { position: relative; margin-right: 5px; }
+    .message { word-wrap: break-word; width: 100%; position: relative; line-height: 1.4em; display: block; z-index: 50; font-weight: 500; opacity: 0; animation: fadeIn 0.4s linear 0.3s forwards; font-size: 13px; }
+    .flag { position: absolute; top: 2px; right: 5px; font-size: 14px; }
+    .fadeOut { animation: fadeOut 0.5s ease forwards; }
+    @keyframes fadeOut { 0% { opacity: 1; } 100% { opacity: 0; } }
+    @keyframes fadeIn { 0% { opacity: 0; } 100% { opacity: 1; } }
+
+    .gift-icon {
+      width: 26px;
+      height: 26px;
+      object-fit: contain;
+      vertical-align: middle;
+      margin-right: 6px;
+      margin-top: -2px;
+      filter: drop-shadow(0 0 6px rgba(255, 105, 180, 0.6));
+      animation: giftPulse 1.5s ease-in-out infinite;
+    }
+    @keyframes giftPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+    }
+
+    .messagebox::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 8px;
+      bottom: 8px;
+      width: 4px;
+      border-radius: 4px 0 0 4px;
+      background: var(--platform-color, transparent);
+    }
+
+    .platform-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 9.5px;
+      font-weight: 800;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+      margin-right: 5px;
+      vertical-align: middle;
+      font-family: 'Inter', system-ui, sans-serif;
+      line-height: 1.5;
+    }
+    .platform-badge i { font-size: 11px; line-height: 1; }
+    .platform-badge.twitch  { background: rgba(145, 70, 255, 0.25);  color: #c4a8ff; border: 1px solid rgba(145, 70, 255, 0.5); }
+    .platform-badge.tiktok  { background: rgba(255, 0, 80, 0.22);    color: #ff8fab; border: 1px solid rgba(255, 0, 80, 0.5); }
+    .platform-badge.kick    { background: rgba(83, 252, 24, 0.15);   color: #8eff70; border: 1px solid rgba(83, 252, 24, 0.4); }
+    .platform-badge.youtube { background: rgba(255, 0, 0, 0.2);      color: #ff8a8a; border: 1px solid rgba(255, 0, 0, 0.45); }
+
+    .message-row.twitch .mainiconcont { background: #9146ff; border-color: #a78bfa; }
+    .message-row.twitch .messagebox { box-shadow: -4px 4px 0 #9146ff, 0 8px 20px rgba(0,0,0,0.4); --platform-color: #9146ff; }
+    .message-row.twitch .namebox { color: #a78bfa; }
+
+    .message-row.tiktok .mainiconcont { background: #ff0050; border-color: #f472b6; }
+    .message-row.tiktok .messagebox { box-shadow: -4px 4px 0 #ff0050, 0 8px 20px rgba(0,0,0,0.4); --platform-color: #ff0050; }
+    .message-row.tiktok .namebox { color: #f472b6; }
+
+    .message-row.kick .mainiconcont { background: #53fc18; border-color: #53fc18; }
+    .message-row.kick .messagebox { box-shadow: -4px 4px 0 #53fc18, 0 8px 20px rgba(0,0,0,0.4); --platform-color: #53fc18; }
+    .message-row.kick .namebox { color: #53fc18; }
+
+    .message-row.youtube .mainiconcont { background: #ff0000; border-color: #ff5252; }
+    .message-row.youtube .messagebox { box-shadow: -4px 4px 0 #ff0000, 0 8px 20px rgba(0,0,0,0.4); --platform-color: #ff0000; }
+    .message-row.youtube .namebox { color: #ff5252; }
+
+    .message-row.alert .messagebox {
+      background: linear-gradient(135deg, rgba(255, 105, 180, 0.25), rgba(0, 229, 255, 0.25));
+      border: 2px solid rgba(255, 255, 255, 0.15);
+      box-shadow: -4px 4px 0 #ff69b4, 0 0 25px rgba(255, 105, 180, 0.6);
+    }
+    .message-row.alert .message { font-weight: 700; }
+  </style>
+</head>
+<body>
+  <div class="main-container" id="chat-container"></div>
+  <script>
+    (function() {
+      // 🌐 SERVER_BASE viene de /js/server-url.js (autodetectado)
+      const mainSocket = io(window.SERVER_BASE, { transports: ['websocket', 'polling'] });
+      const chatContainer = document.getElementById('chat-container');
+      const MAX_MESSAGES = 10;
+      const MESSAGE_LIFETIME = 8000;
+      const DEFAULT_AVATAR = 'https://i.imgur.com/OmnpuQH.png';
+
+      let censorshipEnabled = false;
+
+      const PLATFORM_META = {
+        twitch:  { icon: 'ri-twitch-fill',    label: 'Twitch'  },
+        tiktok:  { icon: 'ri-tiktok-fill',    label: 'TikTok'  },
+        kick:    { icon: 'ri-live-fill',      label: 'Kick'    },
+        youtube: { icon: 'ri-youtube-fill',   label: 'YouTube' }
+      };
+
+      let giftImagesMapGlobal = {};
+
+      function normalizarNombreRegalo(nombre) {
+        return String(nombre || '')
+          .toLowerCase()
+          .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+          .replace(/\s+/g, '-')
+          .replace(/[^a-z0-9\-_]/g, '')
+          .replace(/-+/g, '-')
+          .replace(/^-|-$/g, '');
+      }
+
+      async function cargarMapaGiftsOverlay() {
+        try {
+          const response = await fetch(`${window.SERVER_BASE}/api/gift-images-map`);
+          giftImagesMapGlobal = await response.json();
+          const total = Object.keys(giftImagesMapGlobal).length;
+          console.log(`🎁 Mapa de regalos cargado en overlay: ${total} imágenes`);
+        } catch (e) {
+          console.warn('❌ No se pudo cargar el mapa de regalos:', e.message);
+        }
+      }
+      cargarMapaGiftsOverlay();
+
+      function getUrlImagenRegalo(nombre) {
+        if (!nombre) return null;
+        const clave = normalizarNombreRegalo(nombre);
+        if (!clave) return null;
+        let url = giftImagesMapGlobal[clave];
+        if (!url) return null;
+        if (/^https?:\/\//i.test(url)) return url;
+        if (!url.startsWith('/')) url = '/' + url;
+        const partes = url.split('/').map((p, i) => {
+          if (i === 0) return p;
+          return p.includes('%') ? p : encodeURIComponent(p);
+        });
+        return `${window.SERVER_BASE}${partes.join('/')}`;
+      }
+
+      async function loadOverlayConfig() {
+        try {
+          const response = await fetch(`${window.SERVER_BASE}/get-config`);
+          const data = await response.json();
+          censorshipEnabled = data.ENABLE_CENSORSHIP || data.enableCensorship || false;
+          console.log(`🛡️ Censura: ${censorshipEnabled ? 'ACTIVADA' : 'desactivada'}`);
+        } catch (e) { censorshipEnabled = false; }
+      }
+      loadOverlayConfig();
+
+      const genderReplacements = [
+        { from: /\bhombre\b/gi, to: 'mujer' }, { from: /\bchico\b/gi, to: 'chica' }, { from: /\bmuchacho\b/gi, to: 'muchacha' },
+        { from: /\bvarón\b/gi, to: 'mujer' }, { from: /\bseñor\b/gi, to: 'señora' }, { from: /\bamigo\b/gi, to: 'amiga' },
+        { from: /\bhermano\b/gi, to: 'hermana' }, { from: /\btío\b/gi, to: 'tía' }, { from: /\bmaestro\b/gi, to: 'maestra' },
+        { from: /\bprofesor\b/gi, to: 'profesora' }, { from: /\bdueño\b/gi, to: 'dueña' }, { from: /\bchaval\b/gi, to: 'chavala' },
+        { from: /\bpibe\b/gi, to: 'piba' }, { from: /\bniño\b/gi, to: 'niña' }, { from: /\bpríncipe\b/gi, to: 'princesa' },
+        { from: /\bcaballero\b/gi, to: 'dama' }, { from: /\bgalán\b/gi, to: 'dama' }, { from: /\bnovio\b/gi, to: 'novia' },
+        { from: /\besposo\b/gi, to: 'esposa' }, { from: /\bmarido\b/gi, to: 'esposa' }, { from: /\bpadre\b/gi, to: 'madre' },
+        { from: /\bpapá\b/gi, to: 'mamá' }, { from: /\bpadrino\b/gi, to: 'madrina' }, { from: /\babuelo\b/gi, to: 'abuela' },
+        { from: /\bnieto\b/gi, to: 'nieta' }, { from: /\bsobrino\b/gi, to: 'sobrina' }, { from: /\btocayo\b/gi, to: 'tocaya' },
+        { from: /\bcompadre\b/gi, to: 'comadre' }, { from: /\bpatrón\b/gi, to: 'patrona' }, { from: /\bcarnal\b/gi, to: 'carnala' },
+        { from: /\bcuate\b/gi, to: 'cuata' }, { from: /\bwey\b/gi, to: 'weya' }, { from: /\bmacho\b/gi, to: 'hembra' },
+        { from: /\bmasculino\b/gi, to: 'femenino' },
+        { from: /\bman\b/gi, to: 'woman' }, { from: /\bguy\b/gi, to: 'girl' }, { from: /\bbro\b/gi, to: 'sis' },
+        { from: /\bdude\b/gi, to: 'dudette' }, { from: /\bbuddy\b/gi, to: 'gal' }, { from: /\bking\b/gi, to: 'queen' },
+        { from: /\bboy\b/gi, to: 'girl' }, { from: /\bhe\b/gi, to: 'she' }, { from: /\bhim\b/gi, to: 'her' },
+        { from: /\bhis\b/gi, to: 'her' }, { from: /\bmr\b/gi, to: 'ms' }, { from: /\bsir\b/gi, to: "ma'am" },
+        { from: /\bgentleman\b/gi, to: 'lady' }, { from: /\bboyfriend\b/gi, to: 'girlfriend' }, { from: /\bhusband\b/gi, to: 'wife' },
+        { from: /\bfather\b/gi, to: 'mother' }, { from: /\bdad\b/gi, to: 'mom' }, { from: /\buncle\b/gi, to: 'aunt' },
+        { from: /\bnephew\b/gi, to: 'niece' }, { from: /\bgrandpa\b/gi, to: 'grandma' }, { from: /\bprince\b/gi, to: 'princess' },
+        { from: /\bmale\b/gi, to: 'female' }, { from: /\bmasculine\b/gi, to: 'feminine' },
+        { from: /\bfemboy\b/gi, to: 'chica trans' }, { from: /\btrapito\b/gi, to: 'chica trans' }, { from: /\btrap\b/gi, to: 'chica trans' },
+        { from: /\btransvesti\b/gi, to: 'mujer trans' }, { from: /\btravesti\b/gi, to: 'mujer trans' }, { from: /\btransformista\b/gi, to: 'mujer trans' },
+        { from: /no eres mujer/gi, to: 'eres una mujer maravillosa' }, { from: /no eres hombre/gi, to: 'eres una mujer hermosa' },
+        { from: /eres hombre/gi, to: 'eres una mujer increíble' }, { from: /eres un hombre/gi, to: 'eres una mujer increíble' },
+        { from: /sos hombre/gi, to: 'sos una mujer increíble' }, { from: /eres chico/gi, to: 'eres una chica hermosa' },
+        { from: /eres feo/gi, to: 'eres hermosa' }, { from: /eres fea/gi, to: 'eres hermosa' },
+        { from: /eres gordo/gi, to: 'eres hermosa' }, { from: /eres gorda/gi, to: 'eres hermosa' },
+        { from: /eres tonto/gi, to: 'eres muy inteligente' }, { from: /eres tonta/gi, to: 'eres muy inteligente' },
+        { from: /eres estúpido/gi, to: 'eres muy inteligente' }, { from: /eres estúpida/gi, to: 'eres muy inteligente' },
+        { from: /te odio/gi, to: 'te quiero mucho' }, { from: /no te quiero/gi, to: 'te quiero mucho' },
+        { from: /no te soporto/gi, to: 'te quiero mucho' }, { from: /vete/gi, to: 'quédate conmigo' },
+        { from: /lárgate/gi, to: 'quédate conmigo' }, { from: /cállate/gi, to: 'me encanta escucharte' },
+        { from: /muérete/gi, to: 'vive feliz' }, { from: /asco/gi, to: 'maravilla' },
+        { from: /horrible/gi, to: 'hermosa' }, { from: /feo/gi, to: 'hermosa' },
+        { from: /fea/gi, to: 'hermosa' }, { from: /tonta/gi, to: 'inteligente' },
+        { from: /tonto/gi, to: 'inteligente' }, { from: /estúpida/gi, to: 'inteligente' },
+        { from: /estúpido/gi, to: 'inteligente' }, { from: /odiosa/gi, to: 'amorosa' },
+        { from: /odioso/gi, to: 'amorosa' }, { from: /mala/gi, to: 'buena' },
+        { from: /malo/gi, to: 'buena' }, { from: /pésima/gi, to: 'excelente' },
+        { from: /pésimo/gi, to: 'excelente' },
+        { from: /you are a man/gi, to: 'you are a beautiful woman' }, { from: /you are not a woman/gi, to: 'you are a wonderful woman' },
+        { from: /you are not a man/gi, to: 'you are a beautiful woman' }, { from: /you\'re a man/gi, to: "you're a beautiful woman" },
+        { from: /you\'re not a woman/gi, to: "you're a wonderful woman" }, { from: /you are ugly/gi, to: 'you are beautiful' },
+        { from: /you\'re ugly/gi, to: "you're beautiful" }, { from: /you are stupid/gi, to: 'you are very smart' },
+        { from: /you\'re stupid/gi, to: "you're very smart" }, { from: /i hate you/gi, to: 'i love you' },
+        { from: /i don\'t love you/gi, to: 'i love you' }, { from: /go away/gi, to: 'stay with me' },
+        { from: /shut up/gi, to: 'i love hearing you' }, { from: /you\'re fat/gi, to: "you're beautiful" },
+        { from: /you are fat/gi, to: 'you are beautiful' }, { from: /you\'re dumb/gi, to: "you're smart" },
+        { from: /you are dumb/gi, to: 'you are smart' }, { from: /you\'re gross/gi, to: "you're lovely" },
+        { from: /you are gross/gi, to: 'you are lovely' }, { from: /you\'re horrible/gi, to: "you're wonderful" },
+        { from: /you are horrible/gi, to: 'you are wonderful' }, { from: /you\'re bad/gi, to: "you're good" },
+        { from: /you are bad/gi, to: 'you are good' },
+        { from: /no eres una mujer de verdad/gi, to: 'eres una mujer auténtica' }, { from: /no eres mujer de verdad/gi, to: 'eres una mujer auténtica' },
+        { from: /siempre serás hombre/gi, to: 'siempre serás una mujer hermosa' }, { from: /siempre seras hombre/gi, to: 'siempre serás una mujer hermosa' },
+        { from: /nunca serás mujer/gi, to: 'siempre serás una mujer maravillosa' }, { from: /nunca seras mujer/gi, to: 'siempre serás una mujer maravillosa' },
+        { from: /eres un tío/gi, to: 'eres una mujer hermosa' }, { from: /pareces hombre/gi, to: 'pareces una mujer hermosa' },
+        { from: /pareces chico/gi, to: 'pareces una chica hermosa' }, { from: /you will never be a woman/gi, to: 'you will always be a wonderful woman' },
+        { from: /you\'ll never be a woman/gi, to: "you'll always be a wonderful woman" }, { from: /you are not a real woman/gi, to: 'you are an authentic woman' },
+        { from: /you\'re not a real woman/gi, to: "you're an authentic woman" }, { from: /you look like a man/gi, to: 'you look like a beautiful woman' },
+        { from: /you look like a boy/gi, to: 'you look like a beautiful girl' }, { from: /you will always be a man/gi, to: 'you will always be a beautiful woman' },
+        { from: /you\'ll always be a man/gi, to: "you'll always be a beautiful woman" },
+        { from: /eres válida/gi, to: 'eres válida y amada' }, { from: /te apoyo/gi, to: 'te apoyo y te quiero' },
+        { from: /te quiero/gi, to: 'te quiero mucho' }, { from: /te amo/gi, to: 'te amo con todo mi corazón' },
+        { from: /i support you/gi, to: 'i support and love you' }, { from: /i love you/gi, to: 'i love you so much' }
+      ];
+
+      function applyGenderReplacements(text) {
+        if (!text) return text;
+        let result = text;
+        for (const rule of genderReplacements) { result = result.replace(rule.from, rule.to); }
+        return result;
+      }
+
+      function getFlagByLang(lang) {
+        const flags = {
+          'en': '🇺🇸', 'es': '🇪🇸', 'fr': '🇫🇷', 'de': '🇩🇪', 'it': '🇮🇹', 'pt': '🇧🇷',
+          'ja': '🇯🇵', 'ko': '🇰🇷', 'zh-CN': '🇨🇳', 'ar': '🇸🇦', 'ru': '🇷🇺', 'th': '🇹🇭',
+          'hi': '🇮🇳', 'tr': '🇹🇷', 'nl': '🇳🇱', 'pl': '🇵🇱', 'sv': '🇸🇪', 'no': '🇳🇴',
+          'da': '🇩🇰', 'fi': '🇫🇮'
+        };
+        return flags[lang] || '🌐';
+      }
+
+      const SPANISH_WORDS = new Set([
+        'el','la','los','las','un','una','unos','unas','es','son','está','están','estas','estos',
+        'y','o','pero','porque','que','qué','como','cómo','donde','dónde','quién','quienes','cuando','cuándo',
+        'con','sin','para','por','de','del','al','a','en','se','su','sus','mi','mis','tu','tus',
+        'muy','más','menos','también','tampoco','si','sí','no','ya','ahora','después','antes',
+        'hola','gracias','jaja','jeje','jajaja','bueno','buena','malo','mala','bien','mal',
+        'yo','tú','tu','él','ella','nosotros','ustedes','ellos','ellas','me','te','le','les','nos',
+        'soy','eres','es','somos','son','estoy','estás','está','estamos','están','tengo','tienes','tiene',
+        'hay','va','vas','vamos','van','hace','haces','hacen','dice','dices','dicen','puede','puedes','pueden',
+        'quiero','quieres','quiere','sé','sabes','sabe','sabemos','saben','veo','ves','ve','vemos','ven',
+        'amo','amas','ama','amamos','aman','gusta','gustas','gustan','tambien','aunque','pues','bueno',
+        'esta','este','eso','esa','esos','esas','aquí','allí','allá','acá','así','ya','siempre','nunca',
+        'mañana','tarde','noche','hoy','ayer','semana','mes','año','día','hora','minuto','momento',
+        'amigo','amiga','hermano','hermana','señor','señora','señorita','chico','chica','niño','niña',
+        'hombre','mujer','gente','persona','jefe','jefa','rey','reina','amor','corazón',
+        'vida','muerte','casa','calle','ciudad','país','mundo','tierra','cielo','mar','agua','fuego',
+        'perro','gato','pájaro','pez','caballo','vaca','oveja','animal','bicho','bichito',
+        'dinero','plata','oro','cobre','rico','pobre','pasta','lana','mango','billete',
+        'comer','beber','dormir','despertar','caminar','correr','saltar','volar','nadar',
+        'hablar','callar','escuchar','oír','ver','mirar','observar','sentir','tocar','oler',
+        'jugar','juega','juegas','jugamos','juegan','gana','ganas','ganamos','ganan','pierde','pierdes',
+        'vamos','venga','vengase','ven','venid','vete','vámonos','vale','ok','okey','okay',
+        'gracias','denada','porfavor','perdón','perdona','disculpa','disculpe','lo','siento',
+        'feliz','triste','enojado','enojada','contento','contenta','cansado','cansada','emocionado',
+        'increíble','increible','genial','buenísimo','malísimo','excelente','perfecto','horrible',
+        'claro','obvio','seguro','tal','vez','quizás','quizas','ojalá','ojala','quizá'
+      ]);
+
+      const ENGLISH_WORDS = new Set([
+        'the','a','an','and','or','but','because','if','when','where','who','whom','whose','what','which',
+        'this','that','these','those','here','there','now','then','after','before','always','never',
+        'yes','no','ok','okay','hello','hi','hey','thanks','thank','please','sorry',
+        'i','you','he','she','it','we','they','me','him','her','us','them',
+        'am','is','are','was','were','be','been','being','have','has','had','do','does','did',
+        'will','would','can','could','should','may','might','must','shall',
+        'my','your','his','her','its','our','their','mine','yours','hers','ours','theirs',
+        'love','like','want','need','know','think','see','look','watch','feel','hear','listen',
+        'go','come','get','got','take','give','make','made','say','said','tell','told',
+        'good','bad','great','awesome','amazing','cool','nice','fine','terrible','horrible',
+        'man','woman','boy','girl','guy','dude','bro','sis','buddy','friend','family',
+        'lol','lmao','rofl','wtf','omg','btw','imo','tbh','idk','ttyl','brb','gtg',
+        'yeah','yep','nope','yea','yup','nah','naw','huh','wow','oh','ah','uh','um','hmm',
+        'hello','whats','what\'s','i\'m','you\'re','don\'t','doesn\'t','didn\'t','can\'t','won\'t','isn\'t','aren\'t',
+        'very','really','so','too','much','many','more','most','less','least','some','any','all','none',
+        'here','there','where','when','why','how','who','what','which','whose',
+        'one','two','three','four','five','six','seven','eight','nine','ten','hundred','thousand'
+      ]);
+
+      function cleanText(text) {
+        if (!text) return '';
+        return String(text)
+          .replace(/[\u{1F300}-\u{1FAFF}]/gu, '')
+          .replace(/[\u{2600}-\u{27BF}]/gu, '')
+          .replace(/[\u{1F000}-\u{1F02F}]/gu, '')
+          .replace(/[\u{1F0A0}-\u{1F0FF}]/gu, '')
+          .replace(/[\u{1F100}-\u{1F1FF}]/gu, '')
+          .replace(/[\u{1F200}-\u{1F2FF}]/gu, '')
+          .replace(/[\u{1F600}-\u{1F64F}]/gu, '')
+          .replace(/[\u{1F680}-\u{1F6FF}]/gu, '')
+          .replace(/[\u{1F700}-\u{1F77F}]/gu, '')
+          .replace(/[\u{1F780}-\u{1F7FF}]/gu, '')
+          .replace(/[\u{1F800}-\u{1F8FF}]/gu, '')
+          .replace(/[\u{1F900}-\u{1F9FF}]/gu, '')
+          .replace(/[\u{1FA00}-\u{1FAFF}]/gu, '')
+          .replace(/[\u{200D}]/gu, '')
+          .replace(/[\u{FE0F}]/gu, '')
+          .replace(/\s+/g, ' ')
+          .trim();
+      }
+
+      function detectLanguage(text) {
+        if (!text) return 'es';
+        const cleaned = cleanText(text);
+
+        if (cleaned.length < 3) return 'es';
+        if (/^[\d\s.,!?¿¡\-_()\[\]{}]+$/.test(cleaned)) return 'es';
+
+        if (/[\u3040-\u30FF]/.test(cleaned)) return 'ja';
+        if (/[\u4E00-\u9FFF\u3400-\u4DBF]/.test(cleaned)) return 'zh-CN';
+        if (/[\uAC00-\uD7AF]/.test(cleaned)) return 'ko';
+        if (/[\u0600-\u06FF\u0750-\u077F]/.test(cleaned)) return 'ar';
+        if (/[\u0400-\u04FF]/.test(cleaned)) return 'ru';
+        if (/[\u0E00-\u0E7F]/.test(cleaned)) return 'th';
+        if (/[\u0900-\u097F]/.test(cleaned)) return 'hi';
+        if (/[\u0590-\u05FF]/.test(cleaned)) return 'he';
+        if (/[\u0370-\u03FF]/.test(cleaned)) return 'el';
+
+        if (/[ñÑ¿¡]/.test(cleaned)) return 'es';
+
+        const spanishHint = /\b(se|al|del|el|la|los|las|un|una|unos|unas|y|o|que|qué|es|son|está|están|fue|fui|será|hola|gracias|amigo|amiga|hermano|hermana|corazón|amor|vida|porque|pero|también|muy|más|menos|aquí|allí|así|ahora|después|antes|siempre|nunca|cuando|dónde|cómo|quién|quiénes|directo|en vivo|seguidor|seguidores|regalo|regalos|se unió|se sumó|seguir)\b/i;
+        if (spanishHint.test(cleaned)) return 'es';
+
+        if (/[äöüßÄÖÜ]/.test(cleaned)) return 'de';
+        if (/[àâäéèêëïîôöùûüÿçœæ]/.test(cleaned) && !/[äöüß]/.test(cleaned)) return 'fr';
+        if (/\b(che|come|dove|quando|perché|perche|sono|siamo|siete|abbiamo|questo|questa|molto|anche|però|ancora|sempre|mai|oggi|domani|ieri)\b/i.test(cleaned)) return 'it';
+        if (/[ãõáéíóúâêôç]/.test(cleaned) && !/[ñ]/.test(cleaned)) return 'pt';
+        if (/[áéíóúü]/.test(cleaned)) return 'es';
+
+        const words = cleaned.toLowerCase().split(/\s+/).filter(w => w.length > 1);
+        if (words.length === 0) return 'es';
+
+        let spanishCount = 0, englishCount = 0;
+        for (const w of words) {
+          const wClean = w.replace(/[.,!?¿¡"'()\[\]]/g, '');
+          if (SPANISH_WORDS.has(wClean)) spanishCount++;
+          if (ENGLISH_WORDS.has(wClean)) englishCount++;
+        }
+
+        if (spanishCount > englishCount) return 'es';
+        if (englishCount > spanishCount) return 'en';
+        if (/^[a-záéíóúüñ\s]+$/i.test(cleaned)) return 'en';
+        return 'es';
+      }
+
+      const PROTECTED_WORDS = [
+        'directo', 'en vivo', 'vivo', 'se unió', 'se sumó', 'seguidor', 'seguidores', 'regalo', 'regalos', 'suscripción', 'suscriptor',
+        'live', 'stream', 'streamer', 'streamers', 'streaming',
+        'chat', 'clip', 'clips', 'vlog', 'vlogs',
+        'follow', 'follows', 'follower', 'followers',
+        'sub', 'subs', 'subscriber', 'subscribers',
+        'donation', 'donations', 'donate', 'donated',
+        'raid', 'raids', 'hype',
+        'host', 'hosting', 'viewer', 'viewers',
+        'tiktok', 'twitch', 'youtube', 'kick', 'obs', 'discord', 'twitter', 'instagram',
+        'togi', 'togipanel',
+        'gg', 'wp', 'ez', 'ff', 'afk', 'pog', 'poggers', 'kappa', 'pepega',
+        'lol', 'lmao', 'rofl', 'omg', 'wtf', 'btw', 'imo', 'tbh', 'idk', 'ttyl', 'brb', 'gtg',
+        'ok', 'okay', 'okey', 'yes', 'maybe'
+      ];
+
+      function protectWords(text) {
+        if (!text) return { text, tokens: [] };
+        const tokens = [];
+        let result = text;
+
+        for (const word of PROTECTED_WORDS) {
+          const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const regex = new RegExp(`\\b${escaped}\\b`, 'gi');
+          result = result.replace(regex, (match) => {
+            const token = `ZzQq${tokens.length}QqZz`;
+            tokens.push({ token, original: match });
+            return token;
+          });
+        }
+
+        return { text: result, tokens };
+      }
+
+      function unprotectWords(text, tokens) {
+        if (!text || !tokens || tokens.length === 0) return text;
+        let result = text;
+        for (const { token, original } of tokens) {
+          result = result.split(token).join(original);
+        }
+        return result;
+      }
+
+      const translationCache = new Map();
+
+      function translateWithMyMemory(text, sourceLang) {
+        return new Promise((resolve) => {
+          const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${sourceLang}|es`;
+          const xhr = new XMLHttpRequest();
+          xhr.open('GET', url, true);
+          xhr.timeout = 4000;
+          xhr.onload = function() {
+            try {
+              if (xhr.status === 200) {
+                const data = JSON.parse(xhr.responseText);
+                const translated = data.responseData?.translatedText || '';
+                if (translated && !/^(please|quota|you used all|invalid)/i.test(translated)) {
+                  return resolve({ ok: true, text: translated });
+                }
+              }
+              resolve({ ok: false });
+            } catch (e) { resolve({ ok: false }); }
+          };
+          xhr.onerror = () => resolve({ ok: false });
+          xhr.ontimeout = () => resolve({ ok: false });
+          xhr.send();
+        });
+      }
+
+      function translateWithGoogle(text, sourceLang) {
+        return new Promise((resolve) => {
+          const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceLang}&tl=es&dt=t&q=${encodeURIComponent(text)}`;
+          const xhr = new XMLHttpRequest();
+          xhr.open('GET', url, true);
+          xhr.timeout = 4000;
+          xhr.onload = function() {
+            try {
+              if (xhr.status === 200) {
+                const data = JSON.parse(xhr.responseText);
+                if (Array.isArray(data) && Array.isArray(data[0])) {
+                  const translated = data[0].map(seg => seg[0]).filter(Boolean).join('');
+                  if (translated) return resolve({ ok: true, text: translated });
+                }
+              }
+              resolve({ ok: false });
+            } catch (e) { resolve({ ok: false }); }
+          };
+          xhr.onerror = () => resolve({ ok: false });
+          xhr.ontimeout = () => resolve({ ok: false });
+          xhr.send();
+        });
+      }
+
+      async function translateText(text, targetLang = 'es') {
+        if (!text || text.trim().length === 0) return { translated: text, sourceLang: 'es', translated_ok: false };
+
+        const cleanText = text.trim();
+        const sourceLang = detectLanguage(cleanText);
+
+        console.log(`🌐 [Detección] "${cleanText.slice(0, 60)}${cleanText.length > 60 ? '…' : ''}" → ${sourceLang}`);
+
+        if (sourceLang === 'es') {
+          return { translated: cleanText, sourceLang: 'es', translated_ok: false };
+        }
+
+        const cacheKey = `${cleanText}|${sourceLang}|${targetLang}`;
+        if (translationCache.has(cacheKey)) {
+          return { translated: translationCache.get(cacheKey), sourceLang, translated_ok: true };
+        }
+
+        const { text: protectedText, tokens } = protectWords(cleanText);
+
+        let result = await translateWithMyMemory(protectedText, sourceLang);
+
+        if (!result.ok) {
+          console.log(`🌐 [Fallback] MyMemory falló, usando Google para "${cleanText.slice(0, 40)}…"`);
+          result = await translateWithGoogle(protectedText, sourceLang);
+        }
+
+        if (result.ok && result.text) {
+          const finalText = unprotectWords(result.text, tokens);
+          translationCache.set(cacheKey, finalText);
+          return { translated: finalText, sourceLang, translated_ok: true };
+        }
+
+        console.warn(`🌐 [Error] No se pudo traducir: "${cleanText.slice(0, 40)}…"`);
+        return { translated: cleanText, sourceLang, translated_ok: false };
+      }
+
+      function addMessage(data) {
+        const platform = (data.platform || 'twitch').toLowerCase();
+        const messageText = data.message || '';
+        const tipo = (data.type || 'chat').toLowerCase();
+
+        const esRegalo = (tipo === 'gift') || !!data.giftName;
+
+        const alertKeywords = ['🎁', '❤️', '💎', '⭐', '🚀', '💗', '🌹', '👥', '🔗', '💫', '🎉', '🌟', '🎮'];
+        const isAlert = alertKeywords.some(kw => messageText.includes(kw));
+
+        let urlImagenRegalo = null;
+        if (esRegalo && data.giftName) {
+          urlImagenRegalo = getUrlImagenRegalo(data.giftName);
+        }
+
+        const messageRow = document.createElement('div');
+        messageRow.className = `message-row ${platform}${isAlert ? ' alert' : ''}`;
+
+        const anim = document.createElement('div');
+        anim.className = 'anim';
+        const msgcont = document.createElement('div');
+        msgcont.className = 'msgcont';
+        const mainiconcont = document.createElement('div');
+        mainiconcont.className = 'mainiconcont';
+        const cathead = document.createElement('img');
+        cathead.className = 'cathead';
+        cathead.src = data.avatar || DEFAULT_AVATAR;
+        cathead.alt = 'avatar';
+        cathead.onerror = function() { this.src = DEFAULT_AVATAR; };
+
+        mainiconcont.appendChild(cathead);
+        msgcont.appendChild(mainiconcont);
+
+        const messagebox = document.createElement('div');
+        messagebox.className = 'messagebox';
+        const flagSpan = document.createElement('span');
+        flagSpan.className = 'flag';
+        const namebox = document.createElement('div');
+        namebox.className = 'namebox';
+
+        const meta = PLATFORM_META[platform];
+        if (meta) {
+          const badge = document.createElement('span');
+          badge.className = `platform-badge ${platform}`;
+          badge.innerHTML = `<i class="${meta.icon}"></i>${meta.label}`;
+          namebox.appendChild(badge);
+        }
+
+        if (urlImagenRegalo) {
+          const imgGift = document.createElement('img');
+          imgGift.className = 'gift-icon';
+          imgGift.src = urlImagenRegalo;
+          imgGift.alt = data.giftName || 'regalo';
+          imgGift.onerror = function() {
+            this.replaceWith(document.createTextNode('🎁 '));
+          };
+          namebox.appendChild(imgGift);
+        }
+
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'name';
+        nameSpan.textContent = data.username || 'Anónimo';
+        namebox.appendChild(nameSpan);
+
+        const messageSpan = document.createElement('span');
+        messageSpan.className = 'message';
+        messagebox.appendChild(namebox);
+        messagebox.appendChild(messageSpan);
+        msgcont.appendChild(messagebox);
+        anim.appendChild(msgcont);
+        messageRow.appendChild(anim);
+        chatContainer.appendChild(messageRow);
+
+        const cleanForCheck = cleanText(messageText);
+        const isEmptyAfterClean = !cleanForCheck || cleanForCheck.length < 2;
+
+        if (isEmptyAfterClean) {
+          messageSpan.textContent = messageText;
+        } else {
+          translateText(messageText).then(result => {
+            let finalText = result.translated;
+
+            if (censorshipEnabled && !isAlert && !esRegalo) {
+              finalText = applyGenderReplacements(finalText);
+            }
+
+            if (result.translated_ok && result.sourceLang !== 'es') {
+              flagSpan.textContent = getFlagByLang(result.sourceLang);
+              messagebox.appendChild(flagSpan);
+            }
+
+            messageSpan.textContent = finalText;
+          }).catch(() => {
+            messageSpan.textContent = messageText;
+          });
+        }
+
+        while (chatContainer.children.length > MAX_MESSAGES) {
+          chatContainer.firstChild.remove();
+        }
+
+        setTimeout(() => {
+          messageRow.classList.add('fadeOut');
+          setTimeout(() => messageRow.remove(), 500);
+        }, MESSAGE_LIFETIME);
+      }
+
+      mainSocket.on('chat-message', (data) => {
+        if (!data || !data.username) return;
+        addMessage(data);
+      });
+
+      mainSocket.on('connect', () => {
+        console.log("✅ Overlay conectado exitosamente con server.js");
+      });
+
+      mainSocket.on('disconnect', () => {
+        console.log("❌ Overlay desconectado del servidor");
+      });
+    })();
+  </script>
+</body>
+</html>

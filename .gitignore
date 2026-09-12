@@ -1,0 +1,44 @@
+# Node (raíz)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build de la app
+dist-installer/
+dist/
+build/tiktok-bridge/
+tiktok-bridge.spec
+
+# Configuración local (¡NO subir!)
+config.json
+setup.json
+*.log
+logs/
+
+# Sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Electron
+out/
+
+# Estado interno de la app
+extras/jar-state.json
+
+# Backups
+main.rar
+*.rar
+*.zip
+*.7z
+
+# Archivos basura (creados por error con comandos mal escritos)
+/100
+/2
+/node
+/npm
+extras/2
+extras/cd
+extras/npm
+extras/nul*

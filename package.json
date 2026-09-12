@@ -1,0 +1,81 @@
+{
+  "name": "togi-panel",
+  "version": "1.2.0",
+  "description": "Stream Overlay Pro",
+  "main": "main.js",
+  "author": "Togi",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nerivaleryt-afk/streamoverlay.git"
+  },
+  "scripts": {
+    "start": "electron .",
+    "prebuild": "node scripts/prebuild.js",
+    "build": "electron-builder --win",
+    "postbuild": "node scripts/postbuild.js"
+  },
+  "build": {
+    "appId": "com.togichat.overlay",
+    "productName": "StreamOverlayPro",
+    "asar": true,
+    "afterPack": "scripts/afterpack.js",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "nerivaleryt-afk",
+        "repo": "streamoverlay",
+        "releaseType": "release"
+      }
+    ],
+    "directories": {
+      "output": "dist-installer",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "package.json",
+      "!extras/**/*",
+      "!public/**/*",
+      "!dist-installer/**/*",
+      "!build/**/*",
+      "!scripts/**/*"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "StreamOverlayPro",
+      "deleteAppDataOnUninstall": false
+    },
+    "extraResources": [
+      {
+        "from": "extras",
+        "to": "extras",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "public",
+        "to": "public",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ]
+  },
+  "devDependencies": {
+    "electron": "^31.7.7",
+    "electron-builder": "^26.15.3"
+  },
+  "dependencies": {
+    "electron-log": "^5.4.4",
+    "electron-updater": "^6.8.9"
+  }
+}

@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Último Seguidor ★ Overlay</title>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+  <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+  <script src="/js/server-url.js"></script>
+  <style>
+    :root {
+      --msgcol: rgba(20, 24, 32, 0.95);
+      --textcolor: #ffffff;
+      --accent-purple: #a78bfa;
+      --accent-pink: #f472b6;
+      --bordercolor: rgba(167, 139, 250, 0.5);
+      --header-grad-a: rgba(167, 139, 250, 0.35);
+      --header-grad-b: rgba(244, 114, 182, 0.35);
+
+      --gender-masc: #38bdf8;
+      --gender-fem:  #f472b6;
+      --gender-uni:  #a78bfa;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      background: transparent !important;
+      overflow: hidden;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', system-ui, sans-serif;
+      color: var(--textcolor);
+    }
+
+    .last-follower-wrapper {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 380px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .follower-card {
+      width: 100%;
+      background: var(--msgcol);
+      border-radius: 20px;
+      border: 2px solid rgba(255, 255, 255, 0.15);
+      box-shadow: -5px 5px 0 var(--accent-purple),
+                  0 0 30px rgba(167, 139, 250, 0.6),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(15px);
+      overflow: hidden;
+      position: relative;
+      transition: box-shadow 0.3s ease;
+    }
+
+    .follower-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg,
+        rgba(167, 139, 250, 0.1),
+        rgba(244, 114, 182, 0.1));
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .follower-card.entering {
+      animation: cardEnter 1.1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    @keyframes cardEnter {
+      0% {
+        opacity: 0;
+        transform: translateY(60px) scale(0.6) rotate(-5deg);
+        box-shadow: -5px 5px 0 #fff, 0 0 60px #fff, 0 0 100px var(--accent-pink);
+      }
+      50% {
+        opacity: 1;
+        transform: translateY(-10px) scale(1.08) rotate(2deg);
+        box-shadow: -5px 5px 0 var(--accent-pink), 0 0 60px var(--accent-pink);
+      }
+      70% {
+        transform: translateY(4px) scale(1.02) rotate(-1deg);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1) rotate(0deg);
+        box-shadow: -5px 5px 0 var(--accent-purple), 0 0 30px rgba(167, 139, 250, 0.6);
+      }
+    }
+
+    .follower-card.exiting {
+      animation: cardExit 0.6s cubic-bezier(0.4, 0, 0.6, 1) forwards;
+      pointer-events: none;
+    }
+
+    @keyframes cardExit {
+      0% {
+        opacity: 1;
+        transform: translateY(0) scale(1) rotate(0deg);
+      }
+      30% {
+        opacity: 0.8;
+        transform: translateY(-15px) scale(1.02) rotate(-2deg);
+        box-shadow: -5px 5px 0 #ef4444, 0 0 40px #ef4444;
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(-80px) scale(0.6) rotate(15deg);
+        box-shadow: -5px 5px 0 #ef4444, 0 0 80px #ef4444;
+      }
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 18px;
+      background: linear-gradient(135deg, var(--header-grad-a), var(--header-grad-b));
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      position: relative;
+      z-index: 1;
+    }
+
+    .header-icon {
+      font-size: 22px;
+      filter: drop-shadow(0 0 10px currentColor);
+      animation: iconPulse 1.8s ease-in-out infinite;
+    }
+
+    @keyframes iconPulse {
+      0%, 100% { transform: scale(1); filter: drop-shadow(0 0 10px currentColor); }
+      50%      { transform: scale(1.2); filter: drop-shadow(0 0 20px currentColor); }
+    }
+
+    .header-title {
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #fff;
+      text-shadow: 0 0 10px rgba(167, 139, 250, 0.9);
+    }
+
+    .card-body {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 20px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .follower-avatar {
+      flex-shrink: 0;
+      width: 68px;
+      height: 68px;
+      border-radius: 16px;
+      object-fit: cover;
+      border: 3px solid rgba(255, 255, 255, 0.25);
+      background: rgba(255, 255, 255, 0.05);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5),
+                  0 0 20px rgba(167, 139, 250, 0.4);
+      transition: transform 0.3s ease;
+    }
+
+    .follower-card:hover .follower-avatar {
+      transform: scale(1.05) rotate(-2deg);
+    }
+
+    .follower-info {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .follower-name-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 20px;
+      font-weight: 900;
+      line-height: 1.2;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    }
+
+    .follower-name {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 240px;
+    }
+
+    .follower-name-line.gender-masculino .follower-name { color: var(--gender-masc); }
+    .follower-name-line.gender-femenino  .follower-name { color: var(--gender-fem);  }
+    .follower-name-line.gender-unisex    .follower-name { color: var(--gender-uni);  }
+
+    .gender-icon {
+      flex-shrink: 0;
+      font-size: 16px;
+      opacity: 0.95;
+      filter: drop-shadow(0 0 6px currentColor);
+    }
+
+    .follower-name-line.gender-masculino .gender-icon { color: var(--gender-masc); }
+    .follower-name-line.gender-femenino  .gender-icon { color: var(--gender-fem);  }
+    .follower-name-line.gender-unisex    .gender-icon { color: var(--gender-uni);  }
+
+    .follower-subtitle {
+      font-size: 13px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.65);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .follower-subtitle i {
+      font-size: 13px;
+      opacity: 0.85;
+    }
+
+    .empty-state {
+      width: 100%;
+      text-align: center;
+      padding: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.5);
+      background: var(--msgcol);
+      border-radius: 16px;
+      box-shadow: -4px 4px 0 var(--bordercolor);
+      backdrop-filter: blur(10px);
+      border: 2px solid rgba(255, 255, 255, 0.08);
+      animation: fadeInSimple 0.4s ease;
+    }
+
+    @keyframes fadeInSimple { from { opacity: 0; } to { opacity: 1; } }
+  </style>
+</head>
+<body>
+
+  <div class="last-follower-wrapper" id="wrapper">
+    <div class="empty-state">Esperando nuevo seguidor...</div>
+  </div>
+
+  <script>
+    const params        = new URLSearchParams(window.location.search);
+
+    // 🌐 SERVER_BASE viene de /js/server-url.js (autodetectado)
+
+    const TITLE         = params.get('title') || 'Último Seguidor';
+    const ICON          = params.get('icon')  || '❤️';
+    const GENDER_FORCE  = params.get('gender');
+    const SHOW_GENDER   = params.get('showGender') !== '0';
+    const DURATION      = parseInt(params.get('duration')) || 0;
+    const DEFAULT_AVATAR = 'https://i.imgur.com/OmnpuQH.png';
+
+    const GENDER_MAP = {
+      // 'perez':          'masculino',
+      // 'renacenti uwu':  'femenino',
+    };
+
+    const GENDER_ICONS = {
+      'masculino': '♂',
+      'femenino':  '♀',
+      'unisex':    '⚥',
+    };
+
+    const socket = io(window.SERVER_BASE, { transports: ['websocket', 'polling'] });
+    const wrapper = document.getElementById('wrapper');
+
+    let usuarioActual = null;
+
+    function getGender(username) {
+      if (GENDER_FORCE && ['masculino', 'femenino', 'unisex'].includes(GENDER_FORCE)) {
+        return GENDER_FORCE;
+      }
+      const key = String(username || '').toLowerCase().trim();
+      return GENDER_MAP[key] || 'unisex';
+    }
+
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function tiempoRelativo(timestamp) {
+      if (!timestamp) return '';
+      const diff = Date.now() - timestamp;
+      if (diff < 5000)          return 'hace unos segundos';
+      if (diff < 60000)         return `hace ${Math.floor(diff / 1000)}s`;
+      if (diff < 3600000)       return `hace ${Math.floor(diff / 60000)} min`;
+      if (diff < 86400000)      return `hace ${Math.floor(diff / 3600000)}h`;
+      return `hace ${Math.floor(diff / 86400000)}d`;
+    }
+
+    function crearTarjeta(persona) {
+      const gender     = getGender(persona.username);
+      const iconGender = GENDER_ICONS[gender] || '⚥';
+      const avatar     = persona.avatar || DEFAULT_AVATAR;
+      const username   = persona.username || 'Anónimo';
+      const tiempo     = tiempoRelativo(persona.timestamp);
+
+      const card = document.createElement('div');
+      card.className = 'follower-card entering';
+      card.innerHTML = `
+        <div class="card-header">
+          <span class="header-icon">${ICON}</span>
+          <span class="header-title">${escapeHtml(TITLE)}</span>
+        </div>
+        <div class="card-body">
+          <img class="follower-avatar" src="${escapeHtml(avatar)}" alt="" onerror="this.src='${DEFAULT_AVATAR}'">
+          <div class="follower-info">
+            <div class="follower-name-line gender-${gender}">
+              ${SHOW_GENDER ? `<span class="gender-icon">${iconGender}</span>` : ''}
+              <span class="follower-name">${escapeHtml(username)}</span>
+            </div>
+            <div class="follower-subtitle">
+              <i class="ri-heart-3-fill"></i>
+              <span>te empezó a seguir · ${tiempo}</span>
+            </div>
+          </div>
+        </div>
+      `;
+
+      setTimeout(() => card.classList.remove('entering'), 1200);
+      return card;
+    }
+
+    function mostrarUltimo(persona) {
+      if (!persona || !persona.username) return;
+
+      const clave = String(persona.username).toLowerCase();
+      const ts    = persona.timestamp || 0;
+
+      if (usuarioActual && usuarioActual.clave === clave && usuarioActual.ts === ts) {
+        return;
+      }
+
+      usuarioActual = { clave, ts };
+
+      const empty = wrapper.querySelector('.empty-state');
+
+      wrapper.querySelectorAll('.follower-card').forEach(card => {
+        card.classList.remove('entering');
+        card.classList.add('exiting');
+        setTimeout(() => card.remove(), 650);
+      });
+
+      if (empty) {
+        empty.style.transition = 'opacity 0.3s ease';
+        empty.style.opacity = '0';
+        setTimeout(() => empty.remove(), 300);
+      }
+
+      setTimeout(() => {
+        const card = crearTarjeta(persona);
+        wrapper.appendChild(card);
+
+        if (DURATION > 0) {
+          setTimeout(() => {
+            if (card.isConnected) {
+              card.classList.remove('entering');
+              card.classList.add('exiting');
+              setTimeout(() => {
+                card.remove();
+                if (wrapper.querySelectorAll('.follower-card').length === 0) {
+                  mostrarEmptyState();
+                }
+              }, 650);
+            }
+          }, DURATION);
+        }
+      }, 200);
+    }
+
+    function mostrarEmptyState() {
+      if (wrapper.querySelector('.empty-state')) return;
+      const div = document.createElement('div');
+      div.className = 'empty-state';
+      div.textContent = 'Esperando nuevo seguidor...';
+      wrapper.appendChild(div);
+    }
+
+    socket.on('tiktok-stats-all', (todos) => {
+      if (!todos || typeof todos !== 'object') return;
+
+      const follows = [];
+
+      Object.values(todos).forEach((stats) => {
+        (stats?.ultimosFollows || []).forEach(f => {
+          if (f && f.username) follows.push(f);
+        });
+      });
+
+      follows.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+      const elegido = follows[0] || null;
+
+      if (elegido) {
+        mostrarUltimo(elegido);
+      } else if (wrapper.querySelectorAll('.follower-card').length === 0) {
+        mostrarEmptyState();
+      }
+    });
+
+    socket.on('tiktok-follow', () => {
+      clearTimeout(window.__refreshTimer);
+      window.__refreshTimer = setTimeout(() => socket.emit('tiktok-get-stats'), 200);
+    });
+
+    socket.on('connect', () => {
+      console.log('✅ Último-Seguidor conectado al server');
+      socket.emit('tiktok-get-stats');
+    });
+
+    socket.on('disconnect', () => {
+      console.warn('⚠️ Último-Seguidor desconectado');
+    });
+
+    setInterval(() => {
+      if (socket.connected) socket.emit('tiktok-get-stats');
+    }, 20000);
+
+    (function() {
+      const OVERLAY_KEY = 'follows';
+
+      function aplicarVars(vars) {
+        Object.entries(vars || {}).forEach(([k, v]) => {
+          if (k === '--msgcol-hex') {
+            const hex = v.replace('#', '');
+            const r = parseInt(hex.substr(0, 2), 16) || 0;
+            const g = parseInt(hex.substr(2, 2), 16) || 0;
+            const b = parseInt(hex.substr(4, 2), 16) || 0;
+            document.documentElement.style.setProperty('--msgcol', `rgba(${r}, ${g}, ${b}, 0.95)`);
+          } else {
+            document.documentElement.style.setProperty(k, v);
+          }
+        });
+      }
+
+      fetch(`${window.SERVER_BASE}/api/themes/${OVERLAY_KEY}`)
+        .then(r => r.json())
+        .then(vars => {
+          aplicarVars(vars);
+          console.log(`🎨 Tema cargado: ${OVERLAY_KEY} (${Object.keys(vars || {}).length} vars)`);
+        })
+        .catch(() => console.log(`🎨 Sin tema guardado para ${OVERLAY_KEY}`));
+
+      if (typeof socket !== 'undefined' && socket.on) {
+        socket.on('theme-updated', (data) => {
+          if (data && data.overlay === OVERLAY_KEY) {
+            aplicarVars(data.vars);
+            console.log(`🎨 Tema actualizado en vivo: ${OVERLAY_KEY}`);
+          }
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

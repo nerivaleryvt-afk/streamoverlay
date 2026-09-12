@@ -1,0 +1,50 @@
+{
+  "top-likes": {
+    "--like-pink": "#ffd700",
+    "--like-magenta": "#ff8c00",
+    "--bordercolor": "#ffd700",
+    "--gender-masc": "#ffd700",
+    "--gender-fem": "#ffa500",
+    "--gender-uni": "#ffec8b",
+    "--msgcol-hex": "#1a1408"
+  },
+  "follows": {
+    "--accent-purple": "#00ff88",
+    "--accent-pink": "#00bfff",
+    "--msgcol-hex": "#001a10",
+    "--gender-masc": "#00bfff",
+    "--gender-fem": "#00ff88",
+    "--gender-uni": "#7fff00"
+  },
+  "top-donadores": {
+    "--tiktok-pink": "#ffd700",
+    "--tiktok-cyan": "#ff8c00",
+    "--bordercolor": "#ffd700",
+    "--gender-masc": "#ffd700",
+    "--gender-fem": "#ffa500",
+    "--gender-uni": "#ffec8b",
+    "--msgcol-hex": "#1a1408"
+  },
+  "crystal": {
+    "--meta-label": "🎯 Meta",
+    "--topdonor-label": "🏆 Top Donador",
+    "--crystal-core-1": "#ffffff",
+    "--crystal-core-2": "#ffe066",
+    "--crystal-core-3": "#b45309",
+    "--crystal-stroke-1": "#ffd700",
+    "--crystal-stroke-2": "#f59e0b",
+    "--crystal-stroke-3": "#b45309",
+    "--crystal-aura-1": "#ffd70066",
+    "--crystal-aura-2": "#f59e0b33",
+    "--particle-1": "#fff8dc",
+    "--particle-2": "#ffd700",
+    "--particle-3": "#b45309",
+    "--gold-1": "#ffffff",
+    "--gold-2": "#ffd700",
+    "--gold-3": "#f59e0b",
+    "--progress-1": "#b45309",
+    "--progress-2": "#ffd700",
+    "--progress-3": "#f59e0b",
+    "--label-color": "#ffd700"
+  }
+}

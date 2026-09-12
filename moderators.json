@@ -1,0 +1,28 @@
+{
+  "moderators": [],
+  "banned_users": {
+    "axel_rodriguez49": {
+      "username": "axel_rodriguez49",
+      "reason": "Demasiadas advertencias: Uso de palabras prohibidas",
+      "moderator": "AutoMod",
+      "type": "permanent",
+      "timestamp": "2026-09-08T20:33:14.676475"
+    }
+  },
+  "warnings": {
+    "missingno.servin": 2,
+    "trianino_isra": 1
+  },
+  "filter_words": [
+    "ofensa",
+    "spam",
+    "droga",
+    "violencia",
+    "xxx",
+    "arma",
+    "scam",
+    "insulto",
+    "porn",
+    "hate"
+  ]
+}

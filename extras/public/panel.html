@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel de Control</title>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #0d0e11;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+      background-size: 32px 32px;
+      color: #e4e6eb;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      font-size: 14px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 64px;
+      background: #0f1115;
+      border-right: 1px solid #1e2229;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px 0;
+      flex-shrink: 0;
+    }
+
+    .logo {
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      background: #4d7cc7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      color: white;
+      margin-bottom: 28px;
+      transition: background 0.15s;
+    }
+    .logo:hover { background: #5a8ad6; }
+
+    .sidebar-item {
+      width: 40px;
+      height: 40px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #6b7280;
+      cursor: pointer;
+      transition: all 0.15s;
+      margin-bottom: 4px;
+      position: relative;
+    }
+
+    .sidebar-item:hover {
+      background: #181b21;
+      color: #b8bdc7;
+    }
+    .sidebar-item.active {
+      background: #181d27;
+      color: #8badd8;
+    }
+
+    .sidebar-item.active::before {
+      content: '';
+      position: absolute;
+      left: -20px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 3px;
+      height: 20px;
+      background: #4d7cc7;
+      border-radius: 0 3px 3px 0;
+    }
+
+    .sidebar-item i { font-size: 18px; }
+
+    /* MAIN */
+    .main-content {
+      flex: 1;
+      padding: 28px 34px;
+      overflow-y: auto;
+    }
+
+    .main-content::-webkit-scrollbar { width: 8px; }
+    .main-content::-webkit-scrollbar-track { background: transparent; }
+    .main-content::-webkit-scrollbar-thumb { background: #23262e; border-radius: 4px; }
+    .main-content::-webkit-scrollbar-thumb:hover { background: #2f3542; }
+
+    /* HEADER */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+      gap: 14px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #1e2229;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+    }
+
+    .brand-mark {
+      width: 42px;
+      height: 42px;
+      border-radius: 8px;
+      background: #4d7cc7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 19px;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .header h1 {
+      font-size: 19px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: #f1f2f4;
+      margin: 0;
+    }
+
+    .header-sub {
+      font-size: 12.5px;
+      color: #7b8090;
+      margin-top: 2px;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 12px;
+      border-radius: 100px;
+      font-weight: 500;
+      font-size: 12px;
+      background: rgba(79,168,122,0.08);
+      color: #4fa87a;
+      border: 1px solid rgba(79,168,122,0.22);
+      transition: all 0.15s;
+    }
+
+    .status-badge.offline {
+      background: rgba(192,106,106,0.08);
+      color: #c26a6a;
+      border-color: rgba(192,106,106,0.22);
+    }
+
+    .status-badge i { font-size: 13px; }
+
+    /* SECTIONS */
+    .section-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: #7b8090;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 12px;
+      margin-top: 4px;
+    }
+
+    /* PLATFORMS */
+    .platforms-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 10px;
+      margin-bottom: 28px;
+    }
+
+    .platform-card {
+      background: #14161b;
+      border: 1px solid #23262e;
+      border-radius: 8px;
+      padding: 14px;
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      transition: border-color 0.15s;
+      position: relative;
+    }
+
+    .platform-card::before {
+      content: '';
+      position: absolute;
+      left: -1px;
+      top: 12px;
+      bottom: 12px;
+      width: 2px;
+      background: var(--platform-color, transparent);
+      opacity: 0;
+      transition: opacity 0.15s;
+      border-radius: 0 2px 2px 0;
+    }
+
+    .platform-card.connected::before { opacity: 1; }
+
+    .platform-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+      background: var(--platform-bg);
+      color: var(--platform-color);
+      border: 1px solid var(--platform-border);
+    }
+
+    .platform-info { flex: 1; min-width: 0; }
+    .platform-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #e4e6eb;
+      margin-bottom: 2px;
+    }
+
+    .platform-status {
+      font-size: 11.5px;
+      color: #6b7280;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .platform-status .dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #4a4f5a;
+      flex-shrink: 0;
+    }
+    .platform-card.connected .platform-status .dot { background: #4fa87a; }
+    .platform-card.connected .platform-status { color: #4fa87a; }
+
+    .platform-card.twitch  { --platform-color: #a78bfa; --platform-bg: rgba(167,139,250,0.1); --platform-border: rgba(167,139,250,0.22); }
+    .platform-card.tiktok  { --platform-color: #fe2c55; --platform-bg: rgba(254,44,85,0.1);   --platform-border: rgba(254,44,85,0.22); }
+    .platform-card.kick    { --platform-color: #53fc18; --platform-bg: rgba(83,252,24,0.1);   --platform-border: rgba(83,252,24,0.22); }
+    .platform-card.youtube { --platform-color: #ff3d3d; --platform-bg: rgba(255,61,61,0.1);   --platform-border: rgba(255,61,61,0.22); }
+
+    /* ACTIONS */
+    .actions-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 10px;
+      margin-bottom: 28px;
+    }
+
+    .action-card {
+      background: #14161b;
+      border: 1px solid #23262e;
+      border-radius: 8px;
+      padding: 16px 18px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .action-card:hover {
+      border-color: #3a4150;
+      background: #17191f;
+    }
+
+    .action-card:hover .action-icon { transform: scale(1.04); }
+
+    .action-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      margin-bottom: 12px;
+      transition: transform 0.15s;
+    }
+
+    .action-icon.purple { background: rgba(167,139,250,0.1); color: #a78bfa; }
+    .action-icon.pink   { background: rgba(244,114,182,0.1); color: #f472b6; }
+    .action-icon.blue   { background: rgba(77,124,199,0.12); color: #5a8ad6; }
+    .action-icon.amber  { background: rgba(214,168,74,0.1);  color: #d6a84a; }
+
+    .action-title {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: #e4e6eb;
+      margin-bottom: 3px;
+    }
+    .action-desc {
+      font-size: 12px;
+      color: #7b8090;
+      line-height: 1.5;
+    }
+
+    /* FOOTER */
+    .footer-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      padding-top: 18px;
+      border-top: 1px solid #1e2229;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 10px 16px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      transition: all 0.15s;
+    }
+
+    .btn-primary {
+      background: #4d7cc7;
+      color: white;
+    }
+
+    .btn-primary:hover:not(:disabled) { background: #5a8ad6; }
+    .btn-primary:active:not(:disabled) { background: #3f6bb0; }
+    .btn-primary:disabled { opacity: 0.6; cursor: wait; }
+
+    .btn-secondary {
+      background: #14161b;
+      color: #b8bdc7;
+      border: 1px solid #2a2e37;
+    }
+
+    .btn-secondary:hover {
+      background: #1a1d23;
+      border-color: #3a4150;
+      color: #e4e6eb;
+    }
+
+    /* MODAL */
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(8,9,11,0.85);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+      padding: 20px;
+    }
+
+    .modal.open { display: flex; }
+
+    .modal-box {
+      background: #14161b;
+      border: 1px solid #2a2e37;
+      border-radius: 10px;
+      width: 800px;
+      max-width: 100%;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+    }
+
+    .modal-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid #1e2229;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .modal-header h3 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #e4e6eb;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .modal-header h3 i { color: #7b8090; font-size: 15px; }
+    .modal-actions { display: flex; gap: 6px; align-items: center; }
+
+    .btn-icon {
+      background: transparent;
+      border: 1px solid #2a2e37;
+      border-radius: 5px;
+      padding: 5px 10px;
+      color: #7b8090;
+      font-size: 11.5px;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+
+    .btn-icon:hover {
+      border-color: #3a4150;
+      color: #e4e6eb;
+      background: #1a1d23;
+    }
+    .btn-icon.danger:hover {
+      border-color: #a03a3a;
+      color: #c26a6a;
+      background: #1a1414;
+    }
+
+    .modal-body {
+      flex: 1;
+      padding: 16px 20px;
+      overflow: hidden;
+      display: flex;
+      min-height: 300px;
+    }
+
+    .logs-output {
+      background: #0a0b0e;
+      border: 1px solid #1e2229;
+      border-radius: 6px;
+      padding: 14px;
+      flex: 1;
+      overflow-y: auto;
+      font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+      font-size: 12px;
+      line-height: 1.6;
+      color: #b8bdc7;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .logs-output::-webkit-scrollbar { width: 8px; }
+    .logs-output::-webkit-scrollbar-thumb { background: #23262e; border-radius: 4px; }
+    .logs-output::-webkit-scrollbar-thumb:hover { background: #2f3542; }
+
+    .modal-footer {
+      padding: 14px 20px;
+      border-top: 1px solid #1e2229;
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    /* TOAST */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(90px);
+      background: #14161b;
+      border: 1px solid #2a2e37;
+      border-left: 3px solid #4fa87a;
+      color: #e4e6eb;
+      padding: 11px 18px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 1000;
+      pointer-events: none;
+    }
+
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast i { color: #4fa87a; font-size: 15px; }
+    .toast.error { border-left-color: #c26a6a; }
+    .toast.error i { color: #c26a6a; }
+
+    /* RESPONSIVE */
+    @media (max-width: 720px) {
+      .main-content { padding: 20px 18px; }
+      .header { gap: 10px; }
+      .header h1 { font-size: 17px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="logo">
+      <i class="ri-broadcast-fill"></i>
+    </div>
+    <div class="sidebar-item active" title="Inicio">
+      <i class="ri-home-5-fill"></i>
+    </div>
+    <div class="sidebar-item" title="Configuración" onclick="goTo('/config')">
+      <i class="ri-settings-3-fill"></i>
+    </div>
+    <div class="sidebar-item" title="Galería de Overlays" onclick="goTo('/overlays')">
+      <i class="ri-layout-masonry-line"></i>
+    </div>
+    <div class="sidebar-item" title="Moderación" onclick="goTo('/moderation')">
+      <i class="ri-shield-check-fill"></i>
+    </div>
+    <div class="sidebar-item" title="Logs del sistema" onclick="openLogs()">
+      <i class="ri-terminal-box-line"></i>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main-content">
+
+    <div class="header">
+      <div class="brand">
+        <div class="brand-mark">
+          <i class="ri-broadcast-fill"></i>
+        </div>
+        <div>
+          <h1>Panel de Control</h1>
+          <div class="header-sub">Gestiona conexiones, overlays y moderación</div>
+        </div>
+      </div>
+      <div class="status-badge" id="server-badge">
+        <i class="ri-wifi-line"></i>
+        <span id="server-badge-text">Comprobando...</span>
+      </div>
+    </div>
+
+    <!-- PLATAFORMAS -->
+    <div class="section-title">Estado de plataformas</div>
+    <div class="platforms-grid">
+      <div class="platform-card twitch" id="card-twitch">
+        <div class="platform-icon"><i class="ri-twitch-fill"></i></div>
+        <div class="platform-info">
+          <div class="platform-name">Twitch</div>
+          <div class="platform-status">
+            <span class="dot"></span>
+            <span id="status-twitch">Sin configurar</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="platform-card tiktok" id="card-tiktok">
+        <div class="platform-icon"><i class="ri-tiktok-fill"></i></div>
+        <div class="platform-info">
+          <div class="platform-name">TikTok</div>
+          <div class="platform-status">
+            <span class="dot"></span>
+            <span id="status-tiktok">Sin configurar</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="platform-card kick" id="card-kick">
+        <div class="platform-icon"><i class="ri-live-fill"></i></div>
+        <div class="platform-info">
+          <div class="platform-name">Kick</div>
+          <div class="platform-status">
+            <span class="dot"></span>
+            <span id="status-kick">Sin configurar</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="platform-card youtube" id="card-youtube">
+        <div class="platform-icon"><i class="ri-youtube-fill"></i></div>
+        <div class="platform-info">
+          <div class="platform-name">YouTube</div>
+          <div class="platform-status">
+            <span class="dot"></span>
+            <span id="status-youtube">Sin configurar</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACCIONES -->
+    <div class="section-title">Acciones rápidas</div>
+    <div class="actions-grid">
+      <div class="action-card" onclick="goTo('/config')">
+        <div class="action-icon amber"><i class="ri-settings-3-fill"></i></div>
+        <div class="action-title">Configuración</div>
+        <div class="action-desc">Conecta tus cuentas, activa filtros y ajusta el TTS</div>
+      </div>
+
+      <div class="action-card" onclick="goTo('/overlays')">
+        <div class="action-icon purple"><i class="ri-layout-masonry-line"></i></div>
+        <div class="action-title">Galería de overlays</div>
+        <div class="action-desc">Chat, tops, seguidores, stats y TTS — copia URLs para OBS</div>
+      </div>
+
+      <div class="action-card" onclick="goTo('/moderation')">
+        <div class="action-icon blue"><i class="ri-shield-check-fill"></i></div>
+        <div class="action-title">Moderación</div>
+        <div class="action-desc">Bans, timeouts, encuestas y estadísticas en vivo</div>
+      </div>
+
+      <div class="action-card" onclick="openLogs()">
+        <div class="action-icon pink"><i class="ri-terminal-box-line"></i></div>
+        <div class="action-title">Logs del sistema</div>
+        <div class="action-desc">Estado del servidor y diagnóstico de errores</div>
+      </div>
+    </div>
+
+    <!-- FOOTER ACTIONS -->
+    <div class="footer-actions">
+      <button class="btn btn-primary" id="btn-restart" onclick="restartServers()">
+        <i class="ri-refresh-line"></i>
+        <span id="btn-restart-text">Reiniciar servidores</span>
+      </button>
+      <button class="btn btn-secondary" onclick="openLogs()">
+        <i class="ri-terminal-box-line"></i>
+        Ver logs
+      </button>
+    </div>
+
+  </div>
+
+  <!-- MODAL LOGS -->
+  <div class="modal" id="logs-modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3><i class="ri-terminal-box-line"></i> Logs del sistema</h3>
+        <div class="modal-actions">
+          <button class="btn-icon" onclick="toggleAutoscroll()" id="btn-autoscroll">
+            <i class="ri-arrow-down-line"></i>
+            Auto-scroll
+          </button>
+          <button class="btn-icon danger" onclick="clearLogsUI()">
+            <i class="ri-delete-bin-line"></i>
+            Limpiar
+          </button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div class="logs-output" id="logs-output">Cargando...</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeLogs()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast">
+    <i class="ri-checkbox-circle-fill"></i>
+    <span id="toast-text">Listo</span>
+  </div>
+
+  <script>
+    const { ipcRenderer } = require('electron');
+
+    let serverOnline = false;
+
+    async function checkServerStatus() {
+      try {
+        const res = await fetch('http://localhost:3000/health');
+        const data = await res.json();
+        if (data.status === 'ok') {
+          serverOnline = true;
+          setServerBadge(true);
+          await updatePlatformStatus();
+          return;
+        }
+      } catch (e) {}
+
+      serverOnline = false;
+      setServerBadge(false);
+      resetPlatforms();
+    }
+
+    function setServerBadge(online) {
+      const badge = document.getElementById('server-badge');
+      const text = document.getElementById('server-badge-text');
+      const icon = badge.querySelector('i');
+      if (online) {
+        badge.classList.remove('offline');
+        text.textContent = 'Servidor activo';
+        icon.className = 'ri-wifi-line';
+      } else {
+        badge.classList.add('offline');
+        text.textContent = 'Servidor inactivo';
+        icon.className = 'ri-wifi-off-line';
+      }
+    }
+
+    function resetPlatforms() {
+      ['twitch', 'tiktok', 'kick', 'youtube'].forEach(p => {
+        document.getElementById('card-' + p).classList.remove('connected');
+        document.getElementById('status-' + p).textContent = 'Sin conexión';
+      });
+    }
+
+    async function updatePlatformStatus() {
+      try {
+        const res = await fetch('http://localhost:3000/get-config');
+        const config = await res.json();
+        updateCard('twitch', config.TWITCH_CHANNEL);
+        updateCard('tiktok', config.TIKTOK_USER_ID || (config.TIKTOK_USERS || [])[0]);
+        updateCard('kick', config.KICK_USERNAME || (config.KICK_USERS || [])[0]);
+        updateCard('youtube', config.YOUTUBE_USER_ID || (config.YOUTUBE_USERS || [])[0]);
+      } catch (e) {}
+    }
+
+    function updateCard(platform, value) {
+      const card = document.getElementById('card-' + platform);
+      const status = document.getElementById('status-' + platform);
+      const str = String(value || '').trim();
+      if (str) {
+        card.classList.add('connected');
+        status.textContent = str;
+      } else {
+        card.classList.remove('connected');
+        status.textContent = 'Sin configurar';
+      }
+    }
+
+    setInterval(checkServerStatus, 3000);
+    checkServerStatus();
+
+    function goTo(path) {
+      window.location.href = 'http://localhost:3000' + path;
+    }
+
+    async function restartServers() {
+      const btn = document.getElementById('btn-restart');
+      const text = document.getElementById('btn-restart-text');
+      btn.disabled = true;
+      text.textContent = 'Reiniciando...';
+      try {
+        const result = await ipcRenderer.invoke('restart-servers');
+        if (result && result.success) {
+          showToast('Servidores reiniciados correctamente', false);
+        } else {
+          showToast('No se pudo reiniciar: ' + (result?.error || 'desconocido'), true);
+        }
+      } catch (e) {
+        showToast('Error al reiniciar: ' + e.message, true);
+      }
+      setTimeout(() => {
+        btn.disabled = false;
+        text.textContent = 'Reiniciar servidores';
+      }, 2000);
+    }
+
+    let logsInterval = null;
+    let autoscroll = true;
+
+    function openLogs() {
+      document.getElementById('logs-modal').classList.add('open');
+      refreshLogs();
+      if (logsInterval) clearInterval(logsInterval);
+      logsInterval = setInterval(refreshLogs, 2000);
+    }
+
+    function closeLogs() {
+      document.getElementById('logs-modal').classList.remove('open');
+      if (logsInterval) { clearInterval(logsInterval); logsInterval = null; }
+    }
+
+    async function refreshLogs() {
+      try {
+        const logs = await ipcRenderer.invoke('get-logs');
+        const output = document.getElementById('logs-output');
+        output.textContent = (logs && logs.length > 0) ? logs.join('\n') : 'Sin logs todavía.';
+        if (autoscroll) output.scrollTop = output.scrollHeight;
+      } catch (e) {
+        document.getElementById('logs-output').textContent = 'Error al cargar logs: ' + e.message;
+      }
+    }
+
+    function toggleAutoscroll() {
+      autoscroll = !autoscroll;
+      const btn = document.getElementById('btn-autoscroll');
+      btn.style.borderColor = autoscroll ? '#4d7cc7' : '#2a2e37';
+      btn.style.color = autoscroll ? '#8badd8' : '#7b8090';
+    }
+
+    function clearLogsUI() {
+      document.getElementById('logs-output').textContent = 'Logs limpiados.';
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeLogs();
+    });
+
+    let toastTimer = null;
+    function showToast(message, isError) {
+      const toast = document.getElementById('toast');
+      const text = document.getElementById('toast-text');
+      text.textContent = message;
+      toast.classList.toggle('error', !!isError);
+      toast.classList.add('show');
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove('show'), 2600);
+    }
+  </script>
+</body>
+</html>

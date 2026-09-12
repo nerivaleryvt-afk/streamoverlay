@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>TogiPanel TTS</title>
+    <style>
+        html, body {
+            margin: 0; padding: 0;
+            width: 100vw; height: 100vh;
+            background: transparent;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <audio id="tts-audio" preload="auto"></audio>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const audio = document.getElementById('tts-audio');
+
+        let currentVolume = 0.8;
+        let isPlaying = false;
+        let currentFilename = null;
+
+        socket.on('tts:speak', async ({ url, filename, text }) => {
+            if (!url) return;
+            if (isPlaying) return;
+
+            console.log('🔊 [TTS overlay] Reproduciendo:', text);
+
+            currentFilename = filename;
+            isPlaying = true;
+            audio.volume = currentVolume;
+            audio.src = url;
+
+            try {
+                await audio.play();
+            } catch (e) {
+                console.error('❌ Error reproduciendo:', e.message);
+                // No borrar el MP3 — se limpia solo si no se reproduce
+                isPlaying = false;
+                currentFilename = null;
+            }
+        });
+
+        audio.addEventListener('ended', () => {
+            if (currentFilename) socket.emit('tts:done', { filename: currentFilename });
+            isPlaying = false;
+            currentFilename = null;
+            audio.src = '';
+        });
+
+        audio.addEventListener('error', (e) => {
+            console.error('❌ Error en audio:', e);
+            // No borrar el MP3 al fallar — puede ser un fallo transitorio
+            isPlaying = false;
+            currentFilename = null;
+        });
+
+        socket.on('tts:volume', ({ volume }) => {
+            if (typeof volume === 'number') {
+                currentVolume = Math.max(0, Math.min(1, volume));
+                audio.volume = currentVolume;
+            }
+        });
+
+        socket.on('connect', () => console.log('💻 [TTS overlay] Conectado'));
+
+        // Fallback: si el audio no arrancó por autoplay, reintentar en el próximo click
+        document.addEventListener('click', () => {
+            if (audio.paused && audio.src) {
+                audio.play().catch(() => {});
+            }
+        }, { once: true });
+    </script>
+</body>
+</html>
