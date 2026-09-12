@@ -801,7 +801,74 @@ console.log(`   🏺 Meta cristal: ${config.JAR_META} 💎`);
 // ================================================================
 const twitchChannels = new Map();
 const bannedUsers = new Map();
-const filteredWords = new Set(['spam', 'odio']);
+
+// 🚫 Lista de palabras bloqueadas (para TTS y overlay si se usa)
+const filteredWords = new Set([
+    // ─── Insultos / palabras feas ───
+    'puta', 'puto', 'putas', 'putos',
+    'mierda', 'mierdas',
+    'cabron', 'cabrón', 'cabrona', 'cabronas',
+    'pendejo', 'pendeja', 'pendejos', 'pendejas',
+    'idiota', 'idiotas',
+    'imbecil', 'imbécil', 'imbeciles', 'imbéciles',
+    'estupido', 'estúpido', 'estupida', 'estúpida',
+    'gilipollas', 'capullo', 'capulla',
+    'joder', 'jodete', 'jódete',
+    'coño', 'cono',
+    'hostia', 'hostias',
+    'marica', 'maricon', 'maricón', 'maricona',
+    'zorra', 'zorras',
+    'perra', 'perras',
+    'chupa', 'chupala', 'chúpala',
+    'verga', 'vergas',
+    'chinga', 'chingada', 'chingado', 'chingas',
+    'pinche',
+
+    // ─── Racismo / xenofobia ───
+    'negro', 'negra', 'negros', 'negras',
+    'nigga', 'nigger', 'niggas', 'niggers',
+    'sudaca', 'sudacas',
+    'gitano', 'gitana', 'gitanos', 'gitanas',
+    'moro', 'mora', 'moros', 'moras',
+    'panchito', 'panchita',
+    'indio', 'india',
+    'chino', 'china',
+
+    // ─── Homofobia / transfobia ───
+    'travelo', 'travesti',
+    'torta', 'tortillera',
+    'plumifero', 'plumífero',
+
+    // ─── Discapacidad (uso despectivo) ───
+    'retrasado', 'retrasada', 'retrasados', 'retrasadas',
+    'subnormal', 'subnormales',
+    'mongolo', 'mongola', 'mongolos',
+
+    // ─── Contenido sexual / +18 ───
+    'polla', 'pollas',
+    'pito',
+    'nalga', 'nalgas',
+    'tetas',
+    'culos',
+    'porno', 'pornografia', 'pornografía',
+    'xxx',
+
+    // ─── Violencia / amenazas ───
+    'matate', 'mátate',
+    'suicidate', 'suicídate',
+    'muere',
+    'violacion', 'violación',
+    'violar',
+    'nazi', 'nazis',
+    'hitler',
+
+    // ─── Spam / scams ───
+    'spam',
+    'scam',
+    'estafa',
+    'phishing'
+]);
+
 let totalDiamonds = 0;
 let totalBits = 0;
 const TIKTOK_DEFAULT_AVATAR = 'https://i.imgur.com/OmnpuQH.png';
@@ -823,7 +890,7 @@ function broadcastMessage(msgData) {
     if (isDuplicateMessage(msgData)) return;
     io.emit('chat-message', msgData);
     if (msgData && msgData.username && msgData.message && msgData.type !== 'ai') {
-        try { aiCohost.agregarAlaMemoria(msgData.username, msgData.message); } catch (e) {}
+        try { aiCohost.agregarAlaMemoria(msgData.username, msgData.message, config); } catch (e) {}
     }
 }
 
@@ -877,6 +944,46 @@ async function procesarCoHost(usuario, texto, plataforma, canal) {
 // ================================================================
 const ttsQueue = new TTSQueue(io);
 
+// 🚫 Bots conocidos que NO se leen por TTS
+const BOTS_CONOCIDOS = new Set([
+    'nightbot',
+    'streamelements',
+    'streamlabs',
+    'moobot',
+    'fossabot',
+    'wizebot',
+    'sery_bot',
+    'kofistreambot',
+    'soundalerts',
+    'creatisbot',
+    'commanderroot',
+    'own3d',
+    'stay_hydrated_bot',
+    'pokemoncommunitygame',
+    'tangiabot',
+    'togikirei'
+]);
+
+function esBot(nombre) {
+    if (!nombre) return false;
+    const n = String(nombre).toLowerCase().trim();
+    if (BOTS_CONOCIDOS.has(n)) return true;
+    if (n.endsWith('bot')) return true;
+    if (n.endsWith('_bot')) return true;
+    if (n.endsWith('bot_')) return true;
+    return false;
+}
+
+// 🔍 Comprobar si un texto contiene alguna palabra prohibida
+function contienePalabraProhibida(texto) {
+    if (!texto) return false;
+    const t = String(texto).toLowerCase();
+    for (const palabra of filteredWords) {
+        if (t.includes(palabra)) return true;
+    }
+    return false;
+}
+
 function tryEnqueueTTS({ text, type = 'chat', platform, user }) {
     try {
         const tts = config.TTS || {};
@@ -884,6 +991,12 @@ function tryEnqueueTTS({ text, type = 'chat', platform, user }) {
         if (!tts.readFrom || tts.readFrom[platform] === false) return;
         if (!tts.readEvents || tts.readEvents[type] === false) return;
         if (type === 'chat' && typeof text === 'string' && /(^|\s)!/.test(text)) return;
+
+        // 🚫 Filtro de bots
+        if (user && esBot(user)) return;
+
+        // 🚫 Filtro de palabras prohibidas
+        if (contienePalabraProhibida(text)) return;
 
         ttsQueue.enqueue({
             text,
@@ -908,7 +1021,7 @@ const tiktokChat = new TikTokChat({
         };
         if (isDuplicateMessage(msgData)) return;
         io.emit('chat-message', msgData);
-        try { aiCohost.agregarAlaMemoria(msg.username, msg.message); } catch (e) {}
+        try { aiCohost.agregarAlaMemoria(msg.username, msg.message, config); } catch (e) {}
         tryEnqueueTTS({
             text: `${msg.username} dice: ${msg.message}`,
             type: 'chat',
@@ -1054,7 +1167,7 @@ const youtubeChat = new YouTubeChat({
         };
         if (isDuplicateMessage(msgData)) return;
         io.emit('chat-message', msgData);
-        try { aiCohost.agregarAlaMemoria(msg.username, msg.message); } catch (e) {}
+        try { aiCohost.agregarAlaMemoria(msg.username, msg.message, config); } catch (e) {}
         tryEnqueueTTS({
             text: `${msg.username} dice: ${msg.message}`,
             type: 'chat',
@@ -1664,7 +1777,7 @@ async function connectTwitchChannel(channelName, account) {
             channels: [channelName]
         });
 
-        client.on('message', async (channel, tags, message, self) => {
+               client.on('message', async (channel, tags, message, self) => {
             if (self) return;
             const username = tags['display-name'] || tags.username;
             const canal = channel.replace('#', '');
@@ -1676,7 +1789,7 @@ async function connectTwitchChannel(channelName, account) {
             };
             if (isDuplicateMessage(msgData)) return;
             io.emit('chat-message', msgData);
-            try { aiCohost.agregarAlaMemoria(username, message); } catch (e) {}
+            try { aiCohost.agregarAlaMemoria(username, message, config); } catch (e) {}
             tryEnqueueTTS({
                 text: `${username} dice: ${message}`,
                 type: 'chat',
