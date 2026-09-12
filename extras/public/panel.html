@@ -204,6 +204,108 @@
       font-size: 11.5px;
     }
 
+    /* UPDATE BANNER */
+    .update-banner {
+      display: none;
+      background: linear-gradient(90deg, rgba(77,124,199,0.12) 0%, rgba(77,124,199,0.04) 100%);
+      border: 1px solid rgba(77,124,199,0.32);
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin-bottom: 20px;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      animation: slideDown 0.3s ease;
+    }
+    .update-banner.show { display: flex; }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .update-banner .update-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      background: rgba(77,124,199,0.18);
+      color: #8badd8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    .update-banner.ready .update-icon {
+      background: rgba(79,168,122,0.18);
+      color: #4fa87a;
+    }
+
+    .update-banner .update-info {
+      flex: 1;
+      min-width: 200px;
+    }
+    .update-banner .update-title {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: #e4e6eb;
+      margin-bottom: 2px;
+    }
+    .update-banner .update-desc {
+      font-size: 12px;
+      color: #9aa0ad;
+    }
+
+    .update-banner .update-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .update-banner .btn-update {
+      padding: 8px 14px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 12.5px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s;
+      background: #4d7cc7;
+      color: white;
+    }
+    .update-banner .btn-update:hover:not(:disabled) { background: #5a8ad6; }
+    .update-banner .btn-update:disabled { opacity: 0.55; cursor: wait; }
+    .update-banner.ready .btn-update { background: #4fa87a; }
+    .update-banner.ready .btn-update:hover { background: #5fbb89; }
+
+    .update-progress-wrap {
+      width: 100%;
+      margin-top: 10px;
+    }
+    .update-progress-bar {
+      width: 100%;
+      height: 5px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .update-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #4d7cc7 0%, #6b9be0 100%);
+      width: 0%;
+      transition: width 0.25s ease;
+    }
+    .update-progress-text {
+      font-size: 11px;
+      color: #9aa0ad;
+      margin-top: 5px;
+      font-family: ui-monospace, monospace;
+    }
+
     /* SECTIONS */
     .section-title {
       font-size: 11px;
@@ -594,6 +696,27 @@
       </div>
     </div>
 
+    <!-- BANNER DE ACTUALIZACIÓN -->
+    <div class="update-banner" id="update-banner">
+      <div class="update-icon"><i class="ri-download-cloud-2-line" id="update-icon-i"></i></div>
+      <div class="update-info">
+        <div class="update-title" id="update-title">Nueva versión disponible</div>
+        <div class="update-desc" id="update-desc">Preparando…</div>
+        <div class="update-progress-wrap" id="update-progress-wrap" style="display:none;">
+          <div class="update-progress-bar">
+            <div class="update-progress-fill" id="update-progress-fill"></div>
+          </div>
+          <div class="update-progress-text" id="update-progress-text">0%</div>
+        </div>
+      </div>
+      <div class="update-actions">
+        <button class="btn-update" id="update-btn" onclick="onUpdateButton()">
+          <i class="ri-download-line" id="update-btn-icon"></i>
+          <span id="update-btn-text">Descargar</span>
+        </button>
+      </div>
+    </div>
+
     <!-- PLATAFORMAS -->
     <div class="section-title">Estado de plataformas</div>
     <div class="platforms-grid">
@@ -814,6 +937,112 @@
         .then(() => showToast('IP copiada: ' + serverIp, false))
         .catch(() => showToast('No se pudo copiar', true));
     }
+
+    /* ============ AUTO-UPDATE UI ============ */
+    let updateState = 'idle'; // idle | available | downloading | ready | error
+    let pendingUpdateVersion = '';
+
+    function showUpdateBanner() {
+      document.getElementById('update-banner').classList.add('show');
+    }
+    function hideUpdateBanner() {
+      document.getElementById('update-banner').classList.remove('show');
+    }
+
+    function setUpdateState(state, data = {}) {
+      updateState = state;
+      const banner = document.getElementById('update-banner');
+      const title = document.getElementById('update-title');
+      const desc = document.getElementById('update-desc');
+      const icon = document.getElementById('update-icon-i');
+      const btn = document.getElementById('update-btn');
+      const btnIcon = document.getElementById('update-btn-icon');
+      const btnText = document.getElementById('update-btn-text');
+      const progressWrap = document.getElementById('update-progress-wrap');
+
+      banner.classList.toggle('ready', state === 'ready');
+
+      if (state === 'available') {
+        pendingUpdateVersion = data.version || '';
+        title.textContent = `Nueva versión ${pendingUpdateVersion} disponible`;
+        desc.textContent = data.releaseNotes ? String(data.releaseNotes).slice(0, 120) : 'Pulsa "Descargar" para actualizar.';
+        icon.className = 'ri-download-cloud-2-line';
+        btn.disabled = false;
+        btnIcon.className = 'ri-download-line';
+        btnText.textContent = 'Descargar';
+        progressWrap.style.display = 'none';
+        showUpdateBanner();
+      } else if (state === 'downloading') {
+        title.textContent = `Descargando versión ${pendingUpdateVersion}…`;
+        desc.textContent = 'No cierres la aplicación mientras se descarga.';
+        icon.className = 'ri-download-cloud-2-line';
+        btn.disabled = true;
+        btnIcon.className = 'ri-loader-4-line';
+        btnText.textContent = 'Descargando…';
+        progressWrap.style.display = 'block';
+        showUpdateBanner();
+      } else if (state === 'ready') {
+        title.textContent = `Versión ${pendingUpdateVersion} lista`;
+        desc.textContent = 'Reinicia la aplicación para aplicar la actualización.';
+        icon.className = 'ri-restart-line';
+        btn.disabled = false;
+        btnIcon.className = 'ri-restart-line';
+        btnText.textContent = 'Reiniciar e instalar';
+        progressWrap.style.display = 'none';
+        showUpdateBanner();
+      } else if (state === 'error') {
+        title.textContent = 'Error al actualizar';
+        desc.textContent = data.message || 'No se pudo descargar la actualización.';
+        icon.className = 'ri-error-warning-line';
+        btn.disabled = false;
+        btnIcon.className = 'ri-refresh-line';
+        btnText.textContent = 'Reintentar';
+        showUpdateBanner();
+      }
+    }
+
+    async function onUpdateButton() {
+      if (updateState === 'available' || updateState === 'error') {
+        setUpdateState('downloading');
+        try {
+          const res = await ipcRenderer.invoke('update:download');
+          if (!res || !res.success) {
+            setUpdateState('error', { message: res?.error || 'Error desconocido' });
+          }
+        } catch (e) {
+          setUpdateState('error', { message: e.message });
+        }
+      } else if (updateState === 'ready') {
+        try {
+          await ipcRenderer.invoke('update:install');
+        } catch (e) {
+          showToast('Error al instalar: ' + e.message, true);
+        }
+      }
+    }
+
+    // Eventos desde el proceso principal
+    ipcRenderer.on('update:available', (_e, info) => {
+      console.log('🔄 Actualización disponible:', info);
+      setUpdateState('available', info);
+    });
+
+    ipcRenderer.on('update:progress', (_e, p) => {
+      const fill = document.getElementById('update-progress-fill');
+      const text = document.getElementById('update-progress-text');
+      if (fill) fill.style.width = (p.percent || 0) + '%';
+      if (text) text.textContent = `${p.percent || 0}% · ${p.mbps || '0'} MB/s`;
+    });
+
+    ipcRenderer.on('update:ready', (_e, info) => {
+      console.log('🔄 Actualización lista:', info);
+      setUpdateState('ready', info);
+    });
+
+    ipcRenderer.on('update:error', (_e, msg) => {
+      console.warn('🔄 Error de actualización:', msg);
+      setUpdateState('error', { message: msg });
+    });
 
     /* ============ ARRANQUE ============ */
     setInterval(checkServerStatus, 3000);
