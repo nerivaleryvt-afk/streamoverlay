@@ -145,6 +145,13 @@
       margin-top: 2px;
     }
 
+    .header-right {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
     .status-badge {
       display: inline-flex;
       align-items: center;
@@ -166,6 +173,36 @@
     }
 
     .status-badge i { font-size: 13px; }
+
+    /* IP BOX */
+    .ip-box {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: #14161b;
+      border: 1px solid #23262e;
+      border-radius: 100px;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+      color: #b8bdc7;
+      transition: border-color 0.15s;
+    }
+    .ip-box:hover { border-color: #3a4150; }
+
+    .ip-box i {
+      cursor: pointer;
+      font-size: 14px;
+      color: #7b8090;
+      transition: color 0.15s;
+    }
+    .ip-box i:hover { color: #e4e6eb; }
+
+    .ip-box .ip-label {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      color: #7b8090;
+      font-size: 11.5px;
+    }
 
     /* SECTIONS */
     .section-title {
@@ -543,9 +580,17 @@
           <div class="header-sub">Gestiona conexiones, overlays y moderación</div>
         </div>
       </div>
-      <div class="status-badge" id="server-badge">
-        <i class="ri-wifi-line"></i>
-        <span id="server-badge-text">Comprobando...</span>
+      <div class="header-right">
+        <div class="ip-box" id="ip-box" style="display:none;" title="IP local para conectar desde otra PC">
+          <span class="ip-label">IP:</span>
+          <span id="ip-text">···</span>
+          <i class="ri-eye-line" id="ip-eye" onclick="toggleIp()" title="Mostrar/ocultar IP"></i>
+          <i class="ri-file-copy-line" id="ip-copy" onclick="copyIp()" title="Copiar IP"></i>
+        </div>
+        <div class="status-badge" id="server-badge">
+          <i class="ri-wifi-line"></i>
+          <span id="server-badge-text">Comprobando...</span>
+        </div>
       </div>
     </div>
 
@@ -738,8 +783,42 @@
       }
     }
 
+    /* ============ IP LOCAL ============ */
+    let serverIp = '';
+    let ipVisible = false;
+
+    async function loadServerIp() {
+      try {
+        const res = await fetch('http://localhost:3000/api/local-ip');
+        const data = await res.json();
+        if (data && data.ip) {
+          serverIp = data.ip;
+          document.getElementById('ip-box').style.display = 'inline-flex';
+        }
+      } catch (e) {
+        console.warn('No se pudo obtener la IP local:', e.message);
+      }
+    }
+
+    function toggleIp() {
+      ipVisible = !ipVisible;
+      const text = document.getElementById('ip-text');
+      const eye = document.getElementById('ip-eye');
+      text.textContent = ipVisible ? serverIp : '···';
+      eye.className = ipVisible ? 'ri-eye-off-line' : 'ri-eye-line';
+    }
+
+    function copyIp() {
+      if (!serverIp) return;
+      navigator.clipboard.writeText(serverIp)
+        .then(() => showToast('IP copiada: ' + serverIp, false))
+        .catch(() => showToast('No se pudo copiar', true));
+    }
+
+    /* ============ ARRANQUE ============ */
     setInterval(checkServerStatus, 3000);
     checkServerStatus();
+    loadServerIp();
 
     function goTo(path) {
       window.location.href = 'http://localhost:3000' + path;
