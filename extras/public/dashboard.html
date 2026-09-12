@@ -7,6 +7,7 @@
   <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
   <script src="/js/server-url.js"></script>
   <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
   <style>
     :root {
       --bg-app: #0d0e11;
@@ -1109,17 +1110,17 @@
       document.getElementById('toggleYouTubeText').textContent = youtubeCollapsed ? 'Mostrar YouTube' : 'Ocultar YouTube';
     }
 
-    // ============================================
+       // ============================================
     // SELECTOR DE VISTAS TIKTOK
     // ============================================
     const DEFAULT_TIKTOK_VIEWS = [
-      { id: 'browser',  name: 'Tiktok Browser',  username: 'lugivt_',  url: 'https://livecenter.tiktok.com/live_monitor', partition: 'persist:tiktok-browser'  },
-      { id: 'lugi',     name: 'Tiktok Lugi',     username: 'lugivt_',  url: 'https://livecenter.tiktok.com/live_monitor', partition: 'persist:tiktok-lugi'     },
-      { id: 'neriaiko', name: 'Tiktok Neriaiko', username: 'neriaiko', url: 'https://livecenter.tiktok.com/live_monitor', partition: 'persist:tiktok-neriaiko' }
+      { id: 'slot1', name: 'Cuenta 1', url: 'https://livecenter.tiktok.com/live_monitor', partition: 'persist:tiktok-slot-1' },
+      { id: 'slot2', name: 'Cuenta 2', url: 'https://livecenter.tiktok.com/live_monitor', partition: 'persist:tiktok-slot-2' },
+      { id: 'slot3', name: 'Cuenta 3', url: 'https://livecenter.tiktok.com/live_monitor', partition: 'persist:tiktok-slot-3' }
     ];
 
     let TIKTOK_VIEWS = [...DEFAULT_TIKTOK_VIEWS];
-    let TIKTOK_ACTIVE_VIEW = 'browser';
+    let TIKTOK_ACTIVE_VIEW = 'slot1';
 
     async function loadTikTokViews() {
       // 1. Intentar desde el endpoint

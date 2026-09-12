@@ -10,6 +10,49 @@
   let selectedToken = null;
   let statusInterval = null;
   let lastState = 'idle';
+  let obsInterval = null;
+
+  // ============================================================
+  // 📋 COPIAR AL PORTAPAPELES (3 métodos en cascada)
+  // ============================================================
+  async function copiarAlPortapapeles(texto) {
+    if (!texto) return false;
+
+    // 1) IPC Electron (más fiable con nodeIntegration:true)
+    try {
+      const electron = require('electron');
+      if (electron && electron.clipboard && typeof electron.clipboard.writeText === 'function') {
+        electron.clipboard.writeText(String(texto));
+        return true;
+      }
+    } catch (e) { /* no es Electron o no está disponible */ }
+
+    // 2) API moderna del navegador
+    try {
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+        await navigator.clipboard.writeText(String(texto));
+        return true;
+      }
+    } catch (e) { /* sigue al fallback */ }
+
+    // 3) Fallback clásico con textarea temporal
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = String(texto);
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.top = '-1000px';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      ta.setSelectionRange(0, ta.value.length);
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      return ok;
+    } catch (e) {
+      return false;
+    }
+  }
 
   // ============================================================
   // INYECTAR CSS
@@ -156,6 +199,16 @@
         display: inline-flex; align-items: center; gap: 5px;
       }
       .as-refresh-btn:hover { color: var(--primary-soft); border-color: var(--primary); }
+
+      .as-qr-wrap {
+        display: flex; align-items: center; gap: 12px; margin-top: 4px;
+      }
+      .as-qr-wrap canvas {
+        background: #fff; border-radius: 6px; padding: 6px; flex-shrink: 0;
+      }
+      .as-qr-hint {
+        font-size: 11.5px; color: var(--text-muted); line-height: 1.5;
+      }
     `;
     document.head.appendChild(style);
   }
@@ -221,7 +274,7 @@
 
         <div class="as-col">
           <div>
-            <div class="as-label"><i class="ri-settings-3-line"></i> Configuración de OBS (una sola vez)</div>
+            <div class="as-label"><i class="ri-settings-3-line"></i> Configuración de OBS (esta PC)</div>
             <div class="as-obs-box">
               <div class="as-obs-row">
                 <span class="as-obs-key">Servidor</span>
@@ -233,9 +286,40 @@
               <div class="as-obs-row">
                 <span class="as-obs-key">Clave de retransmisión</span>
                 <div class="as-obs-val">
-                  <span>togipanel</span>
+                  <span id="as-obs-key-local">togipanel</span>
                   <button class="as-copy-btn" data-copy="togipanel">Copiar</button>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="as-label"><i class="ri-computer-line"></i> Otra PC en tu red (streaming)</div>
+            <div class="as-obs-box">
+              <div class="as-obs-row">
+                <span class="as-obs-key">Servidor (RTMP)</span>
+                <div class="as-obs-val">
+                  <span id="as-lan-url">rtmp://…:1935/live</span>
+                  <button class="as-copy-btn" id="as-copy-lan-url" data-copy="">📋</button>
+                </div>
+              </div>
+              <div class="as-obs-row">
+                <span class="as-obs-key">Clave de retransmisión</span>
+                <div class="as-obs-val">
+                  <span id="as-lan-key">togipanel</span>
+                  <button class="as-copy-btn" id="as-copy-lan-key" data-copy="togipanel">📋</button>
+                </div>
+              </div>
+
+              <div class="as-qr-wrap">
+                <canvas id="as-qr" width="120" height="120"></canvas>
+                <div class="as-qr-hint">
+                  Escanea desde el móvil<br>o copia la URL a OBS en la PC 2.
+                </div>
+              </div>
+
+              <div class="as-meta">
+                <span>Estado del proxy: <b id="as-proxy-status">—</b></span>
               </div>
             </div>
           </div>
@@ -262,15 +346,21 @@
     document.getElementById('as-start').addEventListener('click', startStream);
     document.getElementById('as-stop').addEventListener('click', stopStream);
     document.getElementById('as-renew').addEventListener('click', renewStream);
-    panel.querySelectorAll('.as-copy-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const txt = btn.getAttribute('data-copy');
-        navigator.clipboard.writeText(txt).then(() => {
-          const old = btn.textContent;
-          btn.textContent = '✓';
-          setTimeout(() => { btn.textContent = old; }, 1200);
-        }).catch(() => {});
-      });
+
+    // Delegación de eventos para TODOS los botones "Copiar"
+    panel.addEventListener('click', async (e) => {
+      const btn = e.target.closest('.as-copy-btn');
+      if (!btn) return;
+      const txt = btn.getAttribute('data-copy') || '';
+      if (!txt) return;
+      const ok = await copiarAlPortapapeles(txt);
+      const old = btn.textContent;
+      btn.textContent = ok ? '✓' : '✗';
+      btn.style.color = ok ? 'var(--success)' : 'var(--danger)';
+      setTimeout(() => {
+        btn.textContent = old;
+        btn.style.color = '';
+      }, 1200);
     });
   }
 
@@ -459,7 +549,6 @@
       if (el) el.disabled = busy;
     });
     if (!busy) {
-      // Re-aplicar estado real
       actualizarEstado();
     }
   }
@@ -479,6 +568,47 @@
   }
 
   // ============================================================
+  // 🎥 INFO DE OBS (IP LAN + URL + QR)
+  // ============================================================
+  async function loadObsInfo() {
+    try {
+      const r = await fetch(window.SERVER_BASE + '/api/obs-info');
+      const data = await r.json();
+      if (!data.ok) return;
+
+      const urlEl   = document.getElementById('as-lan-url');
+      const keyEl   = document.getElementById('as-lan-key');
+      const stEl    = document.getElementById('as-proxy-status');
+      const copyUrl = document.getElementById('as-copy-lan-url');
+      const copyKey = document.getElementById('as-copy-lan-key');
+
+      if (urlEl)   urlEl.textContent = data.lanUrl;
+      if (keyEl)   keyEl.textContent = data.key;
+      if (stEl)    stEl.textContent  = data.statusLabel || data.status || '—';
+      if (copyUrl) copyUrl.setAttribute('data-copy', data.lanUrl);
+      if (copyKey) copyKey.setAttribute('data-copy', data.key);
+
+      // Pintar QR (si la librería está cargada)
+      const canvas = document.getElementById('as-qr');
+      if (canvas && window.QRCode && typeof window.QRCode.toCanvas === 'function') {
+        try {
+          await window.QRCode.toCanvas(canvas, data.lanUrl, { width: 120, margin: 1 });
+        } catch (e) { /* QR falló, silencioso */ }
+      }
+    } catch (e) { /* silencioso */ }
+  }
+
+  function startObsPolling() {
+    stopObsPolling();
+    loadObsInfo();
+    obsInterval = setInterval(loadObsInfo, 10000);
+  }
+
+  function stopObsPolling() {
+    if (obsInterval) { clearInterval(obsInterval); obsInterval = null; }
+  }
+
+  // ============================================================
   // TOGGLE DEL PANEL
   // ============================================================
   function togglePanel() {
@@ -488,6 +618,9 @@
     if (panel.classList.contains('open')) {
       loadAccounts();
       actualizarEstado();
+      startObsPolling();
+    } else {
+      stopObsPolling();
     }
   }
 

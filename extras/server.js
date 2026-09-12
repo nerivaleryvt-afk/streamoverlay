@@ -270,6 +270,55 @@ app.get('/api/local-ip', (req, res) => {
 });
 
 // ================================================================
+// 🎥 INFO PARA OBS (modo 2 PCs)
+// ================================================================
+app.get('/api/obs-info', (req, res) => {
+    try {
+        const nets = os.networkInterfaces();
+        const candidates = [];
+        const isPrivate = (ip) =>
+            /^192\.168\./.test(ip) ||
+            /^10\./.test(ip) ||
+            /^172\.(1[6-9]|2\d|3[01])\./.test(ip);
+        const isTailscale = (ip) =>
+            /^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\./.test(ip);
+
+        for (const name of Object.keys(nets)) {
+            for (const net of nets[name] || []) {
+                if (net.family !== 'IPv4' || net.internal) continue;
+                if (net.address.startsWith('169.254.')) continue;
+                if (isTailscale(net.address)) continue;
+                candidates.push({ iface: name, ip: net.address, private: isPrivate(net.address) });
+            }
+        }
+        const preferida = candidates.find(c => c.private) || candidates[0] || null;
+        const lanIp = preferida ? preferida.ip : '127.0.0.1';
+
+        const rtmpPort = 1935;
+        const key = 'togipanel';
+
+        const state = (typeof tiktokProxy.getState === 'function') ? tiktokProxy.getState() : { status: 'idle' };
+        let proxyStatus = 'Parado';
+        if (state.status === 'waiting')        proxyStatus = 'Esperando a OBS';
+        else if (state.status === 'streaming') proxyStatus = 'Emitiendo';
+        else if (state.status === 'error')     proxyStatus = 'Error';
+
+        res.json({
+            ok: true,
+            port: rtmpPort,
+            key,
+            lanIp,
+            localUrl: `rtmp://localhost:${rtmpPort}/live`,
+            lanUrl:   `rtmp://${lanIp}:${rtmpPort}/live`,
+            status: state.status || 'idle',
+            statusLabel: proxyStatus,
+            username: state.username || null
+        });
+    } catch (e) {
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+// ================================================================
 // 🎁 MAPA DE IMÁGENES DE REGALOS
 // ================================================================
 const giftImagesMap = new Map();
