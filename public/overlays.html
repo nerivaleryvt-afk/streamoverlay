@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Overlays</title>
   <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+  <script src="/js/server-url.js"></script>
   <style>
     :root {
       --bg-app: #0d0e11;
@@ -907,11 +908,11 @@
     </nav>
 
     <div class="sidebar-footer">
-      <a href="http://localhost:3000/moderation" class="sidebar-link">
+      <a href="/moderation" class="sidebar-link">
         <i class="ri-dashboard-3-line"></i>
         <span>Dashboard</span>
       </a>
-      <a href="http://localhost:3000/config" class="sidebar-link">
+      <a href="/config" class="sidebar-link">
         <i class="ri-settings-3-line"></i>
         <span>Configuración</span>
       </a>
@@ -948,23 +949,23 @@
             <p>Todos tus chats en una sola ventana</p>
           </div>
           <div class="card-header-actions">
-            <button class="icon-btn" onclick="probar('http://localhost:3000/overlay')" title="Abrir en nueva pestaña">
+            <button class="icon-btn" onclick="probar('/overlay')" title="Abrir en nueva pestaña">
               <i class="ri-external-link-line"></i>
             </button>
           </div>
         </div>
-        <div class="preview-box" data-w="380" data-h="640" onclick="probar('http://localhost:3000/overlay')">
+        <div class="preview-box" data-w="380" data-h="640" onclick="probar('/overlay')">
           <div class="preview-empty-hint">Chat en vivo · sin mensajes todavía</div>
           <div class="preview-frame">
-            <iframe data-src="http://localhost:3000/overlay?preview=1" loading="lazy"></iframe>
+            <iframe data-src="/overlay?preview=1" loading="lazy"></iframe>
           </div>
           <div class="preview-footer">
-            <span class="url-text">localhost:3000/overlay</span>
+            <span class="url-text" data-path="/overlay">/overlay</span>
             <span class="open-hint"><i class="ri-external-link-line"></i> Abrir</span>
           </div>
         </div>
         <div class="card-actions">
-          <button class="action-btn secondary" onclick="probar('http://localhost:3000/overlay')">
+          <button class="action-btn secondary" onclick="probar('/overlay')">
             <i class="ri-eye-line"></i> Ver
           </button>
         </div>
@@ -979,17 +980,17 @@
             <p>Quién más ha donado durante el directo</p>
           </div>
           <div class="card-header-actions">
-            <button class="icon-btn" onclick="probar('http://localhost:3000/top-donadores')" title="Abrir en nueva pestaña">
+            <button class="icon-btn" onclick="probar('/top-donadores')" title="Abrir en nueva pestaña">
               <i class="ri-external-link-line"></i>
             </button>
           </div>
         </div>
-        <div class="preview-box" data-w="380" data-h="620" onclick="probar('http://localhost:3000/top-donadores')">
+        <div class="preview-box" data-w="380" data-h="620" onclick="probar('/top-donadores')">
           <div class="preview-frame">
-            <iframe data-src="http://localhost:3000/top-donadores?preview=1" loading="lazy"></iframe>
+            <iframe data-src="/top-donadores?preview=1" loading="lazy"></iframe>
           </div>
           <div class="preview-footer">
-            <span class="url-text">localhost:3000/top-donadores</span>
+            <span class="url-text" data-path="/top-donadores">/top-donadores</span>
             <span class="open-hint"><i class="ri-external-link-line"></i> Abrir</span>
           </div>
         </div>
@@ -1009,17 +1010,17 @@
             <p>Los que más corazones han enviado</p>
           </div>
           <div class="card-header-actions">
-            <button class="icon-btn" onclick="probar('http://localhost:3000/top-likes')" title="Abrir en nueva pestaña">
+            <button class="icon-btn" onclick="probar('/top-likes')" title="Abrir en nueva pestaña">
               <i class="ri-external-link-line"></i>
             </button>
           </div>
         </div>
-        <div class="preview-box" data-w="380" data-h="620" onclick="probar('http://localhost:3000/top-likes')">
+        <div class="preview-box" data-w="380" data-h="620" onclick="probar('/top-likes')">
           <div class="preview-frame">
-            <iframe data-src="http://localhost:3000/top-likes?preview=1" loading="lazy"></iframe>
+            <iframe data-src="/top-likes?preview=1" loading="lazy"></iframe>
           </div>
           <div class="preview-footer">
-            <span class="url-text">localhost:3000/top-likes</span>
+            <span class="url-text" data-path="/top-likes">/top-likes</span>
             <span class="open-hint"><i class="ri-external-link-line"></i> Abrir</span>
           </div>
         </div>
@@ -1039,17 +1040,17 @@
             <p>Los que más han compartido el live</p>
           </div>
           <div class="card-header-actions">
-            <button class="icon-btn" onclick="probar('http://localhost:3000/top-shares')" title="Abrir en nueva pestaña">
+            <button class="icon-btn" onclick="probar('/top-shares')" title="Abrir en nueva pestaña">
               <i class="ri-external-link-line"></i>
             </button>
           </div>
         </div>
-        <div class="preview-box" data-w="380" data-h="620" onclick="probar('http://localhost:3000/top-shares')">
+        <div class="preview-box" data-w="380" data-h="620" onclick="probar('/top-shares')">
           <div class="preview-frame">
-            <iframe data-src="http://localhost:3000/top-shares?preview=1" loading="lazy"></iframe>
+            <iframe data-src="/top-shares?preview=1" loading="lazy"></iframe>
           </div>
           <div class="preview-footer">
-            <span class="url-text">localhost:3000/top-shares</span>
+            <span class="url-text" data-path="/top-shares">/top-shares</span>
             <span class="open-hint"><i class="ri-external-link-line"></i> Abrir</span>
           </div>
         </div>
@@ -1069,17 +1070,17 @@
             <p>Aparece en pantalla al recibir un seguidor</p>
           </div>
           <div class="card-header-actions">
-            <button class="icon-btn" onclick="probar('http://localhost:3000/follows')" title="Abrir en nueva pestaña">
+            <button class="icon-btn" onclick="probar('/follows')" title="Abrir en nueva pestaña">
               <i class="ri-external-link-line"></i>
             </button>
           </div>
         </div>
-        <div class="preview-box" data-w="420" data-h="260" onclick="probar('http://localhost:3000/follows')">
+        <div class="preview-box" data-w="420" data-h="260" onclick="probar('/follows')">
           <div class="preview-frame">
-            <iframe data-src="http://localhost:3000/follows?preview=1" loading="lazy"></iframe>
+            <iframe data-src="/follows?preview=1" loading="lazy"></iframe>
           </div>
           <div class="preview-footer">
-            <span class="url-text">localhost:3000/follows</span>
+            <span class="url-text" data-path="/follows">/follows</span>
             <span class="open-hint"><i class="ri-external-link-line"></i> Abrir</span>
           </div>
         </div>
@@ -1099,17 +1100,17 @@
             <p>Todos los contadores del directo de un vistazo</p>
           </div>
           <div class="card-header-actions">
-            <button class="icon-btn" onclick="probar('http://localhost:3000/stats')" title="Abrir en nueva pestaña">
+            <button class="icon-btn" onclick="probar('/stats')" title="Abrir en nueva pestaña">
               <i class="ri-external-link-line"></i>
             </button>
           </div>
         </div>
-        <div class="preview-box" data-w="560" data-h="120" onclick="probar('http://localhost:3000/stats')">
+        <div class="preview-box" data-w="560" data-h="120" onclick="probar('/stats')">
           <div class="preview-frame">
-            <iframe data-src="http://localhost:3000/stats?preview=1" loading="lazy"></iframe>
+            <iframe data-src="/stats?preview=1" loading="lazy"></iframe>
           </div>
           <div class="preview-footer">
-            <span class="url-text">localhost:3000/stats</span>
+            <span class="url-text" data-path="/stats">/stats</span>
             <span class="open-hint"><i class="ri-external-link-line"></i> Abrir</span>
           </div>
         </div>
@@ -1129,7 +1130,7 @@
             <p>Lee el chat en voz alta, sin mostrarse en pantalla</p>
           </div>
           <div class="card-header-actions">
-            <button class="icon-btn" onclick="probar('http://localhost:3000/overlays/tts.html')" title="Abrir en nueva pestaña">
+            <button class="icon-btn" onclick="probar('/overlays/tts.html')" title="Abrir en nueva pestaña">
               <i class="ri-external-link-line"></i>
             </button>
           </div>
@@ -1141,7 +1142,7 @@
           </div>
         </div>
         <div class="card-actions">
-          <button class="action-btn secondary" onclick="probar('http://localhost:3000/overlays/tts.html')">
+          <button class="action-btn secondary" onclick="probar('/overlays/tts.html')">
             <i class="ri-external-link-line"></i> Abrir en OBS
           </button>
         </div>
@@ -1156,7 +1157,7 @@
             <p>Muestra cuánto falta para llegar a la meta de diamantes</p>
           </div>
           <div class="card-header-actions">
-            <button class="icon-btn" onclick="probar('http://localhost:3000/crystal')" title="Abrir en nueva pestaña">
+            <button class="icon-btn" onclick="probar('/crystal')" title="Abrir en nueva pestaña">
               <i class="ri-external-link-line"></i>
             </button>
             <button class="icon-btn danger" onclick="resetearCristal()" title="Resetear meta">
@@ -1164,12 +1165,12 @@
             </button>
           </div>
         </div>
-        <div class="preview-box" data-w="500" data-h="680" onclick="probar('http://localhost:3000/crystal')">
+        <div class="preview-box" data-w="500" data-h="680" onclick="probar('/crystal')">
           <div class="preview-frame">
-            <iframe data-src="http://localhost:3000/crystal?preview=1" loading="lazy"></iframe>
+            <iframe data-src="/crystal?preview=1" loading="lazy"></iframe>
           </div>
           <div class="preview-footer">
-            <span class="url-text">localhost:3000/crystal</span>
+            <span class="url-text" data-path="/crystal">/crystal</span>
             <span class="open-hint"><i class="ri-external-link-line"></i> Abrir</span>
           </div>
         </div>
@@ -1238,7 +1239,12 @@
 </div>
 
 <script>
-  const SERVER_BASE = 'http://localhost:3000';
+  // 🌐 SERVER_BASE viene de /js/server-url.js (autodetectado)
+  // En modo server → http://localhost:3000
+  // En modo client → http://<ip-del-server>:3000
+  const SERVER_BASE = (typeof window.SERVER_BASE === 'string' && window.SERVER_BASE)
+    ? window.SERVER_BASE
+    : 'http://localhost:3000';
 
   // ═══════════════════════════════════════════════════
   // CONFIGURACIÓN DE VARIABLES POR OVERLAY
@@ -1527,6 +1533,21 @@
 
   document.addEventListener('DOMContentLoaded', cargarPreviewsDiferido);
   if (document.readyState !== 'loading') cargarPreviewsDiferido();
+
+  // ═══════════════════════════════════════════════════
+  // REESCRIBIR URLs MOSTRADAS CON SERVER_BASE
+  // ═══════════════════════════════════════════════════
+  // Aunque en modo server y client las rutas relativas (onclick, iframe, etc.)
+  // ya funcionan, la URL que se muestra abajo en cada preview debe reflejar
+  // la URL real que el usuario copiaría a OBS. La construimos con SERVER_BASE
+  // para que en modo cliente muestre la IP del server (ej: 192.168.1.50:3000/overlay).
+  function pintarUrlsMostradas() {
+    const host = SERVER_BASE.replace(/^https?:\/\//, ''); // "localhost:3000" o "192.168.1.50:3000"
+    document.querySelectorAll('.url-text').forEach(el => {
+      const path = el.dataset.path;
+      if (path) el.textContent = host + path;
+    });
+  }
 
   // ═══════════════════════════════════════════════════
   // CONFIGURACIÓN DE TOPS
@@ -1991,6 +2012,9 @@
       cerrarConfigCristal();
     }
   });
+
+  // Pintar las URLs visibles con SERVER_BASE al cargar
+  pintarUrlsMostradas();
 </script>
 
 </body>

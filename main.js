@@ -1,12 +1,12 @@
 // ================================================================
 // main.js - Lanzador Electron con soporte para TikTok (Login QR + Captura)
 // ================================================================
-const { app, BrowserWindow, shell, ipcMain, session } = require('electron');
+const { app, BrowserWindow, shell, ipcMain, session, dialog } = require('electron');
 const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 
-// ← NUEVO: Auto-update
+// ← Auto-update
 const { autoUpdater } = require('electron-updater');
 const updaterLog = require('electron-log');
 
@@ -77,7 +77,6 @@ let appLogs = [];
 let loginWin = null;
 let monitorWin = null;
 
-// ← NUEVO: referencia global a la ventana principal y flag del updater
 let mainWindow = null;
 let updaterInitialized = false;
 
@@ -112,6 +111,17 @@ function writeSetup(payload) {
         console.error('❌ No se pudo escribir setup.json:', e.message);
         return { success: false, error: e.message };
     }
+}
+
+// ================================================================
+// 🔥 CALCULAR BASE DEL SERVER SEGÚN MODO
+// ================================================================
+function getServerBase() {
+    const setup = readSetup();
+    if (setup && setup.mode === 'client' && setup.ip) {
+        return `http://${setup.ip}:${process.env.PORT}`;
+    }
+    return `http://localhost:${process.env.PORT}`;
 }
 
 // ================================================================
@@ -254,7 +264,7 @@ function getTikTokSession() {
 }
 
 // ================================================================
-// 🔄 AUTO-UPDATE
+// 🔄 AUTO-UPDATE (con diálogo nativo + descarga automática)
 // ================================================================
 function initAutoUpdater(win) {
     if (updaterInitialized) return;
@@ -276,12 +286,18 @@ function initAutoUpdater(win) {
 
     autoUpdater.on('update-available', (info) => {
         console.log(`🔄 Nueva versión disponible: ${info.version}`);
+
+        // Avisar al panel (por si quiere mostrar banner)
         if (win && !win.isDestroyed()) {
             win.webContents.send('update:available', {
                 version: info.version,
                 releaseNotes: info.releaseNotes || ''
             });
         }
+
+        // 🔽 Descargar automáticamente
+        console.log('🔄 Descargando actualización...');
+        autoUpdater.downloadUpdate().catch(e => console.error('❌ updater download:', e.message));
     });
 
     autoUpdater.on('update-not-available', () => {
@@ -299,9 +315,30 @@ function initAutoUpdater(win) {
 
     autoUpdater.on('update-downloaded', (info) => {
         console.log(`🔄 Actualización descargada: ${info.version}`);
+
+        // Avisar al panel
         if (win && !win.isDestroyed()) {
             win.webContents.send('update:ready', { version: info.version });
         }
+
+        // 🔔 Diálogo nativo preguntando si reiniciar
+        dialog.showMessageBox(win, {
+            type: 'info',
+            buttons: ['Reiniciar ahora', 'Más tarde'],
+            defaultId: 0,
+            cancelId: 1,
+            title: 'Actualización lista',
+            message: `La versión ${info.version} está lista para instalarse.`,
+            detail: '¿Quieres reiniciar la aplicación ahora para aplicar la actualización?\n\nSi eliges "Más tarde", se instalará la próxima vez que abras la app.'
+        }).then(({ response }) => {
+            if (response === 0) {
+                console.log('🔄 Reiniciando para instalar update...');
+                closeAllProcesses();
+                setImmediate(() => autoUpdater.quitAndInstall());
+            } else {
+                console.log('⏭️ Usuario eligió "Más tarde". Se instalará al cerrar la app.');
+            }
+        }).catch(err => console.error('❌ Error mostrando diálogo:', err.message));
     });
 
     autoUpdater.on('error', (err) => {
@@ -311,6 +348,7 @@ function initAutoUpdater(win) {
         }
     });
 
+    // Comprobar al arrancar (15 s) y cada 4 horas
     setTimeout(() => {
         autoUpdater.checkForUpdates().catch((e) => console.error('❌ updater:', e.message));
     }, 15000);
@@ -408,6 +446,10 @@ function openTikTokLoginWindow() {
 function startTikTokMonitorWindow() {
     if (monitorWin) { monitorWin.focus(); return; }
 
+    // 🔥 Base del server según el modo (server vs client)
+    const serverBase = getServerBase();
+    console.log(`🎥 Monitor TikTok → enviará eventos a ${serverBase}`);
+
     let url = 'https://livecenter.tiktok.com/live_monitor';
     try {
         const cfg = JSON.parse(fs.readFileSync(configPath, 'utf8'));
@@ -435,6 +477,8 @@ function startTikTokMonitorWindow() {
     monitorWin.webContents.on('did-finish-load', () => {
         const captureScript = `
             (function() {
+                const SERVER_BASE = ${JSON.stringify(serverBase)};
+
                 function captureTikTokEvents() {
                     const chatContainer = document.querySelector('[data-e2e="chat-list"], [class*="chat-list"], [class*="comment-list"]') || document.body;
                     if (!chatContainer || window.__tiktokObserverLoaded) return;
@@ -450,7 +494,7 @@ function startTikTokMonitorWindow() {
 
                                 if (userEl && textEl) {
                                     node.dataset.processed = "true";
-                                    fetch('http://localhost:3000/tiktok-chat', {
+                                    fetch(SERVER_BASE + '/tiktok-chat', {
                                         method: 'POST',
                                         headers: { 'Content-Type': 'application/json' },
                                         body: JSON.stringify({ username: userEl.innerText.trim(), message: textEl.innerText.trim() })
@@ -462,7 +506,7 @@ function startTikTokMonitorWindow() {
                                 if (giftEl) {
                                     node.dataset.processed = "true";
                                     const user = node.querySelector('[class*="nickname"], [class*="username"]')?.innerText.trim() || 'Usuario';
-                                    fetch('http://localhost:3000/tiktok-gift', {
+                                    fetch(SERVER_BASE + '/tiktok-gift', {
                                         method: 'POST',
                                         headers: { 'Content-Type': 'application/json' },
                                         body: JSON.stringify({ username: user, gift: giftEl.innerText.trim(), diamonds: 1 })
@@ -474,7 +518,7 @@ function startTikTokMonitorWindow() {
                                 if (textContent.includes('followed') || textContent.includes('siguió') || textContent.includes('te sigue')) {
                                     node.dataset.processed = "true";
                                     const user = node.querySelector('[class*="nickname"], [class*="username"]')?.innerText.trim() || 'Nuevo Seguidor';
-                                    fetch('http://localhost:3000/tiktok-follow', {
+                                    fetch(SERVER_BASE + '/tiktok-follow', {
                                         method: 'POST',
                                         headers: { 'Content-Type': 'application/json' },
                                         body: JSON.stringify({ username: user })
@@ -512,7 +556,6 @@ ipcMain.handle('setup:load', async () => {
     return readSetup();
 });
 
-// ← NUEVO: info y reset del setup
 ipcMain.handle('setup:get-info', async () => {
     const setup = readSetup();
     if (!setup) return { mode: null };
@@ -540,9 +583,6 @@ ipcMain.handle('setup:reset', async () => {
     }
 });
 
-// ================================================================
-// 🔄 SETUP COMPLETADO → REINICIAR LA APP PARA APLICAR MODO
-// ================================================================
 ipcMain.on('setup:done', () => {
     console.log('🔄 Setup completado. Reiniciando la aplicación...');
 
@@ -598,7 +638,8 @@ ipcMain.on('start-tiktok-stream-monitor', () => { startTikTokMonitorWindow(); })
 
 ipcMain.on('tiktok-chat-captured', async (event, data) => {
     try {
-        await fetch(`http://localhost:${process.env.PORT}/tiktok-chat`, {
+        const base = getServerBase();
+        await fetch(`${base}/tiktok-chat`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username: data.user, message: data.text })

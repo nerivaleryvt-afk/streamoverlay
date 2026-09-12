@@ -97,24 +97,42 @@ app.get('/health', (req, res) => res.json({ status: 'ok' }));
 // ================================================================
 // 🌐 IP LOCAL (para el modo dos PC)
 // ================================================================
+// Devuelve la mejor IP local (prefiere rangos privados, descarta Tailscale
+// y link-local) y además un array con todas las IPs candidatas por si el
+// usuario quiere elegir otra.
 app.get('/api/local-ip', (req, res) => {
     const nets = os.networkInterfaces();
-    let localIp = null;
+    const candidates = [];
+
+    const isPrivate = (ip) =>
+        /^192\.168\./.test(ip) ||
+        /^10\./.test(ip) ||
+        /^172\.(1[6-9]|2\d|3[01])\./.test(ip);
+
+    const isTailscale = (ip) =>
+        /^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\./.test(ip);
 
     for (const name of Object.keys(nets)) {
         for (const net of nets[name] || []) {
-            // Solo IPv4, no internos (no 127.0.0.1), no link-local (no 169.254.x.x)
-            if (net.family === 'IPv4' && !net.internal) {
-                if (!net.address.startsWith('169.254.')) {
-                    localIp = net.address;
-                    break;
-                }
-            }
+            if (net.family !== 'IPv4' || net.internal) continue;
+            if (net.address.startsWith('169.254.')) continue; // link-local
+            if (isTailscale(net.address)) continue;            // Tailscale
+            candidates.push({
+                iface: name,
+                ip: net.address,
+                private: isPrivate(net.address)
+            });
         }
-        if (localIp) break;
     }
 
-    res.json({ ip: localIp });
+    // Preferir una IP privada de LAN; si no hay, la primera que haya
+    const preferida = candidates.find(c => c.private) || candidates[0] || null;
+
+    res.json({
+        ip: preferida ? preferida.ip : null,
+        all: candidates.map(c => c.ip),
+        detailed: candidates
+    });
 });
 
 // ================================================================
@@ -174,13 +192,25 @@ function cargarMapaGifts() {
 }
 cargarMapaGifts();
 
+// ✅ CAMBIO: devolvemos RUTA RELATIVA, no localhost.
+// Así el navegador la resuelve contra el host actual:
+//   - Server PC: http://localhost:3000/img/gifts/...
+//   - Client PC: http://192.168.x.x:3000/img/gifts/...
 function getGiftImageUrl(nombreRegalo) {
     if (!nombreRegalo) return null;
     const clave = normalizarNombreRegalo(nombreRegalo);
     if (!clave) return null;
     const relativa = giftImagesMap.get(clave);
     if (!relativa) return null;
-    return `http://localhost:${PORT}${relativa}`;
+    return relativa;
+}
+
+// Helper para construir URL absoluta desde el request actual
+function buildAbsUrl(req, relativa) {
+    if (!relativa) return null;
+    if (/^https?:\/\//i.test(relativa)) return relativa;
+    const base = `${req.protocol}://${req.get('host')}`;
+    return base + (relativa.startsWith('/') ? relativa : '/' + relativa);
 }
 
 app.get('/api/gift-image/:nombre', (req, res) => {
@@ -189,7 +219,7 @@ app.get('/api/gift-image/:nombre', (req, res) => {
     res.json({
         ok: !!relativa,
         claveNormalizada: clave,
-        url: relativa ? `http://localhost:${PORT}${relativa}` : null
+        url: buildAbsUrl(req, relativa)
     });
 });
 
@@ -200,7 +230,7 @@ app.get('/api/gift-lookup/:nombre', (req, res) => {
         buscado: req.params.nombre,
         claveNormalizada: clave,
         encontrado: !!relativa,
-        url: relativa ? `http://localhost:${PORT}${relativa}` : null,
+        url: buildAbsUrl(req, relativa),
         totalEnMapa: giftImagesMap.size
     });
 });
@@ -214,7 +244,7 @@ app.get('/api/gift-search/:query', (req, res) => {
         if (clave.includes(q) || q.includes(clave) || clave.includes(q.slice(0, 4))) {
             coincidencias.push({
                 clave,
-                url: `http://localhost:${PORT}${url}`
+                url: buildAbsUrl(req, url)
             });
         }
     }
