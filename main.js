@@ -254,13 +254,12 @@ function getTikTokSession() {
 }
 
 // ================================================================
-// 🔄 AUTO-UPDATE  ← NUEVO
+// 🔄 AUTO-UPDATE
 // ================================================================
 function initAutoUpdater(win) {
     if (updaterInitialized) return;
     updaterInitialized = true;
 
-    // En desarrollo no hay app-update.yml, así que lo saltamos
     if (!isPackaged) {
         console.log('🔄 Auto-updater: en desarrollo, no se comprueba.');
         return;
@@ -268,7 +267,7 @@ function initAutoUpdater(win) {
 
     autoUpdater.logger = updaterLog;
     autoUpdater.logger.transports.file.level = 'info';
-    autoUpdater.autoDownload = false;      // Esperar a que el usuario acepte
+    autoUpdater.autoDownload = false;
     autoUpdater.autoInstallOnAppQuit = true;
 
     autoUpdater.on('checking-for-update', () => {
@@ -307,14 +306,15 @@ function initAutoUpdater(win) {
 
     autoUpdater.on('error', (err) => {
         console.error('❌ [updater]', err.message);
+        if (win && !win.isDestroyed()) {
+            win.webContents.send('update:error', err.message);
+        }
     });
 
-    // Primera comprobación: 15 segundos después de arrancar
     setTimeout(() => {
         autoUpdater.checkForUpdates().catch((e) => console.error('❌ updater:', e.message));
     }, 15000);
 
-    // Y luego cada 4 horas
     setInterval(() => {
         autoUpdater.checkForUpdates().catch((e) => console.error('❌ updater:', e.message));
     }, 4 * 60 * 60 * 1000);
@@ -360,7 +360,6 @@ function createWindow() {
         win.loadURL(`http://localhost:${process.env.PORT}`);
     }
 
-    // ← NUEVO: arrancar el auto-updater cuando la ventana esté lista
     win.webContents.once('did-finish-load', () => {
         initAutoUpdater(win);
     });
@@ -513,6 +512,34 @@ ipcMain.handle('setup:load', async () => {
     return readSetup();
 });
 
+// ← NUEVO: info y reset del setup
+ipcMain.handle('setup:get-info', async () => {
+    const setup = readSetup();
+    if (!setup) return { mode: null };
+    return {
+        mode: setup.mode,
+        ip: setup.ip || null,
+        configuredAt: setup.configuredAt || null
+    };
+});
+
+ipcMain.handle('setup:reset', async () => {
+    try {
+        if (fs.existsSync(setupPath)) {
+            fs.unlinkSync(setupPath);
+            console.log('🗑️ setup.json borrado');
+        }
+        setTimeout(() => {
+            try { app.relaunch(); } catch (e) {}
+            app.quit();
+        }, 500);
+        return { success: true };
+    } catch (e) {
+        console.error('❌ Error reseteando setup:', e.message);
+        return { success: false, error: e.message };
+    }
+});
+
 // ================================================================
 // 🔄 SETUP COMPLETADO → REINICIAR LA APP PARA APLICAR MODO
 // ================================================================
@@ -580,7 +607,7 @@ ipcMain.on('tiktok-chat-captured', async (event, data) => {
 });
 
 // ================================================================
-// 🔄 IPC DEL AUTO-UPDATE  ← NUEVO
+// 🔄 IPC DEL AUTO-UPDATE
 // ================================================================
 ipcMain.handle('update:check', async () => {
     if (!isPackaged) return { success: false, error: 'No disponible en desarrollo' };

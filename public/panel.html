@@ -35,66 +35,36 @@
       padding: 20px 0;
       flex-shrink: 0;
     }
-
     .logo {
-      width: 38px;
-      height: 38px;
-      border-radius: 8px;
+      width: 38px; height: 38px; border-radius: 8px;
       background: #4d7cc7;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-      color: white;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; color: white;
       margin-bottom: 28px;
       transition: background 0.15s;
     }
     .logo:hover { background: #5a8ad6; }
-
     .sidebar-item {
-      width: 40px;
-      height: 40px;
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      width: 40px; height: 40px; border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
       color: #6b7280;
       cursor: pointer;
       transition: all 0.15s;
       margin-bottom: 4px;
       position: relative;
     }
-
-    .sidebar-item:hover {
-      background: #181b21;
-      color: #b8bdc7;
-    }
-    .sidebar-item.active {
-      background: #181d27;
-      color: #8badd8;
-    }
-
+    .sidebar-item:hover { background: #181b21; color: #b8bdc7; }
+    .sidebar-item.active { background: #181d27; color: #8badd8; }
     .sidebar-item.active::before {
-      content: '';
-      position: absolute;
-      left: -20px;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 3px;
-      height: 20px;
-      background: #4d7cc7;
+      content: ''; position: absolute;
+      left: -20px; top: 50%; transform: translateY(-50%);
+      width: 3px; height: 20px; background: #4d7cc7;
       border-radius: 0 3px 3px 0;
     }
-
     .sidebar-item i { font-size: 18px; }
 
     /* MAIN */
-    .main-content {
-      flex: 1;
-      padding: 28px 34px;
-      overflow-y: auto;
-    }
-
+    .main-content { flex: 1; padding: 28px 34px; overflow-y: auto; }
     .main-content::-webkit-scrollbar { width: 8px; }
     .main-content::-webkit-scrollbar-track { background: transparent; }
     .main-content::-webkit-scrollbar-thumb { background: #23262e; border-radius: 4px; }
@@ -102,106 +72,50 @@
 
     /* HEADER */
     .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 28px;
-      flex-wrap: wrap;
-      gap: 14px;
-      padding-bottom: 20px;
-      border-bottom: 1px solid #1e2229;
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 28px; flex-wrap: wrap; gap: 14px;
+      padding-bottom: 20px; border-bottom: 1px solid #1e2229;
     }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 13px;
-    }
-
+    .brand { display: flex; align-items: center; gap: 13px; }
     .brand-mark {
-      width: 42px;
-      height: 42px;
-      border-radius: 8px;
+      width: 42px; height: 42px; border-radius: 8px;
       background: #4d7cc7;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 19px;
-      color: white;
-      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 19px; color: white; flex-shrink: 0;
     }
-
-    .header h1 {
-      font-size: 19px;
-      font-weight: 600;
-      letter-spacing: -0.01em;
-      color: #f1f2f4;
-      margin: 0;
-    }
-
-    .header-sub {
-      font-size: 12.5px;
-      color: #7b8090;
-      margin-top: 2px;
-    }
-
-    .header-right {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
+    .header h1 { font-size: 19px; font-weight: 600; color: #f1f2f4; }
+    .header-sub { font-size: 12.5px; color: #7b8090; margin-top: 2px; }
+    .header-right { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 
     .status-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      padding: 6px 12px;
-      border-radius: 100px;
-      font-weight: 500;
-      font-size: 12px;
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 6px 12px; border-radius: 100px;
+      font-weight: 500; font-size: 12px;
       background: rgba(79,168,122,0.08);
       color: #4fa87a;
       border: 1px solid rgba(79,168,122,0.22);
-      transition: all 0.15s;
     }
-
     .status-badge.offline {
       background: rgba(192,106,106,0.08);
       color: #c26a6a;
       border-color: rgba(192,106,106,0.22);
     }
-
     .status-badge i { font-size: 13px; }
 
     /* IP BOX */
     .ip-box {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      background: #14161b;
-      border: 1px solid #23262e;
-      border-radius: 100px;
-      padding: 6px 12px;
+      display: inline-flex; align-items: center; gap: 7px;
+      background: #14161b; border: 1px solid #23262e;
+      border-radius: 100px; padding: 6px 12px;
       font-size: 12px;
       font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
       color: #b8bdc7;
-      transition: border-color 0.15s;
     }
-    .ip-box:hover { border-color: #3a4150; }
-
-    .ip-box i {
-      cursor: pointer;
-      font-size: 14px;
-      color: #7b8090;
-      transition: color 0.15s;
-    }
+    .ip-box i { cursor: pointer; font-size: 14px; color: #7b8090; }
     .ip-box i:hover { color: #e4e6eb; }
-
     .ip-box .ip-label {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      color: #7b8090;
-      font-size: 11.5px;
+      font-family: -apple-system, sans-serif;
+      color: #7b8090; font-size: 11.5px;
     }
 
     /* UPDATE BANNER */
@@ -212,185 +126,134 @@
       border-radius: 10px;
       padding: 14px 18px;
       margin-bottom: 20px;
-      align-items: center;
-      gap: 14px;
-      flex-wrap: wrap;
+      align-items: center; gap: 14px; flex-wrap: wrap;
       animation: slideDown 0.3s ease;
     }
     .update-banner.show { display: flex; }
-
     @keyframes slideDown {
       from { opacity: 0; transform: translateY(-8px); }
       to   { opacity: 1; transform: translateY(0); }
     }
-
     .update-banner .update-icon {
-      width: 38px;
-      height: 38px;
-      border-radius: 8px;
+      width: 38px; height: 38px; border-radius: 8px;
       background: rgba(77,124,199,0.18);
       color: #8badd8;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; flex-shrink: 0;
     }
-    .update-banner.ready .update-icon {
-      background: rgba(79,168,122,0.18);
-      color: #4fa87a;
-    }
-
-    .update-banner .update-info {
-      flex: 1;
-      min-width: 200px;
-    }
-    .update-banner .update-title {
-      font-size: 13.5px;
-      font-weight: 600;
-      color: #e4e6eb;
-      margin-bottom: 2px;
-    }
-    .update-banner .update-desc {
-      font-size: 12px;
-      color: #9aa0ad;
-    }
-
-    .update-banner .update-actions {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-    }
-
+    .update-banner.ready .update-icon { background: rgba(79,168,122,0.18); color: #4fa87a; }
+    .update-banner .update-info { flex: 1; min-width: 200px; }
+    .update-banner .update-title { font-size: 13.5px; font-weight: 600; color: #e4e6eb; margin-bottom: 2px; }
+    .update-banner .update-desc { font-size: 12px; color: #9aa0ad; }
+    .update-banner .update-actions { display: flex; gap: 8px; align-items: center; }
     .update-banner .btn-update {
-      padding: 8px 14px;
-      border-radius: 6px;
-      border: none;
-      cursor: pointer;
-      font-family: inherit;
-      font-size: 12.5px;
-      font-weight: 600;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
+      padding: 8px 14px; border-radius: 6px; border: none;
+      cursor: pointer; font-family: inherit;
+      font-size: 12.5px; font-weight: 600;
+      display: inline-flex; align-items: center; gap: 6px;
       transition: all 0.15s;
-      background: #4d7cc7;
-      color: white;
+      background: #4d7cc7; color: white;
     }
     .update-banner .btn-update:hover:not(:disabled) { background: #5a8ad6; }
     .update-banner .btn-update:disabled { opacity: 0.55; cursor: wait; }
     .update-banner.ready .btn-update { background: #4fa87a; }
     .update-banner.ready .btn-update:hover { background: #5fbb89; }
 
-    .update-progress-wrap {
-      width: 100%;
-      margin-top: 10px;
-    }
+    .update-progress-wrap { width: 100%; margin-top: 10px; }
     .update-progress-bar {
-      width: 100%;
-      height: 5px;
+      width: 100%; height: 5px;
       background: rgba(255,255,255,0.05);
-      border-radius: 3px;
-      overflow: hidden;
+      border-radius: 3px; overflow: hidden;
     }
     .update-progress-fill {
       height: 100%;
       background: linear-gradient(90deg, #4d7cc7 0%, #6b9be0 100%);
-      width: 0%;
-      transition: width 0.25s ease;
+      width: 0%; transition: width 0.25s ease;
     }
     .update-progress-text {
-      font-size: 11px;
-      color: #9aa0ad;
-      margin-top: 5px;
+      font-size: 11px; color: #9aa0ad; margin-top: 5px;
       font-family: ui-monospace, monospace;
+    }
+
+    /* CONNECTION MODE */
+    .mode-card {
+      background: #14161b; border: 1px solid #23262e;
+      border-radius: 8px; padding: 18px;
+      margin-bottom: 28px;
+      display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    }
+    .mode-icon {
+      width: 42px; height: 42px; border-radius: 8px;
+      background: rgba(77,124,199,0.12);
+      color: #5a8ad6;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; flex-shrink: 0;
+    }
+    .mode-info { flex: 1; min-width: 200px; }
+    .mode-label { font-size: 11px; font-weight: 600; color: #7b8090; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+    .mode-value { font-size: 14px; font-weight: 600; color: #e4e6eb; }
+    .mode-detail { font-size: 12px; color: #7b8090; margin-top: 2px; }
+
+    .btn-danger {
+      background: transparent;
+      color: #c26a6a;
+      border: 1px solid rgba(192,106,106,0.32);
+      padding: 9px 14px; border-radius: 6px;
+      font-family: inherit; font-size: 12.5px; font-weight: 500;
+      cursor: pointer;
+      display: inline-flex; align-items: center; gap: 7px;
+      transition: all 0.15s;
+    }
+    .btn-danger:hover {
+      background: rgba(192,106,106,0.08);
+      border-color: #a03a3a;
+      color: #d68080;
     }
 
     /* SECTIONS */
     .section-title {
-      font-size: 11px;
-      font-weight: 600;
-      color: #7b8090;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      margin-bottom: 12px;
-      margin-top: 4px;
+      font-size: 11px; font-weight: 600; color: #7b8090;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      margin-bottom: 12px; margin-top: 4px;
     }
 
     /* PLATFORMS */
     .platforms-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 10px;
-      margin-bottom: 28px;
+      gap: 10px; margin-bottom: 28px;
     }
-
     .platform-card {
-      background: #14161b;
-      border: 1px solid #23262e;
-      border-radius: 8px;
-      padding: 14px;
-      display: flex;
-      align-items: center;
-      gap: 11px;
-      transition: border-color 0.15s;
-      position: relative;
+      background: #14161b; border: 1px solid #23262e;
+      border-radius: 8px; padding: 14px;
+      display: flex; align-items: center; gap: 11px;
+      transition: border-color 0.15s; position: relative;
     }
-
     .platform-card::before {
-      content: '';
-      position: absolute;
-      left: -1px;
-      top: 12px;
-      bottom: 12px;
-      width: 2px;
-      background: var(--platform-color, transparent);
-      opacity: 0;
-      transition: opacity 0.15s;
+      content: ''; position: absolute;
+      left: -1px; top: 12px; bottom: 12px;
+      width: 2px; background: var(--platform-color, transparent);
+      opacity: 0; transition: opacity 0.15s;
       border-radius: 0 2px 2px 0;
     }
-
     .platform-card.connected::before { opacity: 1; }
-
     .platform-icon {
-      width: 36px;
-      height: 36px;
-      border-radius: 7px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-      flex-shrink: 0;
-      background: var(--platform-bg);
-      color: var(--platform-color);
+      width: 36px; height: 36px; border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex-shrink: 0;
+      background: var(--platform-bg); color: var(--platform-color);
       border: 1px solid var(--platform-border);
     }
-
     .platform-info { flex: 1; min-width: 0; }
-    .platform-name {
-      font-size: 13px;
-      font-weight: 600;
-      color: #e4e6eb;
-      margin-bottom: 2px;
-    }
-
+    .platform-name { font-size: 13px; font-weight: 600; color: #e4e6eb; margin-bottom: 2px; }
     .platform-status {
-      font-size: 11.5px;
-      color: #6b7280;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      font-size: 11.5px; color: #6b7280;
+      display: flex; align-items: center; gap: 5px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-
     .platform-status .dot {
-      width: 5px;
-      height: 5px;
-      border-radius: 50%;
-      background: #4a4f5a;
-      flex-shrink: 0;
+      width: 5px; height: 5px; border-radius: 50%;
+      background: #4a4f5a; flex-shrink: 0;
     }
     .platform-card.connected .platform-status .dot { background: #4fa87a; }
     .platform-card.connected .platform-status { color: #4fa87a; }
@@ -404,240 +267,125 @@
     .actions-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 10px;
-      margin-bottom: 28px;
+      gap: 10px; margin-bottom: 28px;
     }
-
     .action-card {
-      background: #14161b;
-      border: 1px solid #23262e;
-      border-radius: 8px;
-      padding: 16px 18px;
-      cursor: pointer;
-      transition: all 0.15s;
+      background: #14161b; border: 1px solid #23262e;
+      border-radius: 8px; padding: 16px 18px;
+      cursor: pointer; transition: all 0.15s;
     }
-
-    .action-card:hover {
-      border-color: #3a4150;
-      background: #17191f;
-    }
-
+    .action-card:hover { border-color: #3a4150; background: #17191f; }
     .action-card:hover .action-icon { transform: scale(1.04); }
-
     .action-icon {
-      width: 36px;
-      height: 36px;
-      border-radius: 7px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-      margin-bottom: 12px;
+      width: 36px; height: 36px; border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; margin-bottom: 12px;
       transition: transform 0.15s;
     }
-
     .action-icon.purple { background: rgba(167,139,250,0.1); color: #a78bfa; }
     .action-icon.pink   { background: rgba(244,114,182,0.1); color: #f472b6; }
     .action-icon.blue   { background: rgba(77,124,199,0.12); color: #5a8ad6; }
     .action-icon.amber  { background: rgba(214,168,74,0.1);  color: #d6a84a; }
-
-    .action-title {
-      font-size: 13.5px;
-      font-weight: 600;
-      color: #e4e6eb;
-      margin-bottom: 3px;
-    }
-    .action-desc {
-      font-size: 12px;
-      color: #7b8090;
-      line-height: 1.5;
-    }
+    .action-title { font-size: 13.5px; font-weight: 600; color: #e4e6eb; margin-bottom: 3px; }
+    .action-desc { font-size: 12px; color: #7b8090; line-height: 1.5; }
 
     /* FOOTER */
     .footer-actions {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      padding-top: 18px;
-      border-top: 1px solid #1e2229;
+      display: flex; gap: 8px; align-items: center;
+      padding-top: 18px; border-top: 1px solid #1e2229;
       flex-wrap: wrap;
     }
-
     .btn {
-      padding: 10px 16px;
-      border-radius: 6px;
-      border: none;
-      cursor: pointer;
-      font-family: inherit;
-      font-size: 13px;
-      font-weight: 500;
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
+      padding: 10px 16px; border-radius: 6px;
+      border: none; cursor: pointer;
+      font-family: inherit; font-size: 13px; font-weight: 500;
+      display: inline-flex; align-items: center; gap: 7px;
       transition: all 0.15s;
     }
-
-    .btn-primary {
-      background: #4d7cc7;
-      color: white;
-    }
-
+    .btn-primary { background: #4d7cc7; color: white; }
     .btn-primary:hover:not(:disabled) { background: #5a8ad6; }
     .btn-primary:active:not(:disabled) { background: #3f6bb0; }
     .btn-primary:disabled { opacity: 0.6; cursor: wait; }
-
     .btn-secondary {
-      background: #14161b;
-      color: #b8bdc7;
+      background: #14161b; color: #b8bdc7;
       border: 1px solid #2a2e37;
     }
-
-    .btn-secondary:hover {
-      background: #1a1d23;
-      border-color: #3a4150;
-      color: #e4e6eb;
-    }
+    .btn-secondary:hover { background: #1a1d23; border-color: #3a4150; color: #e4e6eb; }
 
     /* MODAL */
     .modal {
-      position: fixed;
-      inset: 0;
+      position: fixed; inset: 0;
       background: rgba(8,9,11,0.85);
       backdrop-filter: blur(4px);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 999;
-      padding: 20px;
+      display: none; align-items: center; justify-content: center;
+      z-index: 999; padding: 20px;
     }
-
     .modal.open { display: flex; }
-
     .modal-box {
-      background: #14161b;
-      border: 1px solid #2a2e37;
-      border-radius: 10px;
-      width: 800px;
-      max-width: 100%;
-      max-height: 85vh;
-      display: flex;
-      flex-direction: column;
+      background: #14161b; border: 1px solid #2a2e37;
+      border-radius: 10px; width: 800px;
+      max-width: 100%; max-height: 85vh;
+      display: flex; flex-direction: column;
       box-shadow: 0 20px 60px rgba(0,0,0,0.6);
     }
-
     .modal-header {
-      padding: 16px 20px;
-      border-bottom: 1px solid #1e2229;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 10px;
+      padding: 16px 20px; border-bottom: 1px solid #1e2229;
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 10px;
     }
-
     .modal-header h3 {
-      font-size: 14px;
-      font-weight: 600;
-      color: #e4e6eb;
-      display: flex;
-      align-items: center;
-      gap: 9px;
+      font-size: 14px; font-weight: 600; color: #e4e6eb;
+      display: flex; align-items: center; gap: 9px;
     }
-
     .modal-header h3 i { color: #7b8090; font-size: 15px; }
     .modal-actions { display: flex; gap: 6px; align-items: center; }
-
     .btn-icon {
-      background: transparent;
-      border: 1px solid #2a2e37;
-      border-radius: 5px;
-      padding: 5px 10px;
-      color: #7b8090;
-      font-size: 11.5px;
-      font-weight: 500;
+      background: transparent; border: 1px solid #2a2e37;
+      border-radius: 5px; padding: 5px 10px;
+      color: #7b8090; font-size: 11.5px; font-weight: 500;
       cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      transition: all 0.15s;
-      font-family: inherit;
+      display: inline-flex; align-items: center; gap: 5px;
+      transition: all 0.15s; font-family: inherit;
     }
-
-    .btn-icon:hover {
-      border-color: #3a4150;
-      color: #e4e6eb;
-      background: #1a1d23;
-    }
-    .btn-icon.danger:hover {
-      border-color: #a03a3a;
-      color: #c26a6a;
-      background: #1a1414;
-    }
-
+    .btn-icon:hover { border-color: #3a4150; color: #e4e6eb; background: #1a1d23; }
+    .btn-icon.danger:hover { border-color: #a03a3a; color: #c26a6a; background: #1a1414; }
     .modal-body {
-      flex: 1;
-      padding: 16px 20px;
-      overflow: hidden;
-      display: flex;
-      min-height: 300px;
+      flex: 1; padding: 16px 20px;
+      overflow: hidden; display: flex; min-height: 300px;
     }
-
     .logs-output {
-      background: #0a0b0e;
-      border: 1px solid #1e2229;
-      border-radius: 6px;
-      padding: 14px;
-      flex: 1;
-      overflow-y: auto;
+      background: #0a0b0e; border: 1px solid #1e2229;
+      border-radius: 6px; padding: 14px;
+      flex: 1; overflow-y: auto;
       font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
-      font-size: 12px;
-      line-height: 1.6;
-      color: #b8bdc7;
-      white-space: pre-wrap;
-      word-break: break-word;
+      font-size: 12px; line-height: 1.6;
+      color: #b8bdc7; white-space: pre-wrap; word-break: break-word;
     }
-
     .logs-output::-webkit-scrollbar { width: 8px; }
     .logs-output::-webkit-scrollbar-thumb { background: #23262e; border-radius: 4px; }
-    .logs-output::-webkit-scrollbar-thumb:hover { background: #2f3542; }
-
     .modal-footer {
-      padding: 14px 20px;
-      border-top: 1px solid #1e2229;
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
+      padding: 14px 20px; border-top: 1px solid #1e2229;
+      display: flex; justify-content: flex-end; gap: 8px;
     }
 
     /* TOAST */
     .toast {
-      position: fixed;
-      bottom: 24px;
-      left: 50%;
+      position: fixed; bottom: 24px; left: 50%;
       transform: translateX(-50%) translateY(90px);
-      background: #14161b;
-      border: 1px solid #2a2e37;
+      background: #14161b; border: 1px solid #2a2e37;
       border-left: 3px solid #4fa87a;
-      color: #e4e6eb;
-      padding: 11px 18px;
-      border-radius: 6px;
-      font-size: 13px;
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-      gap: 9px;
+      color: #e4e6eb; padding: 11px 18px;
+      border-radius: 6px; font-size: 13px; font-weight: 500;
+      display: flex; align-items: center; gap: 9px;
       box-shadow: 0 8px 24px rgba(0,0,0,0.5);
       transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      z-index: 1000;
-      pointer-events: none;
+      z-index: 1000; pointer-events: none;
     }
-
     .toast.show { transform: translateX(-50%) translateY(0); }
     .toast i { color: #4fa87a; font-size: 15px; }
     .toast.error { border-left-color: #c26a6a; }
     .toast.error i { color: #c26a6a; }
 
-    /* RESPONSIVE */
     @media (max-width: 720px) {
       .main-content { padding: 20px 18px; }
       .header { gap: 10px; }
@@ -649,24 +397,12 @@
 
   <!-- SIDEBAR -->
   <div class="sidebar">
-    <div class="logo">
-      <i class="ri-broadcast-fill"></i>
-    </div>
-    <div class="sidebar-item active" title="Inicio">
-      <i class="ri-home-5-fill"></i>
-    </div>
-    <div class="sidebar-item" title="Configuración" onclick="goTo('/config')">
-      <i class="ri-settings-3-fill"></i>
-    </div>
-    <div class="sidebar-item" title="Galería de Overlays" onclick="goTo('/overlays')">
-      <i class="ri-layout-masonry-line"></i>
-    </div>
-    <div class="sidebar-item" title="Moderación" onclick="goTo('/moderation')">
-      <i class="ri-shield-check-fill"></i>
-    </div>
-    <div class="sidebar-item" title="Logs del sistema" onclick="openLogs()">
-      <i class="ri-terminal-box-line"></i>
-    </div>
+    <div class="logo"><i class="ri-broadcast-fill"></i></div>
+    <div class="sidebar-item active" title="Inicio"><i class="ri-home-5-fill"></i></div>
+    <div class="sidebar-item" title="Configuración" onclick="goTo('/config')"><i class="ri-settings-3-fill"></i></div>
+    <div class="sidebar-item" title="Galería de Overlays" onclick="goTo('/overlays')"><i class="ri-layout-masonry-line"></i></div>
+    <div class="sidebar-item" title="Moderación" onclick="goTo('/moderation')"><i class="ri-shield-check-fill"></i></div>
+    <div class="sidebar-item" title="Logs del sistema" onclick="openLogs()"><i class="ri-terminal-box-line"></i></div>
   </div>
 
   <!-- MAIN -->
@@ -674,9 +410,7 @@
 
     <div class="header">
       <div class="brand">
-        <div class="brand-mark">
-          <i class="ri-broadcast-fill"></i>
-        </div>
+        <div class="brand-mark"><i class="ri-broadcast-fill"></i></div>
         <div>
           <h1>Panel de Control</h1>
           <div class="header-sub">Gestiona conexiones, overlays y moderación</div>
@@ -717,6 +451,21 @@
       </div>
     </div>
 
+    <!-- MODO DE CONEXIÓN -->
+    <div class="section-title">Modo de conexión</div>
+    <div class="mode-card">
+      <div class="mode-icon"><i class="ri-server-line" id="mode-icon-i"></i></div>
+      <div class="mode-info">
+        <div class="mode-label">Función de este PC</div>
+        <div class="mode-value" id="mode-value">Comprobando…</div>
+        <div class="mode-detail" id="mode-detail"></div>
+      </div>
+      <button class="btn-danger" onclick="reconfigureConnection()">
+        <i class="ri-refresh-line"></i>
+        Reconfigurar conexión
+      </button>
+    </div>
+
     <!-- PLATAFORMAS -->
     <div class="section-title">Estado de plataformas</div>
     <div class="platforms-grid">
@@ -724,43 +473,28 @@
         <div class="platform-icon"><i class="ri-twitch-fill"></i></div>
         <div class="platform-info">
           <div class="platform-name">Twitch</div>
-          <div class="platform-status">
-            <span class="dot"></span>
-            <span id="status-twitch">Sin configurar</span>
-          </div>
+          <div class="platform-status"><span class="dot"></span><span id="status-twitch">Sin configurar</span></div>
         </div>
       </div>
-
       <div class="platform-card tiktok" id="card-tiktok">
         <div class="platform-icon"><i class="ri-tiktok-fill"></i></div>
         <div class="platform-info">
           <div class="platform-name">TikTok</div>
-          <div class="platform-status">
-            <span class="dot"></span>
-            <span id="status-tiktok">Sin configurar</span>
-          </div>
+          <div class="platform-status"><span class="dot"></span><span id="status-tiktok">Sin configurar</span></div>
         </div>
       </div>
-
       <div class="platform-card kick" id="card-kick">
         <div class="platform-icon"><i class="ri-live-fill"></i></div>
         <div class="platform-info">
           <div class="platform-name">Kick</div>
-          <div class="platform-status">
-            <span class="dot"></span>
-            <span id="status-kick">Sin configurar</span>
-          </div>
+          <div class="platform-status"><span class="dot"></span><span id="status-kick">Sin configurar</span></div>
         </div>
       </div>
-
       <div class="platform-card youtube" id="card-youtube">
         <div class="platform-icon"><i class="ri-youtube-fill"></i></div>
         <div class="platform-info">
           <div class="platform-name">YouTube</div>
-          <div class="platform-status">
-            <span class="dot"></span>
-            <span id="status-youtube">Sin configurar</span>
-          </div>
+          <div class="platform-status"><span class="dot"></span><span id="status-youtube">Sin configurar</span></div>
         </div>
       </div>
     </div>
@@ -773,19 +507,16 @@
         <div class="action-title">Configuración</div>
         <div class="action-desc">Conecta tus cuentas, activa filtros y ajusta el TTS</div>
       </div>
-
       <div class="action-card" onclick="goTo('/overlays')">
         <div class="action-icon purple"><i class="ri-layout-masonry-line"></i></div>
         <div class="action-title">Galería de overlays</div>
         <div class="action-desc">Chat, tops, seguidores, stats y TTS — copia URLs para OBS</div>
       </div>
-
       <div class="action-card" onclick="goTo('/moderation')">
         <div class="action-icon blue"><i class="ri-shield-check-fill"></i></div>
         <div class="action-title">Moderación</div>
         <div class="action-desc">Bans, timeouts, encuestas y estadísticas en vivo</div>
       </div>
-
       <div class="action-card" onclick="openLogs()">
         <div class="action-icon pink"><i class="ri-terminal-box-line"></i></div>
         <div class="action-title">Logs del sistema</div>
@@ -814,12 +545,10 @@
         <h3><i class="ri-terminal-box-line"></i> Logs del sistema</h3>
         <div class="modal-actions">
           <button class="btn-icon" onclick="toggleAutoscroll()" id="btn-autoscroll">
-            <i class="ri-arrow-down-line"></i>
-            Auto-scroll
+            <i class="ri-arrow-down-line"></i> Auto-scroll
           </button>
           <button class="btn-icon danger" onclick="clearLogsUI()">
-            <i class="ri-delete-bin-line"></i>
-            Limpiar
+            <i class="ri-delete-bin-line"></i> Limpiar
           </button>
         </div>
       </div>
@@ -854,7 +583,6 @@
           return;
         }
       } catch (e) {}
-
       serverOnline = false;
       setServerBadge(false);
       resetPlatforms();
@@ -918,17 +646,13 @@
           serverIp = data.ip;
           document.getElementById('ip-box').style.display = 'inline-flex';
         }
-      } catch (e) {
-        console.warn('No se pudo obtener la IP local:', e.message);
-      }
+      } catch (e) {}
     }
 
     function toggleIp() {
       ipVisible = !ipVisible;
-      const text = document.getElementById('ip-text');
-      const eye = document.getElementById('ip-eye');
-      text.textContent = ipVisible ? serverIp : '···';
-      eye.className = ipVisible ? 'ri-eye-off-line' : 'ri-eye-line';
+      document.getElementById('ip-text').textContent = ipVisible ? serverIp : '···';
+      document.getElementById('ip-eye').className = ipVisible ? 'ri-eye-off-line' : 'ri-eye-line';
     }
 
     function copyIp() {
@@ -938,16 +662,56 @@
         .catch(() => showToast('No se pudo copiar', true));
     }
 
-    /* ============ AUTO-UPDATE UI ============ */
-    let updateState = 'idle'; // idle | available | downloading | ready | error
-    let pendingUpdateVersion = '';
+    /* ============ MODO DE CONEXIÓN ============ */
+    async function loadConnectionMode() {
+      try {
+        const info = await ipcRenderer.invoke('setup:get-info');
+        const icon = document.getElementById('mode-icon-i');
+        const value = document.getElementById('mode-value');
+        const detail = document.getElementById('mode-detail');
 
-    function showUpdateBanner() {
-      document.getElementById('update-banner').classList.add('show');
+        if (!info || !info.mode) {
+          icon.className = 'ri-question-line';
+          value.textContent = 'Sin configurar';
+          detail.textContent = 'Vuelve a configurar para elegir el modo';
+          return;
+        }
+        if (info.mode === 'server') {
+          icon.className = 'ri-server-line';
+          value.textContent = 'PC principal (servidor)';
+          detail.textContent = 'Este PC aloja los servidores en el puerto 3000';
+        } else if (info.mode === 'client') {
+          icon.className = 'ri-computer-line';
+          value.textContent = 'PC secundaria (cliente)';
+          detail.textContent = 'Conectada al servidor remoto: ' + (info.ip || '?');
+        } else {
+          icon.className = 'ri-question-line';
+          value.textContent = 'Modo desconocido';
+          detail.textContent = 'Modo: ' + info.mode;
+        }
+      } catch (e) {
+        console.warn('No se pudo leer setup:', e.message);
+      }
     }
-    function hideUpdateBanner() {
-      document.getElementById('update-banner').classList.remove('show');
+
+    async function reconfigureConnection() {
+      const ok = confirm(
+        '¿Reconfigurar la conexión?\n\n' +
+        'Esto borrará la configuración actual (servidor/cliente) y reiniciará la app.\n' +
+        'Tus datos de plataformas NO se borrarán.\n\n' +
+        '¿Continuar?'
+      );
+      if (!ok) return;
+      try {
+        await ipcRenderer.invoke('setup:reset');
+      } catch (e) {
+        showToast('Error al reconfigurar: ' + e.message, true);
+      }
     }
+
+    /* ============ AUTO-UPDATE UI ============ */
+    let updateState = 'idle';
+    let pendingUpdateVersion = '';
 
     function setUpdateState(state, data = {}) {
       updateState = state;
@@ -964,32 +728,32 @@
 
       if (state === 'available') {
         pendingUpdateVersion = data.version || '';
-        title.textContent = `Nueva versión ${pendingUpdateVersion} disponible`;
+        title.textContent = 'Nueva versión ' + pendingUpdateVersion + ' disponible';
         desc.textContent = data.releaseNotes ? String(data.releaseNotes).slice(0, 120) : 'Pulsa "Descargar" para actualizar.';
         icon.className = 'ri-download-cloud-2-line';
         btn.disabled = false;
         btnIcon.className = 'ri-download-line';
         btnText.textContent = 'Descargar';
         progressWrap.style.display = 'none';
-        showUpdateBanner();
+        banner.classList.add('show');
       } else if (state === 'downloading') {
-        title.textContent = `Descargando versión ${pendingUpdateVersion}…`;
+        title.textContent = 'Descargando versión ' + pendingUpdateVersion + '…';
         desc.textContent = 'No cierres la aplicación mientras se descarga.';
         icon.className = 'ri-download-cloud-2-line';
         btn.disabled = true;
         btnIcon.className = 'ri-loader-4-line';
         btnText.textContent = 'Descargando…';
         progressWrap.style.display = 'block';
-        showUpdateBanner();
+        banner.classList.add('show');
       } else if (state === 'ready') {
-        title.textContent = `Versión ${pendingUpdateVersion} lista`;
+        title.textContent = 'Versión ' + pendingUpdateVersion + ' lista';
         desc.textContent = 'Reinicia la aplicación para aplicar la actualización.';
         icon.className = 'ri-restart-line';
         btn.disabled = false;
         btnIcon.className = 'ri-restart-line';
         btnText.textContent = 'Reiniciar e instalar';
         progressWrap.style.display = 'none';
-        showUpdateBanner();
+        banner.classList.add('show');
       } else if (state === 'error') {
         title.textContent = 'Error al actualizar';
         desc.textContent = data.message || 'No se pudo descargar la actualización.';
@@ -997,7 +761,7 @@
         btn.disabled = false;
         btnIcon.className = 'ri-refresh-line';
         btnText.textContent = 'Reintentar';
-        showUpdateBanner();
+        banner.classList.add('show');
       }
     }
 
@@ -1021,33 +785,21 @@
       }
     }
 
-    // Eventos desde el proceso principal
-    ipcRenderer.on('update:available', (_e, info) => {
-      console.log('🔄 Actualización disponible:', info);
-      setUpdateState('available', info);
-    });
-
+    ipcRenderer.on('update:available', (_e, info) => setUpdateState('available', info));
     ipcRenderer.on('update:progress', (_e, p) => {
       const fill = document.getElementById('update-progress-fill');
       const text = document.getElementById('update-progress-text');
       if (fill) fill.style.width = (p.percent || 0) + '%';
-      if (text) text.textContent = `${p.percent || 0}% · ${p.mbps || '0'} MB/s`;
+      if (text) text.textContent = (p.percent || 0) + '% · ' + (p.mbps || '0') + ' MB/s';
     });
-
-    ipcRenderer.on('update:ready', (_e, info) => {
-      console.log('🔄 Actualización lista:', info);
-      setUpdateState('ready', info);
-    });
-
-    ipcRenderer.on('update:error', (_e, msg) => {
-      console.warn('🔄 Error de actualización:', msg);
-      setUpdateState('error', { message: msg });
-    });
+    ipcRenderer.on('update:ready', (_e, info) => setUpdateState('ready', info));
+    ipcRenderer.on('update:error', (_e, msg) => setUpdateState('error', { message: msg }));
 
     /* ============ ARRANQUE ============ */
     setInterval(checkServerStatus, 3000);
     checkServerStatus();
     loadServerIp();
+    loadConnectionMode();
 
     function goTo(path) {
       window.location.href = 'http://localhost:3000' + path;
