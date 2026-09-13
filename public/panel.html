@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Panel de Control</title>
   <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+  <script src="/js/server-url.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -574,7 +575,7 @@
 
     async function checkServerStatus() {
       try {
-        const res = await fetch('http://localhost:3000/health');
+        const res = await fetch(window.SERVER_BASE + '/health');
         const data = await res.json();
         if (data.status === 'ok') {
           serverOnline = true;
@@ -612,7 +613,7 @@
 
     async function updatePlatformStatus() {
       try {
-        const res = await fetch('http://localhost:3000/get-config');
+        const res = await fetch(window.SERVER_BASE + '/get-config');
         const config = await res.json();
         updateCard('twitch', config.TWITCH_CHANNEL);
         updateCard('tiktok', config.TIKTOK_USER_ID || (config.TIKTOK_USERS || [])[0]);
@@ -640,7 +641,7 @@
 
     async function loadServerIp() {
       try {
-        const res = await fetch('http://localhost:3000/api/local-ip');
+        const res = await fetch(window.SERVER_BASE + '/api/local-ip');
         const data = await res.json();
         if (data && data.ip) {
           serverIp = data.ip;
@@ -802,7 +803,7 @@
     loadConnectionMode();
 
     function goTo(path) {
-      window.location.href = 'http://localhost:3000' + path;
+      window.location.href = window.SERVER_BASE + path;
     }
 
     async function restartServers() {

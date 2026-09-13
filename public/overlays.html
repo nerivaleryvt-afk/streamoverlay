@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Overlays</title>
   <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+  <script src="/js/server-url.js"></script>
   <style>
     :root {
       --bg-app: #0d0e11;
@@ -367,12 +368,10 @@
       position: relative;
       cursor: pointer;
       transition: border-color 0.15s ease;
-      /* La altura real la calcula JS según data-w y data-h */
       width: 100%;
     }
     .preview-box:hover { border-color: var(--border-strong); }
 
-    /* Placeholder tenue detrás (se ve si el overlay es transparente/vacío) */
     .preview-box .preview-empty-hint {
       position: absolute;
       inset: 0;
@@ -389,7 +388,6 @@
       padding: 20px;
     }
 
-    /* Contenedor interno que mantiene el tamaño virtual y aplica el scale */
     .preview-box .preview-frame {
       position: absolute;
       top: 0;
@@ -409,7 +407,6 @@
       background: transparent;
     }
 
-    /* Placeholder especial (TTS y similares que no son iframe) */
     .preview-box .preview-placeholder {
       display: flex;
       flex-direction: column;
@@ -436,7 +433,6 @@
       line-height: 1.5;
     }
 
-    /* Overlay inferior con la URL */
     .preview-footer {
       position: absolute;
       bottom: 0;
@@ -724,7 +720,6 @@
       user-select: none;
     }
 
-    /* ─── Presets ─── */
     .presets {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -757,7 +752,6 @@
       border: 1px solid rgba(255,255,255,0.1);
     }
 
-    /* ─── Botones del drawer ─── */
     .btn {
       padding: 9px 14px;
       border-radius: var(--r-sm);
@@ -819,9 +813,6 @@
     .toast.error { border-left-color: var(--danger); }
     .toast.error i { color: var(--danger); }
 
-    /* ═══════════════════════════════════════════════════════════
-       RESPONSIVE
-       ═══════════════════════════════════════════════════════════ */
     @media (max-width: 900px) {
       .app { grid-template-columns: 1fr; }
       .sidebar {
@@ -854,9 +845,6 @@
 
 <div class="app">
 
-  <!-- ═══════════════════════════════════════════════════════════
-       SIDEBAR
-       ═══════════════════════════════════════════════════════════ -->
   <aside class="sidebar">
     <div class="sidebar-brand">
       <div class="brand-logo">
@@ -907,20 +895,17 @@
     </nav>
 
     <div class="sidebar-footer">
-      <a href="http://localhost:3000/moderation" class="sidebar-link">
+      <a href="/moderation" class="sidebar-link">
         <i class="ri-dashboard-3-line"></i>
         <span>Dashboard</span>
       </a>
-      <a href="http://localhost:3000/config" class="sidebar-link">
+      <a href="/config" class="sidebar-link">
         <i class="ri-settings-3-line"></i>
         <span>Configuración</span>
       </a>
     </div>
   </aside>
 
-  <!-- ═══════════════════════════════════════════════════════════
-       CONTENIDO
-       ═══════════════════════════════════════════════════════════ -->
   <main class="content">
 
     <div class="content-header">
@@ -934,9 +919,6 @@
       </div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════════
-         GRID — PREVIEWS CON PROPORCIÓN REAL
-         ═══════════════════════════════════════════════════════════ -->
     <div class="overlay-grid">
 
       <!-- CHAT -->
@@ -948,23 +930,23 @@
             <p>Todos tus chats en una sola ventana</p>
           </div>
           <div class="card-header-actions">
-            <button class="icon-btn" onclick="probar('http://localhost:3000/overlay')" title="Abrir en nueva pestaña">
+            <button class="icon-btn" onclick="probar('/overlay')" title="Abrir en nueva pestaña">
               <i class="ri-external-link-line"></i>
             </button>
           </div>
         </div>
-        <div class="preview-box" data-w="380" data-h="640" onclick="probar('http://localhost:3000/overlay')">
+        <div class="preview-box" data-w="380" data-h="640" onclick="probar('/overlay')">
           <div class="preview-empty-hint">Chat en vivo · sin mensajes todavía</div>
           <div class="preview-frame">
-            <iframe data-src="http://localhost:3000/overlay?preview=1" loading="lazy"></iframe>
+            <iframe data-src="/overlay?preview=1" loading="lazy"></iframe>
           </div>
           <div class="preview-footer">
-            <span class="url-text">localhost:3000/overlay</span>
+            <span class="url-text">/overlay</span>
             <span class="open-hint"><i class="ri-external-link-line"></i> Abrir</span>
           </div>
         </div>
         <div class="card-actions">
-          <button class="action-btn secondary" onclick="probar('http://localhost:3000/overlay')">
+          <button class="action-btn secondary" onclick="probar('/overlay')">
             <i class="ri-eye-line"></i> Ver
           </button>
         </div>
@@ -979,17 +961,17 @@
             <p>Quién más ha donado durante el directo</p>
           </div>
           <div class="card-header-actions">
-            <button class="icon-btn" onclick="probar('http://localhost:3000/top-donadores')" title="Abrir en nueva pestaña">
+            <button class="icon-btn" onclick="probar('/top-donadores')" title="Abrir en nueva pestaña">
               <i class="ri-external-link-line"></i>
             </button>
           </div>
         </div>
-        <div class="preview-box" data-w="380" data-h="620" onclick="probar('http://localhost:3000/top-donadores')">
+        <div class="preview-box" data-w="380" data-h="620" onclick="probar('/top-donadores')">
           <div class="preview-frame">
-            <iframe data-src="http://localhost:3000/top-donadores?preview=1" loading="lazy"></iframe>
+            <iframe data-src="/top-donadores?preview=1" loading="lazy"></iframe>
           </div>
           <div class="preview-footer">
-            <span class="url-text">localhost:3000/top-donadores</span>
+            <span class="url-text">/top-donadores</span>
             <span class="open-hint"><i class="ri-external-link-line"></i> Abrir</span>
           </div>
         </div>
@@ -1009,17 +991,17 @@
             <p>Los que más corazones han enviado</p>
           </div>
           <div class="card-header-actions">
-            <button class="icon-btn" onclick="probar('http://localhost:3000/top-likes')" title="Abrir en nueva pestaña">
+            <button class="icon-btn" onclick="probar('/top-likes')" title="Abrir en nueva pestaña">
               <i class="ri-external-link-line"></i>
             </button>
           </div>
         </div>
-        <div class="preview-box" data-w="380" data-h="620" onclick="probar('http://localhost:3000/top-likes')">
+        <div class="preview-box" data-w="380" data-h="620" onclick="probar('/top-likes')">
           <div class="preview-frame">
-            <iframe data-src="http://localhost:3000/top-likes?preview=1" loading="lazy"></iframe>
+            <iframe data-src="/top-likes?preview=1" loading="lazy"></iframe>
           </div>
           <div class="preview-footer">
-            <span class="url-text">localhost:3000/top-likes</span>
+            <span class="url-text">/top-likes</span>
             <span class="open-hint"><i class="ri-external-link-line"></i> Abrir</span>
           </div>
         </div>
@@ -1039,17 +1021,17 @@
             <p>Los que más han compartido el live</p>
           </div>
           <div class="card-header-actions">
-            <button class="icon-btn" onclick="probar('http://localhost:3000/top-shares')" title="Abrir en nueva pestaña">
+            <button class="icon-btn" onclick="probar('/top-shares')" title="Abrir en nueva pestaña">
               <i class="ri-external-link-line"></i>
             </button>
           </div>
         </div>
-        <div class="preview-box" data-w="380" data-h="620" onclick="probar('http://localhost:3000/top-shares')">
+        <div class="preview-box" data-w="380" data-h="620" onclick="probar('/top-shares')">
           <div class="preview-frame">
-            <iframe data-src="http://localhost:3000/top-shares?preview=1" loading="lazy"></iframe>
+            <iframe data-src="/top-shares?preview=1" loading="lazy"></iframe>
           </div>
           <div class="preview-footer">
-            <span class="url-text">localhost:3000/top-shares</span>
+            <span class="url-text">/top-shares</span>
             <span class="open-hint"><i class="ri-external-link-line"></i> Abrir</span>
           </div>
         </div>
@@ -1069,17 +1051,17 @@
             <p>Aparece en pantalla al recibir un seguidor</p>
           </div>
           <div class="card-header-actions">
-            <button class="icon-btn" onclick="probar('http://localhost:3000/follows')" title="Abrir en nueva pestaña">
+            <button class="icon-btn" onclick="probar('/follows')" title="Abrir en nueva pestaña">
               <i class="ri-external-link-line"></i>
             </button>
           </div>
         </div>
-        <div class="preview-box" data-w="420" data-h="260" onclick="probar('http://localhost:3000/follows')">
+        <div class="preview-box" data-w="420" data-h="260" onclick="probar('/follows')">
           <div class="preview-frame">
-            <iframe data-src="http://localhost:3000/follows?preview=1" loading="lazy"></iframe>
+            <iframe data-src="/follows?preview=1" loading="lazy"></iframe>
           </div>
           <div class="preview-footer">
-            <span class="url-text">localhost:3000/follows</span>
+            <span class="url-text">/follows</span>
             <span class="open-hint"><i class="ri-external-link-line"></i> Abrir</span>
           </div>
         </div>
@@ -1099,17 +1081,17 @@
             <p>Todos los contadores del directo de un vistazo</p>
           </div>
           <div class="card-header-actions">
-            <button class="icon-btn" onclick="probar('http://localhost:3000/stats')" title="Abrir en nueva pestaña">
+            <button class="icon-btn" onclick="probar('/stats')" title="Abrir en nueva pestaña">
               <i class="ri-external-link-line"></i>
             </button>
           </div>
         </div>
-        <div class="preview-box" data-w="560" data-h="120" onclick="probar('http://localhost:3000/stats')">
+        <div class="preview-box" data-w="560" data-h="120" onclick="probar('/stats')">
           <div class="preview-frame">
-            <iframe data-src="http://localhost:3000/stats?preview=1" loading="lazy"></iframe>
+            <iframe data-src="/stats?preview=1" loading="lazy"></iframe>
           </div>
           <div class="preview-footer">
-            <span class="url-text">localhost:3000/stats</span>
+            <span class="url-text">/stats</span>
             <span class="open-hint"><i class="ri-external-link-line"></i> Abrir</span>
           </div>
         </div>
@@ -1129,7 +1111,7 @@
             <p>Lee el chat en voz alta, sin mostrarse en pantalla</p>
           </div>
           <div class="card-header-actions">
-            <button class="icon-btn" onclick="probar('http://localhost:3000/overlays/tts.html')" title="Abrir en nueva pestaña">
+            <button class="icon-btn" onclick="probar('/overlays/tts.html')" title="Abrir en nueva pestaña">
               <i class="ri-external-link-line"></i>
             </button>
           </div>
@@ -1141,7 +1123,7 @@
           </div>
         </div>
         <div class="card-actions">
-          <button class="action-btn secondary" onclick="probar('http://localhost:3000/overlays/tts.html')">
+          <button class="action-btn secondary" onclick="probar('/overlays/tts.html')">
             <i class="ri-external-link-line"></i> Abrir en OBS
           </button>
         </div>
@@ -1156,7 +1138,7 @@
             <p>Muestra cuánto falta para llegar a la meta de diamantes</p>
           </div>
           <div class="card-header-actions">
-            <button class="icon-btn" onclick="probar('http://localhost:3000/crystal')" title="Abrir en nueva pestaña">
+            <button class="icon-btn" onclick="probar('/crystal')" title="Abrir en nueva pestaña">
               <i class="ri-external-link-line"></i>
             </button>
             <button class="icon-btn danger" onclick="resetearCristal()" title="Resetear meta">
@@ -1164,12 +1146,12 @@
             </button>
           </div>
         </div>
-        <div class="preview-box" data-w="500" data-h="680" onclick="probar('http://localhost:3000/crystal')">
+        <div class="preview-box" data-w="500" data-h="680" onclick="probar('/crystal')">
           <div class="preview-frame">
-            <iframe data-src="http://localhost:3000/crystal?preview=1" loading="lazy"></iframe>
+            <iframe data-src="/crystal?preview=1" loading="lazy"></iframe>
           </div>
           <div class="preview-footer">
-            <span class="url-text">localhost:3000/crystal</span>
+            <span class="url-text">/crystal</span>
             <span class="open-hint"><i class="ri-external-link-line"></i> Abrir</span>
           </div>
         </div>
@@ -1185,9 +1167,6 @@
   </main>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════
-     DRAWER: Configuración de colores
-     ═══════════════════════════════════════════════════════════ -->
 <div class="drawer-overlay" id="drawerOverlay" onclick="cerrarDrawer()"></div>
 <div class="drawer" id="drawer">
   <div class="drawer-head">
@@ -1208,9 +1187,6 @@
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════
-     DRAWER: Configuración de la Meta
-     ═══════════════════════════════════════════════════════════ -->
 <div class="drawer-overlay" id="crystalDrawerOverlay" onclick="cerrarConfigCristal()"></div>
 <div class="drawer" id="crystalDrawer">
   <div class="drawer-head">
@@ -1231,18 +1207,14 @@
   </div>
 </div>
 
-<!-- TOAST -->
 <div class="toast" id="toast">
   <i class="ri-checkbox-circle-fill"></i>
   <span id="toastText">Listo</span>
 </div>
 
 <script>
-  const SERVER_BASE = 'http://localhost:3000';
+  // 🌐 SERVER_BASE viene de /js/server-url.js (autodetectado)
 
-  // ═══════════════════════════════════════════════════
-  // CONFIGURACIÓN DE VARIABLES POR OVERLAY
-  // ═══════════════════════════════════════════════════
   const OVERLAY_CONFIGS = {
     'top-donadores': {
       groups: [
@@ -1344,66 +1316,42 @@
     }
   };
 
-  // ═══════════════════════════════════════════════════
-  // CONFIGURACIÓN DE LA META
-  // ═══════════════════════════════════════════════════
   const CRYSTAL_CONFIG = {
     groups: [
-      {
-        title: '🏺 Meta',
-        inputs: [
-          { key: 'meta', label: 'Meta (diamantes)', type: 'number', default: 500, min: 1 }
-        ]
-      },
-      {
-        title: '🏷️ Etiquetas',
-        inputs: [
-          { key: '--meta-label',     label: 'Texto etiqueta meta', type: 'text', default: '🎯 Meta' },
-          { key: '--topdonor-label', label: 'Texto etiqueta top',  type: 'text', default: '🏆 Top Donador' }
-        ],
-        checks: [
-          { key: '--meta-label-visible',     label: 'Mostrar etiqueta meta', default: true },
-          { key: '--topdonor-label-visible', label: 'Mostrar etiqueta top',  default: true }
-        ]
-      },
-      {
-        title: '💎 Cristal',
-        vars: [
-          { key: '--crystal-core-1',   label: 'Núcleo 1', default: '#ffffff' },
-          { key: '--crystal-core-2',   label: 'Núcleo 2', default: '#c4b5fd' },
-          { key: '--crystal-core-3',   label: 'Núcleo 3', default: '#7c3aed' },
-          { key: '--crystal-stroke-1', label: 'Borde 1',  default: '#f472b6' },
-          { key: '--crystal-stroke-2', label: 'Borde 2',  default: '#a78bfa' },
-          { key: '--crystal-stroke-3', label: 'Borde 3',  default: '#7c3aed' },
-          { key: '--crystal-aura-1',   label: 'Aura 1',   default: '#a78bfa66' },
-          { key: '--crystal-aura-2',   label: 'Aura 2',   default: '#f472b633' }
-        ]
-      },
-      {
-        title: '✨ Partículas',
-        vars: [
-          { key: '--particle-1', label: 'Partícula 1', default: '#ffffff' },
-          { key: '--particle-2', label: 'Partícula 2', default: '#c4b5fd' },
-          { key: '--particle-3', label: 'Partícula 3', default: '#a78bfa' },
-          { key: '--gold-1',     label: 'Dorada 1',    default: '#ffffff' },
-          { key: '--gold-2',     label: 'Dorada 2',    default: '#ffd700' },
-          { key: '--gold-3',     label: 'Dorada 3',    default: '#f59e0b' }
-        ]
-      },
-      {
-        title: '📊 Progreso',
-        vars: [
-          { key: '--progress-1', label: 'Progreso 1', default: '#7c3aed' },
-          { key: '--progress-2', label: 'Progreso 2', default: '#a78bfa' },
-          { key: '--progress-3', label: 'Progreso 3', default: '#f472b6' }
-        ]
-      },
-      {
-        title: '🏷️ Color de etiquetas',
-        vars: [
-          { key: '--label-color', label: 'Color etiqueta', default: '#c4b5fd' }
-        ]
-      }
+      { title: '🏺 Meta', inputs: [{ key: 'meta', label: 'Meta (diamantes)', type: 'number', default: 500, min: 1 }] },
+      { title: '🏷️ Etiquetas', inputs: [
+        { key: '--meta-label',     label: 'Texto etiqueta meta', type: 'text', default: '🎯 Meta' },
+        { key: '--topdonor-label', label: 'Texto etiqueta top',  type: 'text', default: '🏆 Top Donador' }
+      ], checks: [
+        { key: '--meta-label-visible',     label: 'Mostrar etiqueta meta', default: true },
+        { key: '--topdonor-label-visible', label: 'Mostrar etiqueta top',  default: true }
+      ]},
+      { title: '💎 Cristal', vars: [
+        { key: '--crystal-core-1',   label: 'Núcleo 1', default: '#ffffff' },
+        { key: '--crystal-core-2',   label: 'Núcleo 2', default: '#c4b5fd' },
+        { key: '--crystal-core-3',   label: 'Núcleo 3', default: '#7c3aed' },
+        { key: '--crystal-stroke-1', label: 'Borde 1',  default: '#f472b6' },
+        { key: '--crystal-stroke-2', label: 'Borde 2',  default: '#a78bfa' },
+        { key: '--crystal-stroke-3', label: 'Borde 3',  default: '#7c3aed' },
+        { key: '--crystal-aura-1',   label: 'Aura 1',   default: '#a78bfa66' },
+        { key: '--crystal-aura-2',   label: 'Aura 2',   default: '#f472b633' }
+      ]},
+      { title: '✨ Partículas', vars: [
+        { key: '--particle-1', label: 'Partícula 1', default: '#ffffff' },
+        { key: '--particle-2', label: 'Partícula 2', default: '#c4b5fd' },
+        { key: '--particle-3', label: 'Partícula 3', default: '#a78bfa' },
+        { key: '--gold-1',     label: 'Dorada 1',    default: '#ffffff' },
+        { key: '--gold-2',     label: 'Dorada 2',    default: '#ffd700' },
+        { key: '--gold-3',     label: 'Dorada 3',    default: '#f59e0b' }
+      ]},
+      { title: '📊 Progreso', vars: [
+        { key: '--progress-1', label: 'Progreso 1', default: '#7c3aed' },
+        { key: '--progress-2', label: 'Progreso 2', default: '#a78bfa' },
+        { key: '--progress-3', label: 'Progreso 3', default: '#f472b6' }
+      ]},
+      { title: '🏷️ Color de etiquetas', vars: [
+        { key: '--label-color', label: 'Color etiqueta', default: '#c4b5fd' }
+      ]}
     ],
     presets: {
       original: {
@@ -1436,17 +1384,11 @@
     }
   };
 
-  // ═══════════════════════════════════════════════════
-  // ESTADO
-  // ═══════════════════════════════════════════════════
   let overlayActual = null;
   let valoresActuales = {};
   let cristalValores = {};
   let cristalMeta = 500;
 
-  // ═══════════════════════════════════════════════════
-  // NAVEGACIÓN
-  // ═══════════════════════════════════════════════════
   function filtrar(categoria, boton) {
     document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
     boton.classList.add('active');
@@ -1468,21 +1410,11 @@
     });
   }
 
-  // ═══════════════════════════════════════════════════
-  // PREVIEWS: PROPORCIÓN REAL + ESCALADO AUTOMÁTICO
-  // ═══════════════════════════════════════════════════
-  /**
-   * Ajusta la altura de cada .preview-box según su data-w/data-h,
-   * y calcula el scale del iframe para que el contenido encaje
-   * perfectamente al ancho de la caja.
-   */
   function ajustarProporcionesYEscala() {
     document.querySelectorAll('.preview-box').forEach(box => {
       const w = parseInt(box.dataset.w, 10) || 380;
       const h = parseInt(box.dataset.h, 10) || 620;
 
-      // El ancho lo fija el layout (grid), así que calculamos
-      // la altura proporcional al aspect ratio del overlay
       const boxW = box.clientWidth;
       if (!boxW) return;
 
@@ -1490,7 +1422,6 @@
       const boxH = Math.round(boxW / aspect);
       box.style.height = boxH + 'px';
 
-      // Ahora ajustamos el iframe dentro del .preview-frame
       const frame = box.querySelector('.preview-frame');
       if (!frame) return;
 
@@ -1503,7 +1434,6 @@
   }
 
   function cargarPreviewsDiferido() {
-    // Primero calcular proporciones (con lo que se ve inmediatamente)
     ajustarProporcionesYEscala();
 
     const iframes = document.querySelectorAll('.preview-box iframe[data-src]');
@@ -1514,7 +1444,6 @@
           iframe.src = src;
           iframe.removeAttribute('data-src');
         }
-        // Reajustar tras carga
         setTimeout(ajustarProporcionesYEscala, 50);
       }, i * 400);
     });
@@ -1528,9 +1457,6 @@
   document.addEventListener('DOMContentLoaded', cargarPreviewsDiferido);
   if (document.readyState !== 'loading') cargarPreviewsDiferido();
 
-  // ═══════════════════════════════════════════════════
-  // CONFIGURACIÓN DE TOPS
-  // ═══════════════════════════════════════════════════
   async function abrirConfig(overlayKey, titulo) {
     const config = OVERLAY_CONFIGS[overlayKey];
     if (!config) {
@@ -1543,7 +1469,7 @@
 
     let actuales = {};
     try {
-      const r = await fetch(`${SERVER_BASE}/api/themes/${overlayKey}`);
+      const r = await fetch(`${window.SERVER_BASE}/api/themes/${overlayKey}`);
       actuales = await r.json() || {};
     } catch (e) {}
 
@@ -1643,7 +1569,7 @@
   async function guardarConfig() {
     if (!overlayActual) return;
     try {
-      const r = await fetch(`${SERVER_BASE}/api/themes/${overlayActual}`, {
+      const r = await fetch(`${window.SERVER_BASE}/api/themes/${overlayActual}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(valoresActuales)
@@ -1664,7 +1590,7 @@
     if (!overlayActual) return;
     if (!confirm('¿Resetear los colores de este overlay?')) return;
     try {
-      await fetch(`${SERVER_BASE}/api/themes/${overlayActual}`, { method: 'DELETE' });
+      await fetch(`${window.SERVER_BASE}/api/themes/${overlayActual}`, { method: 'DELETE' });
       mostrarToast('Colores reseteados');
       cerrarDrawer();
     } catch (e) {
@@ -1690,19 +1616,16 @@
     mostrarToast(`Preset "${name}" aplicado`);
   }
 
-  // ═══════════════════════════════════════════════════
-  // CONFIGURACIÓN DE LA META
-  // ═══════════════════════════════════════════════════
   async function abrirConfigCristal() {
     let temaActual = {};
     try {
-      const r = await fetch(`${SERVER_BASE}/api/themes/crystal`);
+      const r = await fetch(`${window.SERVER_BASE}/api/themes/crystal`);
       temaActual = await r.json() || {};
     } catch (e) {}
 
     let metaActual = 500;
     try {
-      const r = await fetch(`${SERVER_BASE}/get-config`);
+      const r = await fetch(`${window.SERVER_BASE}/get-config`);
       const cfg = await r.json();
       if (cfg.JAR_META) metaActual = cfg.JAR_META;
     } catch (e) {}
@@ -1848,7 +1771,7 @@
     if (!cristalValores['--topdonor-label']) cristalValores['--topdonor-label'] = '🏆 Top Donador';
 
     try {
-      const r = await fetch(`${SERVER_BASE}/api/themes/crystal`, {
+      const r = await fetch(`${window.SERVER_BASE}/api/themes/crystal`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(cristalValores)
@@ -1874,7 +1797,7 @@
       return;
     }
     try {
-      const r = await fetch(`${SERVER_BASE}/api/jar-state/meta`, {
+      const r = await fetch(`${window.SERVER_BASE}/api/jar-state/meta`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ meta })
@@ -1894,7 +1817,7 @@
   async function resetearTemaCristal() {
     if (!confirm('¿Resetear los colores de la meta?')) return;
     try {
-      await fetch(`${SERVER_BASE}/api/themes/crystal`, { method: 'DELETE' });
+      await fetch(`${window.SERVER_BASE}/api/themes/crystal`, { method: 'DELETE' });
       mostrarToast('Colores reseteados');
       cerrarConfigCristal();
     } catch (e) {
@@ -1905,7 +1828,7 @@
   async function resetearCristal() {
     if (!confirm('¿Resetear la meta?\n\nSe borrarán TODOS los diamantes y el top donador.')) return;
     try {
-      const r = await fetch(`${SERVER_BASE}/api/jar-state/reset`, { method: 'POST' });
+      const r = await fetch(`${window.SERVER_BASE}/api/jar-state/reset`, { method: 'POST' });
       const data = await r.json();
       if (data.success) mostrarToast('Meta reseteada');
       else mostrarToast('Error al resetear');
@@ -1927,45 +1850,6 @@
     });
 
     mostrarToast(`Preset "${name}" aplicado`);
-  }
-
-  // ═══════════════════════════════════════════════════
-  // UTILIDADES
-  // ═══════════════════════════════════════════════════
-  function copiar(texto, boton) {
-    const finalizar = () => {
-      if (boton) {
-        const original = boton.innerHTML;
-        boton.innerHTML = '<i class="ri-check-line"></i> Copiado';
-        boton.style.color = 'var(--success)';
-        setTimeout(() => {
-          boton.innerHTML = original;
-          boton.style.color = '';
-        }, 1500);
-      }
-      mostrarToast('Copiado al portapapeles');
-    };
-
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(texto).then(finalizar).catch(() => {
-        fallbackCopy(texto);
-        finalizar();
-      });
-    } else {
-      fallbackCopy(texto);
-      finalizar();
-    }
-  }
-
-  function fallbackCopy(texto) {
-    const ta = document.createElement('textarea');
-    ta.value = texto;
-    ta.style.position = 'fixed';
-    ta.style.opacity = '0';
-    document.body.appendChild(ta);
-    ta.select();
-    try { document.execCommand('copy'); } catch (e) {}
-    document.body.removeChild(ta);
   }
 
   function probar(url) {
