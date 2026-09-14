@@ -52,6 +52,11 @@ const HYPE_TRAIN_DEFAULTS = {
     }
 };
 
+// 🧹 NUEVO — Límite de contributors para podar el objeto.
+// El overlay solo muestra el Top 3, así que guardar más de 100 no aporta nada.
+// Esto evita que en trenes virales (miles de viewers) el objeto crezca sin control.
+const MAX_CONTRIBUTORS = 100;
+
 // ================================================================
 // 🚂 CLASE HYPE TRAIN
 // ================================================================
@@ -269,6 +274,18 @@ class HypeTrain {
         if (username) {
             this.state.uniqueGifters.add(username);
             this.state.contributors[username] = (this.state.contributors[username] || 0) + pts;
+
+            // 🧹 NUEVO — Poda del Top 100 si el objeto crece demasiado.
+            // El overlay solo muestra el Top 3, así que guardar más de 100 no aporta.
+            // Esto evita que en trenes virales el objeto crezca sin control.
+            const totalContributors = Object.keys(this.state.contributors).length;
+            if (totalContributors > MAX_CONTRIBUTORS) {
+                const entradas = Object.entries(this.state.contributors)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, MAX_CONTRIBUTORS);
+                this.state.contributors = Object.fromEntries(entradas);
+                console.log(`🧹 [HYPE] Poda de contributors: ${totalContributors} → ${MAX_CONTRIBUTORS}`);
+            }
         }
 
         // Level-up

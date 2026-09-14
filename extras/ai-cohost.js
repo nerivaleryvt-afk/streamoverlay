@@ -185,6 +185,18 @@ async function responder(mensaje, config) {
   return { ok: false, motivo: r.motivo };
 }
 
+// 🧹 Limpieza periódica de usuarios inactivos (evita fuga de memoria)
+// Cada 5 min revisa el Map y borra entradas con más de 30 min sin actividad.
+// .unref() evita que este timer bloquee el cierre del proceso.
+setInterval(() => {
+  const antes = actividadUsuarios.size;
+  limpiarUsuariosViejos();
+  const despues = actividadUsuarios.size;
+  if (antes !== despues) {
+    console.log(`🧹 [ai-cohost] Limpiados ${antes - despues} usuarios inactivos (quedan ${despues})`);
+  }
+}, 5 * 60 * 1000).unref();
+
 module.exports = {
   debeResponder,
   extraerPregunta,

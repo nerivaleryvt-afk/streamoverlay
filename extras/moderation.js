@@ -218,6 +218,12 @@ class ModerationSystem {
       reason: reason || '',
       timestamp: Date.now()
     });
+
+    // 🧹 Limitar el histórico para evitar fuga de memoria
+    // Solo guardamos las últimas 500 acciones. El resto se descarta.
+    if (this.modActions.length > 500) {
+      this.modActions = this.modActions.slice(-500);
+    }
     
     console.log(`📝 [MOD] ${mod || 'Sistema'} ${action} a ${target}: ${reason || ''}`);
   }

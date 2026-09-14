@@ -19,6 +19,10 @@ let onObsRunning = false;
 let renewalTimer = null;
 let renewing = false;
 
+// 🧹 NUEVO — Timer del "kill diferido" del FFmpeg antiguo durante renovaciones.
+// Se guarda aquí para poder cancelarlo si el proxy se para antes de que dispare.
+let pendingKillTimer = null;
+
 let state = {
     status: 'idle',           // idle | waiting | streaming | error
     username: null,
@@ -252,7 +256,9 @@ async function renewNow() {
         });
 
         // 3) Esperamos 4 segundos y matamos el viejo
-        setTimeout(() => {
+        // 🧹 Guardamos el ID para poder cancelarlo si el proxy se para antes.
+        pendingKillTimer = setTimeout(() => {
+            pendingKillTimer = null;
             if (oldFfmpeg && !oldFfmpeg.killed) {
                 console.log('🛑 [RENEW] Cerrando FFmpeg antiguo');
                 try { oldFfmpeg.kill(); } catch (e) {}
@@ -277,6 +283,12 @@ async function renewNow() {
 // ----------------------------------------------------------------
 async function stopRelay() {
     stopRenewal();
+
+    // 🧹 Cancelar el "kill diferido" si estaba pendiente
+    if (pendingKillTimer) {
+        clearTimeout(pendingKillTimer);
+        pendingKillTimer = null;
+    }
 
     if (ffmpegProc) {
         try { ffmpegProc.kill(); } catch (e) {}

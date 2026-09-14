@@ -4,15 +4,25 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Node (extras)
+extras/node_modules/
+extras/modules/
+extras/npm-debug.log*
+
 # Build de la app
 dist-installer/
 dist/
 build/tiktok-bridge/
 tiktok-bridge.spec
 
+# Ofuscación
+extras-obfuscated/
+extras-backup/
+
 # Configuración local (¡NO subir!)
 config.json
 setup.json
+extras/config.json
 *.log
 logs/
 

@@ -2,23 +2,36 @@ name: Release
 on:
   push:
     tags: ['v*']
+
 jobs:
   build:
     runs-on: windows-latest
     permissions:
       contents: write
+
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+
       - name: Install root dependencies
         run: npm install
+
       - name: Install extras dependencies
         run: |
           cd extras
           npm install
-      - run: npm run prebuild
-      - run: npx electron-builder --win --publish always
+
+      - name: Prebuild (rename modules + obfuscate)
+        run: npm run prebuild
+
+      - name: Build & publish
+        run: npx electron-builder --win --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Postbuild (restore originals)
+        if: always()
+        run: npm run postbuild

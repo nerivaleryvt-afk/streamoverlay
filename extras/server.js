@@ -1529,6 +1529,21 @@ function isDuplicateMessage(msg) {
     return false;
 }
 
+// 🧹 Limpieza periódica de recentMessages para evitar fuga de memoria
+setInterval(() => {
+    const now = Date.now();
+    let borrados = 0;
+    for (const [key, ts] of recentMessages) {
+        if (now - ts > 10000) {
+            recentMessages.delete(key);
+            borrados++;
+        }
+    }
+    if (borrados > 0) {
+        console.log(`🧹 [recentMessages] Limpiadas ${borrados} entradas antiguas (quedan ${recentMessages.size})`);
+    }
+}, 30000);
+
 function broadcastMessage(msgData) {
     if (isDuplicateMessage(msgData)) return;
     io.emit('chat-message', msgData);
@@ -1943,6 +1958,21 @@ app.post('/save-config', (req, res) => {
     try {
         const newConfig = req.body;
 
+        // 🛡️ Validación defensiva: body debe ser objeto
+        if (!newConfig || typeof newConfig !== 'object' || Array.isArray(newConfig)) {
+            console.error('❌ [save-config] Body inválido:', typeof newConfig);
+            return res.status(400).json({ success: false, message: '❌ Body inválido' });
+        }
+
+        // 🛡️ Sanear arrays de usuarios (solo strings no vacíos)
+        const sanearArrayStrings = (arr) => {
+            if (!Array.isArray(arr)) return [];
+            return arr
+                .map(s => (typeof s === 'string' ? s.trim() : ''))
+                .filter(s => s.length > 0);
+        };
+
+        // 🛡️ Sanear cuentas de Twitch (cada channels debe ser array de strings)
         if (Array.isArray(newConfig.TWITCH_ACCOUNTS)) {
             newConfig.TWITCH_ACCOUNTS = newConfig.TWITCH_ACCOUNTS.map(acc => ({
                 id: acc.id || ('acc_' + Math.random().toString(36).slice(2, 10)),
@@ -1957,9 +1987,9 @@ app.post('/save-config', (req, res) => {
         if (newConfig.TWITCH_OAUTH_TOKEN) newConfig.TWITCH_OAUTH_TOKEN = normalizarOauth(newConfig.TWITCH_OAUTH_TOKEN);
         if (newConfig.TWITCH_OAUTH_TOKEN_CHAT) newConfig.TWITCH_OAUTH_TOKEN_CHAT = normalizarOauth(newConfig.TWITCH_OAUTH_TOKEN_CHAT);
 
-        if (!Array.isArray(newConfig.TIKTOK_USERS)) newConfig.TIKTOK_USERS = [];
-        if (!Array.isArray(newConfig.KICK_USERS)) newConfig.KICK_USERS = [];
-        if (!Array.isArray(newConfig.YOUTUBE_USERS)) newConfig.YOUTUBE_USERS = [];
+        newConfig.TIKTOK_USERS  = sanearArrayStrings(newConfig.TIKTOK_USERS);
+        newConfig.KICK_USERS    = sanearArrayStrings(newConfig.KICK_USERS);
+        newConfig.YOUTUBE_USERS = sanearArrayStrings(newConfig.YOUTUBE_USERS);
         if (newConfig.TIKTOK_USERS.length > 0) newConfig.TIKTOK_USER_ID = newConfig.TIKTOK_USERS.join(', ');
         if (newConfig.KICK_USERS.length > 0) newConfig.KICK_USERNAME = newConfig.KICK_USERS[0];
         if (newConfig.YOUTUBE_USERS.length > 0) newConfig.YOUTUBE_USER_ID = newConfig.YOUTUBE_USERS.join(', ');

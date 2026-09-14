@@ -1,5 +1,6 @@
 // ================================================================
 // main.js - Lanzador Electron con soporte para TikTok (Login QR + Captura)
+// Versión refactorizada: fixes de isQuitting, backoff, listeners, caché
 // ================================================================
 const { app, BrowserWindow, shell, ipcMain, session, dialog } = require('electron');
 const { spawn } = require('child_process');
@@ -73,28 +74,48 @@ process.env.TWITCH_CLIENT_ID = config.TWITCH_CLIENT_ID || '';
 process.env.MOD_PASSWORD = config.MOD_PASSWORD || 'camiones';
 process.env.OVERLAY_TOKEN = config.OVERLAY_TOKEN || 'camiones';
 
+// ================================================================
+// 🧠 ESTADO GLOBAL
+// ================================================================
 let childProcesses = [];
 let appLogs = [];
 let loginWin = null;
 let monitorWin = null;
-
 let mainWindow = null;
 let updaterInitialized = false;
+let updaterInterval = null;
+
+let isQuitting = false;   // ← reemplaza app.isQuitting
 
 const restartCounters = {};
 const processScripts = {};
 
 // ================================================================
-// 📝 SETUP.JSON
+// 📝 HELPERS
 // ================================================================
-function readSetup() {
+function log(tag, msg, isError = false) {
+    const line = isError ? `[${tag} ERROR] ${msg}` : `[${tag}] ${msg}`;
+    if (isError) console.error(line); else console.log(line);
+    if (appLogs.length >= 500) appLogs.shift();
+    appLogs.push(line);
+}
+
+// ================================================================
+// 📝 SETUP.JSON (con caché en memoria)
+// ================================================================
+let cachedSetup = null;
+
+function readSetup(force = false) {
+    if (cachedSetup && !force) return cachedSetup;
     try {
         if (fs.existsSync(setupPath)) {
-            return JSON.parse(fs.readFileSync(setupPath, 'utf8'));
+            cachedSetup = JSON.parse(fs.readFileSync(setupPath, 'utf8'));
+            return cachedSetup;
         }
     } catch (e) {
         console.error('⚠️ No se pudo leer setup.json:', e.message);
     }
+    cachedSetup = null;
     return null;
 }
 
@@ -106,6 +127,7 @@ function writeSetup(payload) {
             configuredAt: new Date().toISOString()
         };
         fs.writeFileSync(setupPath, JSON.stringify(data, null, 2), 'utf8');
+        cachedSetup = data;  // actualizar caché
         console.log('✅ setup.json guardado:', data);
         return { success: true, data };
     } catch (e) {
@@ -143,11 +165,11 @@ function resolveNodeModulesPath() {
 // 🚀 ARRANQUE DE PROCESOS
 // ================================================================
 function startProcess(name, scriptPath, cwd) {
+    if (isQuitting) return null;
     console.log(`⏳ Iniciando ${name}...`);
 
     if (!fs.existsSync(scriptPath)) {
-        console.error(`❌ [${name}] NO EXISTE: ${scriptPath}`);
-        appLogs.push(`❌ [${name}] Archivo no encontrado: ${scriptPath}`);
+        log(name, `Archivo no encontrado: ${scriptPath}`, true);
         return null;
     }
 
@@ -174,42 +196,40 @@ function startProcess(name, scriptPath, cwd) {
         shell: false
     });
 
-    proc.stdout.on('data', (data) => {
-        const logLine = `[${name}] ${data.toString().trim()}`;
-        console.log(logLine);
-        appLogs.push(logLine);
-        if (appLogs.length > 500) appLogs = appLogs.slice(-500);
-    });
+    const startedAt = Date.now();
 
-    proc.stderr.on('data', (data) => {
-        const logLine = `[${name} ERROR] ${data.toString().trim()}`;
-        console.log(logLine);
-        appLogs.push(logLine);
-        if (appLogs.length > 500) appLogs = appLogs.slice(-500);
-    });
+    proc.stdout.on('data', (data) => log(name, data.toString().trim()));
+    proc.stderr.on('data', (data) => log(name, data.toString().trim(), true));
 
-    proc.on('error', (err) => {
-        console.error(`❌ [${name}] Error al arrancar:`, err.message);
-        appLogs.push(`❌ [${name}] ${err.message}`);
-    });
+    proc.on('error', (err) => log(name, err.message, true));
 
     proc.on('exit', (code) => {
+        // Limpiar la referencia del array (evita acumulación)
+        childProcesses = childProcesses.filter(p => p !== proc);
         console.log(`[${name}] Proceso terminado con código ${code}`);
+        if (appLogs.length >= 500) appLogs.shift();
         appLogs.push(`[${name}] Terminado (código ${code})`);
 
+        if (isQuitting) return;
         if (code === 0) return;
-        if (app.isQuitting) return;
+
+        // Si vivió > 30s, consideramos que arrancó bien → reseteamos contador
+        const livedMs = Date.now() - startedAt;
+        if (livedMs > 30_000) restartCounters[name] = 0;
 
         restartCounters[name] = (restartCounters[name] || 0) + 1;
 
         if (restartCounters[name] > 5) {
-            console.error(`❌ [${name}] Demasiados reinicios.`);
+            log(name, 'Demasiados reinicios, se detiene.', true);
             return;
         }
 
+        const delay = Math.min(30_000, 1000 * 2 ** restartCounters[name]); // 2,4,8,16,30s
+        console.log(`[${name}] Reintentando en ${delay / 1000}s (intento ${restartCounters[name]}/5)`);
+
         setTimeout(() => {
-            if (!app.isQuitting) startProcess(name, scriptPath, cwd);
-        }, 5000);
+            if (!isQuitting) startProcess(name, scriptPath, cwd);
+        }, delay);
     });
 
     childProcesses.push(proc);
@@ -220,7 +240,9 @@ function startProcess(name, scriptPath, cwd) {
 // 🛑 CERRAR PROCESOS
 // ================================================================
 function closeAllProcesses() {
-    app.isQuitting = true;
+    if (isQuitting) return;
+    isQuitting = true;
+
     childProcesses.forEach((proc) => {
         if (proc && !proc.killed) {
             try { proc.kill(); } catch (e) {}
@@ -230,10 +252,14 @@ function closeAllProcesses() {
 }
 
 // ================================================================
-// 🌐 SESIÓN TIKTOK
+// 🌐 SESIÓN TIKTOK (singleton — evita apilar handlers)
 // ================================================================
+let tiktokSessionReady = false;
+
 function getTikTokSession() {
     const tiktokSession = session.fromPartition('persist:tiktok-session');
+    if (tiktokSessionReady) return tiktokSession;
+    tiktokSessionReady = true;
 
     tiktokSession.webRequest.onHeadersReceived((details, callback) => {
         const responseHeaders = {};
@@ -294,11 +320,11 @@ function descifrar(texto) {
     }
 }
 
-const COOKIES_INTERES = [
+const COOKIES_INTERES = new Set([
     'sessionid', 'sessionid_ss', 'sid_tt', 'sid_guard', 'uid_tt', 'uid_tt_ss',
     'ttwid', 'odin_tt', 'passport_csrf_token', 'passport_csrf_token_default',
     'tt_csrf_token', 'msToken', 'tt_chain_token', 'store-idc', 'store-country-code'
-];
+]);
 
 async function capturarYGuardarCookies() {
     try {
@@ -306,7 +332,7 @@ async function capturarYGuardarCookies() {
         const todas = await tiktokSession.cookies.get({});
         const relevantes = {};
         todas.forEach((c) => {
-            if (COOKIES_INTERES.includes(c.name)) {
+            if (COOKIES_INTERES.has(c.name)) {
                 relevantes[c.name] = c.value;
             }
         });
@@ -343,7 +369,7 @@ async function capturarYGuardarCookies() {
 }
 
 // ================================================================
-// 🔄 AUTO-UPDATE (con diálogo nativo + descarga automática)
+// 🔄 AUTO-UPDATE
 // ================================================================
 function initAutoUpdater(win) {
     if (updaterInitialized) return;
@@ -365,14 +391,12 @@ function initAutoUpdater(win) {
 
     autoUpdater.on('update-available', (info) => {
         console.log(`🔄 Nueva versión disponible: ${info.version}`);
-
         if (win && !win.isDestroyed()) {
             win.webContents.send('update:available', {
                 version: info.version,
                 releaseNotes: info.releaseNotes || ''
             });
         }
-
         console.log('🔄 Descargando actualización...');
         autoUpdater.downloadUpdate().catch(e => console.error('❌ updater download:', e.message));
     });
@@ -397,7 +421,9 @@ function initAutoUpdater(win) {
             win.webContents.send('update:ready', { version: info.version });
         }
 
-        dialog.showMessageBox(win, {
+        const parentWin = (win && !win.isDestroyed()) ? win : null;
+
+        dialog.showMessageBox(parentWin, {
             type: 'info',
             buttons: ['Reiniciar ahora', 'Más tarde'],
             defaultId: 0,
@@ -427,7 +453,7 @@ function initAutoUpdater(win) {
         autoUpdater.checkForUpdates().catch((e) => console.error('❌ updater:', e.message));
     }, 15000);
 
-    setInterval(() => {
+    updaterInterval = setInterval(() => {
         autoUpdater.checkForUpdates().catch((e) => console.error('❌ updater:', e.message));
     }, 4 * 60 * 60 * 1000);
 }
@@ -504,7 +530,8 @@ function openTikTokLoginWindow() {
     loginWin.loadURL('https://livecenter.tiktok.com/login');
 
     loginWin.webContents.on('did-navigate', async (event, url) => {
-        const loginOk = url.includes('/live_monitor') || url.includes('/dashboard') || !url.includes('/login');
+        // Detección más estricta: rutas internas conocidas y sin /login
+        const loginOk = /\/(live_monitor|dashboard|live|studio)/.test(url) && !url.includes('/login');
 
         if (loginOk) {
             console.log('🔑 Login detectado en ventana externa. Capturando cookies...');
@@ -558,10 +585,28 @@ function startTikTokMonitorWindow() {
             (function() {
                 const SERVER_BASE = ${JSON.stringify(serverBase)};
 
-                function captureTikTokEvents() {
-                    const chatContainer = document.querySelector('[data-e2e="chat-list"], [class*="chat-list"], [class*="comment-list"]') || document.body;
-                    if (!chatContainer || window.__tiktokObserverLoaded) return;
-                    window.__tiktokObserverLoaded = true;
+                // Post con timeout para no dejar promesas colgadas
+                function post(path, body) {
+                    const ctrl = new AbortController();
+                    const t = setTimeout(() => ctrl.abort(), 3000);
+                    return fetch(SERVER_BASE + path, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(body),
+                        signal: ctrl.signal
+                    }).catch(() => {}).finally(() => clearTimeout(t));
+                }
+
+                function findChatContainer() {
+                    return document.querySelector(
+                        '[data-e2e="chat-list"], [class*="chat-list"], [class*="comment-list"]'
+                    );
+                }
+
+                function attachObserver() {
+                    const chatContainer = findChatContainer();
+                    if (!chatContainer || chatContainer.__tiktokObserved) return false;
+                    chatContainer.__tiktokObserved = true;
 
                     const observer = new MutationObserver((mutations) => {
                         mutations.forEach((mutation) => {
@@ -573,11 +618,10 @@ function startTikTokMonitorWindow() {
 
                                 if (userEl && textEl) {
                                     node.dataset.processed = "true";
-                                    fetch(SERVER_BASE + '/tiktok-chat', {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ username: userEl.innerText.trim(), message: textEl.innerText.trim() })
-                                    }).catch(() => {});
+                                    post('/tiktok-chat', {
+                                        username: userEl.innerText.trim(),
+                                        message: textEl.innerText.trim()
+                                    });
                                     return;
                                 }
 
@@ -585,11 +629,11 @@ function startTikTokMonitorWindow() {
                                 if (giftEl) {
                                     node.dataset.processed = "true";
                                     const user = node.querySelector('[class*="nickname"], [class*="username"]')?.innerText.trim() || 'Usuario';
-                                    fetch(SERVER_BASE + '/tiktok-gift', {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ username: user, gift: giftEl.innerText.trim(), diamonds: 1 })
-                                    }).catch(() => {});
+                                    post('/tiktok-gift', {
+                                        username: user,
+                                        gift: giftEl.innerText.trim(),
+                                        diamonds: 1
+                                    });
                                     return;
                                 }
 
@@ -597,19 +641,23 @@ function startTikTokMonitorWindow() {
                                 if (textContent.includes('followed') || textContent.includes('siguió') || textContent.includes('te sigue')) {
                                     node.dataset.processed = "true";
                                     const user = node.querySelector('[class*="nickname"], [class*="username"]')?.innerText.trim() || 'Nuevo Seguidor';
-                                    fetch(SERVER_BASE + '/tiktok-follow', {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ username: user })
-                                    }).catch(() => {});
+                                    post('/tiktok-follow', { username: user });
                                 }
                             });
                         });
                     });
                     observer.observe(chatContainer, { childList: true, subtree: true });
+                    return true;
                 }
-                setTimeout(captureTikTokEvents, 3000);
-                setInterval(captureTikTokEvents, 5000);
+
+                // Observa el body una sola vez para re-enganchar si TikTok reemplaza el contenedor
+                const bodyObserver = new MutationObserver(() => {
+                    if (findChatContainer()) attachObserver();
+                });
+                bodyObserver.observe(document.body, { childList: true, subtree: true });
+
+                // Intento inicial
+                setTimeout(attachObserver, 3000);
             })();
         `;
         monitorWin.webContents.executeJavaScript(captureScript).catch(console.error);
@@ -651,6 +699,7 @@ ipcMain.handle('setup:reset', async () => {
             fs.unlinkSync(setupPath);
             console.log('🗑️ setup.json borrado');
         }
+        cachedSetup = null; // ← limpiar caché
         setTimeout(() => {
             try { app.relaunch(); } catch (e) {}
             app.quit();
@@ -718,11 +767,14 @@ ipcMain.on('start-tiktok-stream-monitor', () => { startTikTokMonitorWindow(); })
 ipcMain.on('tiktok-chat-captured', async (event, data) => {
     try {
         const base = getServerBase();
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), 3000);
         await fetch(`${base}/tiktok-chat`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: data.user, message: data.text })
-        });
+            body: JSON.stringify({ username: data.user, message: data.text }),
+            signal: ctrl.signal
+        }).finally(() => clearTimeout(t));
     } catch (e) {}
 });
 
@@ -784,11 +836,26 @@ ipcMain.handle('update:install', () => {
 // ================================================================
 // 🚀 INICIO DE LA APLICACIÓN
 // ================================================================
+const SCRIPTS = {};
+
+function buildScriptMap() {
+    SCRIPTS.SERVIDOR = path.join(extrasPath, 'server.js');
+    SCRIPTS.MODERACIÓN = path.join(extrasPath, 'moderation.js');
+}
+
+function startAllServers() {
+    for (const [name, script] of Object.entries(SCRIPTS)) {
+        startProcess(name, script, extrasPath);
+    }
+}
+
 app.whenReady().then(() => {
     const setup = readSetup();
     const mode = setup ? setup.mode : null;
 
-    // 🔥 Preparar la partición persist:tiktok-session desde el inicio
+    buildScriptMap();
+
+    // Preparar la partición persist:tiktok-session desde el inicio
     getTikTokSession();
 
     console.log(`🚀 Arrancando en modo: ${mode || 'PRIMERA VEZ (sin setup.json)'}`);
@@ -801,24 +868,14 @@ app.whenReady().then(() => {
 
     if (mode === 'server') {
         console.log('🖥️ Modo SERVIDOR → arrancando servidor y moderación.');
-        const serverScript = path.join(extrasPath, 'server.js');
-        const moderationScript = path.join(extrasPath, 'moderation.js');
-
-        startProcess('SERVIDOR', serverScript, extrasPath);
-        startProcess('MODERACIÓN', moderationScript, extrasPath);
-
+        startAllServers();
         setTimeout(() => { createWindow(); }, 5000);
     } else if (mode === 'client') {
         console.log(`💻 Modo CLIENTE → conectando a ${setup.ip}:${process.env.PORT}. No se arrancan servidores.`);
         setTimeout(() => { createWindow(); }, 500);
     } else {
         console.warn(`⚠️ Modo desconocido "${mode}". Arrancando como servidor por seguridad.`);
-        const serverScript = path.join(extrasPath, 'server.js');
-        const moderationScript = path.join(extrasPath, 'moderation.js');
-
-        startProcess('SERVIDOR', serverScript, extrasPath);
-        startProcess('MODERACIÓN', moderationScript, extrasPath);
-
+        startAllServers();
         setTimeout(() => { createWindow(); }, 5000);
     }
 });
@@ -833,6 +890,10 @@ app.on('window-all-closed', () => {
 
 app.on('before-quit', () => {
     closeAllProcesses();
+    if (updaterInterval) {
+        clearInterval(updaterInterval);
+        updaterInterval = null;
+    }
 });
 
 process.on('SIGINT', () => {
