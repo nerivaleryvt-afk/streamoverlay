@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<title>Overlay · Pride Flags</title>
+<style>
+  html, body {
+    margin: 0; padding: 0;
+    width: 100%; height: 100%;
+    background: transparent;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #fff;
+    user-select: none;
+  }
+
+  .overlay {
+    position: fixed;
+    left: 40px; bottom: 40px;
+    width: fit-content;
+    max-width: 520px;
+    pointer-events: none;
+    transition: opacity .4s ease;
+  }
+  .overlay.solo-bandera { width: 260px; max-width: 260px; }
+
+  .card {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 18px 20px;
+    border-radius: 20px;
+    background: rgba(11, 13, 18, 0.85);
+    border: 1px solid rgba(167, 139, 250, 0.45);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow:
+      0 10px 40px rgba(0, 0, 0, 0.55),
+      0 0 30px rgba(167, 139, 250, 0.25);
+    opacity: 0;
+    transform: translateX(-40px) scale(0.96);
+    transition: opacity .45s ease, transform .45s ease;
+    width: fit-content;
+    max-width: 100%;
+  }
+  .card.show {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+
+  .flag-img {
+    flex: 0 0 auto;
+    width: 120px;
+    height: 80px;
+    border-radius: 10px;
+    object-fit: cover;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.08) inset;
+    background: #1a1f2b;
+  }
+
+  .info {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+    flex: 0 1 auto;
+    max-width: 340px;
+  }
+  .name {
+    font-size: 22px;
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    background: linear-gradient(120deg, #fff, #c7b8ff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .meaning {
+    font-size: 13px;
+    color: #b8bfd1;
+    line-height: 1.4;
+  }
+
+  .colors {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 6px;
+  }
+  .colors span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10.5px;
+    color: #d6dbe8;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: 3px 8px;
+    border-radius: 999px;
+  }
+  .colors span i {
+    width: 10px; height: 10px; border-radius: 3px; display: inline-block;
+    flex-shrink: 0;
+  }
+
+  /* Modo solo bandera */
+  .overlay.solo-bandera .card {
+    padding: 12px;
+    justify-content: center;
+  }
+  .overlay.solo-bandera .info { display: none; }
+  .overlay.solo-bandera .flag-img { width: 100%; height: auto; aspect-ratio: 3/2; }
+
+  @media (max-aspect-ratio: 1/1) {
+    .overlay {
+      left: 20px; right: 20px; bottom: 120px;
+      width: auto; max-width: none;
+    }
+    .card { padding: 14px 16px; gap: 14px; border-radius: 16px; }
+    .flag-img { width: 90px; height: 60px; }
+    .name { font-size: 18px; }
+    .meaning { font-size: 12px; }
+    .colors span { font-size: 10px; }
+    .info { max-width: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="overlay" id="overlay">
+  <div class="card" id="card">
+    <img class="flag-img" id="flag" src="" alt="Bandera" />
+    <div class="info">
+      <div class="name" id="name">Bandera</div>
+      <div class="meaning" id="meaning"></div>
+      <div class="colors" id="colors"></div>
+    </div>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  // ============================================================
+  //  CONFIGURACIÓN (se puede sobreescribir desde el servidor)
+  // ============================================================
+  const CONFIG = {
+    mode: 'rotate',           // 'rotate' | 'fixed' | 'chat'
+    fixedId: 'pride',         // bandera fija cuando mode === 'fixed'
+    rotateMs: 6000,           // tiempo por bandera
+    folder: 'HD 1080p',       // 'HD 1080p' | '512px Icons' | '32px Full Palette' | '16px Full Palette' | '16px Pico 8 Palette'
+    showName: true,
+    showMeaning: true,
+    showColors: true,
+    soloBandera: false,       // si true, oculta todo el texto
+    enabled: null             // array de ids a mostrar, null = todas
+  };
+
+  // ============================================================
+  //  CARGA DE DATOS
+  // ============================================================
+  let EXPLAIN = {};
+  let ITEMS = [];
+  let idx = 0;
+  let timer = null;
+  let currentChatItem = null;
+  let chatTimer = null;
+
+  const overlayEl = document.getElementById('overlay');
+  const card      = document.getElementById('card');
+  const flagEl    = document.getElementById('flag');
+  const nameEl    = document.getElementById('name');
+  const meanEl    = document.getElementById('meaning');
+  const colorsEl  = document.getElementById('colors');
+
+  // Codifica la carpeta para URL
+  function folderPath() {
+    return '/img/Pride%20Flags/' + encodeURIComponent(CONFIG.folder) + '/';
+  }
+
+  async function cargar() {
+    try {
+      const r = await fetch('/pride-explain.json');
+      EXPLAIN = await r.json();
+    } catch (e) {
+      console.error('No se pudo cargar pride-explain.json', e);
+      return;
+    }
+
+    // Orden fijo de presentación
+    const orden = [
+      'pride', 'progress-pride', 'intersex-progress-pride',
+      'trans-pride', 'non-binary-pride', 'genderfluid-pride',
+      'genderqueer-pride', 'agender-pride', 'bigender-pride',
+      'demigender-pride', 'intersex-pride',
+      'lesbian-pride', 'gay-mens-pride-trans-inclusive',
+      'bisexual-pride', 'pansexual-pride', 'polysexual-pride',
+      'asexual-pride', 'demisexual-pride',
+      'philadelphia-pride', 'gilbert-baker-pride', 'queer-pride'
+    ];
+
+    ITEMS = orden
+      .filter(id => EXPLAIN[id])
+      .filter(id => !CONFIG.enabled || CONFIG.enabled.includes(id))
+      .map(id => ({ id, ...EXPLAIN[id] }));
+
+    if (ITEMS.length === 0) {
+      console.warn('No hay banderas para mostrar');
+      return;
+    }
+
+    aplicarModo();
+  }
+
+  // ============================================================
+  //  RENDER
+  // ============================================================
+  function render(item) {
+    flagEl.src = folderPath() + encodeURIComponent(item.file);
+    flagEl.alt = item.name;
+
+    nameEl.textContent   = CONFIG.showName ? item.name : '';
+    nameEl.style.display = CONFIG.showName ? '' : 'none';
+
+    meanEl.textContent   = CONFIG.showMeaning ? item.meaning : '';
+    meanEl.style.display = CONFIG.showMeaning ? '' : 'none';
+
+    colorsEl.innerHTML = '';
+    if (CONFIG.showColors && item.colors) {
+      item.colors.forEach(c => {
+        const span = document.createElement('span');
+        span.innerHTML = `<i style="background:${c.hex}"></i>${c.label}${c.desc ? ' · ' + c.desc : ''}`;
+        colorsEl.appendChild(span);
+      });
+      colorsEl.style.display = '';
+    } else {
+      colorsEl.style.display = 'none';
+    }
+  }
+
+  function showCard() { card.classList.add('show'); }
+  function hideCard() { card.classList.remove('show'); }
+
+  // ============================================================
+  //  MODOS
+  // ============================================================
+  function aplicarModo() {
+    overlayEl.classList.toggle('solo-bandera', CONFIG.soloBandera);
+
+    if (timer) { clearInterval(timer); timer = null; }
+
+    if (CONFIG.mode === 'fixed') {
+      const item = ITEMS.find(i => i.id === CONFIG.fixedId) || ITEMS[0];
+      render(item);
+      showCard();
+      return;
+    }
+
+    if (CONFIG.mode === 'chat') {
+      // no rota; se queda oculto hasta que llegue un !bandera
+      hideCard();
+      return;
+    }
+
+    // rotate
+    idx = 0;
+    render(ITEMS[idx]);
+    showCard();
+    timer = setInterval(() => {
+      hideCard();
+      setTimeout(() => {
+        idx = (idx + 1) % ITEMS.length;
+        render(ITEMS[idx]);
+        showCard();
+      }, 600);
+    }, CONFIG.rotateMs);
+  }
+
+  // ============================================================
+  //  SOCKET.IO — comandos del chat
+  // ============================================================
+  const socket = io();
+
+  socket.on('pride:config-updated', (newCfg) => {
+    Object.assign(CONFIG, newCfg);
+    aplicarModo();
+  });
+
+  socket.on('pride:show', ({ id, nombre }) => {
+    let item = null;
+    if (id && EXPLAIN[id]) item = { id, ...EXPLAIN[id] };
+    else if (nombre) {
+      const key = Object.keys(EXPLAIN).find(k =>
+        EXPLAIN[k].name.toLowerCase().includes(nombre.toLowerCase())
+      );
+      if (key) item = { id: key, ...EXPLAIN[key] };
+    }
+    if (!item) return;
+
+    // Pausa la rotación
+    if (timer) { clearInterval(timer); timer = null; }
+
+    hideCard();
+    setTimeout(() => {
+      render(item);
+      showCard();
+      if (chatTimer) clearTimeout(chatTimer);
+      chatTimer = setTimeout(() => {
+        if (CONFIG.mode === 'rotate') aplicarModo();
+        else if (CONFIG.mode === 'chat') hideCard();
+        else {
+          // fixed: vuelve a la fija
+          const fija = ITEMS.find(i => i.id === CONFIG.fixedId) || ITEMS[0];
+          render(fija);
+        }
+      }, 8000);
+    }, 400);
+  });
+
+  // ============================================================
+  //  INIT
+  // ============================================================
+  cargar();
+
+  // Permite previsualización con query params: /pride?preview=1&mode=fixed&id=trans-pride
+  const params = new URLSearchParams(location.search);
+  if (params.has('mode')) CONFIG.mode = params.get('mode');
+  if (params.has('id'))   CONFIG.fixedId = params.get('id');
+  if (params.has('folder')) CONFIG.folder = params.get('folder');
+  if (params.has('solo')) CONFIG.soloBandera = params.get('solo') === '1';
+</script>
+
+</body>
+</html>

@@ -1,4 +1,4 @@
-// server.js - VERSIÓN MULTI-CUENTA TWITCH + TikTok + Kick + YouTube + IMÁGENES DE REGALOS + TEMAS + PLATFORM TOGGLES + TTS + CRISTAL PERSISTENTE + AI CO-HOST
+// server.js - VERSIÓN MULTI-CUENTA TWITCH + TikTok + Kick + YouTube + IMÁGENES DE REGALOS + TEMAS + PLATFORM TOGGLES + TTS + CRISTAL PERSISTENTE + AI CO-HOST + PRIDE FLAGS + HYPE TRAIN
 require('dotenv').config();
 const express = require('express');
 const http = require('http');
@@ -21,6 +21,9 @@ const aiCohost = require('./ai-cohost');
 // 🔊 PATCH 1 — Requires del sistema TTS
 const { TTSQueue } = require('./tts-queue');
 const ttsEngine = require('./tts-engine');
+
+// 🚂 HYPE TRAIN
+const { HypeTrain, HYPE_TRAIN_DEFAULTS } = require('./hype-train');
 
 // ================================================================
 // 📦 NUEVO — DETECCIÓN DE EMPAQUETADO (Electron)
@@ -56,6 +59,40 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIO(server, { cors: { origin: "*" } });
 const PORT = process.env.PORT || 3000;
+
+// ================================================================
+// 🏳️🌈 PRIDE FLAGS — defaults y helpers
+// ================================================================
+const PRIDE_DEFAULTS = {
+    mode: 'rotate',        // 'rotate' | 'fixed' | 'chat'
+    fixedId: 'pride',
+    rotateMs: 6000,
+    folder: 'HD 1080p',
+    showName: true,
+    showMeaning: true,
+    showColors: true,
+    soloBandera: false,
+    enabled: null          // null = todas
+};
+
+// ================================================================
+// 🚂 HYPE TRAIN — defaults y helpers
+// ================================================================
+function getHypeTrainConfig() {
+    const h = config.HYPE_TRAIN || {};
+    return { ...HYPE_TRAIN_DEFAULTS, ...h };
+}
+
+function saveHypeTrainConfig(nueva) {
+    config.HYPE_TRAIN = { ...HYPE_TRAIN_DEFAULTS, ...(config.HYPE_TRAIN || {}), ...nueva };
+    try {
+        fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
+        return true;
+    } catch (e) {
+        console.error('❌ [HYPE] Error guardando config:', e.message);
+        return false;
+    }
+}
 
 // ================================================================
 // 🔥 RUTA ABSOLUTA AL CONFIG
@@ -136,7 +173,6 @@ app.get('/api/tiktok/streamlabs-accounts', async (req, res) => {
             }
         }
 
-        // Quitamos duplicados por apiToken
         const unique = [];
         const seen = new Set();
         for (const d of detailed) {
@@ -748,11 +784,60 @@ function loadConfig() {
             }
         }
 
-        if (typeof parsed.JAR_META !== 'number' || parsed.JAR_META < 1) {
+                                if (typeof parsed.JAR_META !== 'number' || parsed.JAR_META < 1) {
             parsed.JAR_META = 500;
         }
 
+        // 🏳️🌈 PRIDE — defaults persistentes
+        if (!parsed.PRIDE || typeof parsed.PRIDE !== 'object') {
+            parsed.PRIDE = { ...PRIDE_DEFAULTS };
+        } else {
+            parsed.PRIDE = { ...PRIDE_DEFAULTS, ...parsed.PRIDE };
+        }
+
+        // 🚂 HYPE TRAIN — defaults persistentes
+        if (!parsed.HYPE_TRAIN || typeof parsed.HYPE_TRAIN !== 'object') {
+            parsed.HYPE_TRAIN = { ...HYPE_TRAIN_DEFAULTS };
+        } else {
+            parsed.HYPE_TRAIN = { ...HYPE_TRAIN_DEFAULTS, ...parsed.HYPE_TRAIN };
+        }
+
+                // 🔥 NUEVO: garantizar TIKTOK_VIEWS
+        if (!Array.isArray(parsed.TIKTOK_VIEWS) || parsed.TIKTOK_VIEWS.length === 0) {
+            parsed.TIKTOK_VIEWS = [
+                { id: 'slot1', name: 'Cuenta 1', username: '', url: 'https://livecenter.tiktok.com/live_monitor', partition: 'persist:tiktok-slot-1' },
+                { id: 'slot2', name: 'Cuenta 2', username: '', url: 'https://livecenter.tiktok.com/live_monitor', partition: 'persist:tiktok-slot-2' },
+                { id: 'slot3', name: 'Cuenta 3', username: '', url: 'https://livecenter.tiktok.com/live_monitor', partition: 'persist:tiktok-slot-3' }
+            ];
+        }
+
+        // 🔥 Validar TIKTOK_ACTIVE_VIEW ANTES de usarla
+        if (!parsed.TIKTOK_ACTIVE_VIEW || !parsed.TIKTOK_VIEWS.some(v => v.id === parsed.TIKTOK_ACTIVE_VIEW)) {
+            parsed.TIKTOK_ACTIVE_VIEW = parsed.TIKTOK_VIEWS[0].id;
+        }
+
+        // 🔥 Migración suave: garantizar 'username' en cada vista
+        parsed.TIKTOK_VIEWS = parsed.TIKTOK_VIEWS.map(v => ({
+            id: v.id,
+            name: v.name || ('Cuenta ' + v.id),
+            username: typeof v.username === 'string' ? v.username.replace(/^@/, '').trim() : '',
+            url: v.url || 'https://livecenter.tiktok.com/live_monitor',
+            partition: v.partition || ('persist:tiktok-' + v.id)
+        }));
+
+        // 🔥 Sincronizar TIKTOK_USER_ID con la vista activa (ya garantizada válida)
+        const _vistaActiva = parsed.TIKTOK_VIEWS.find(v => v.id === parsed.TIKTOK_ACTIVE_VIEW);
+        if (_vistaActiva && _vistaActiva.username) {
+            if (!parsed.TIKTOK_USER_ID) parsed.TIKTOK_USER_ID = _vistaActiva.username;
+            if (!Array.isArray(parsed.TIKTOK_USERS) || parsed.TIKTOK_USERS.length === 0) {
+                parsed.TIKTOK_USERS = [_vistaActiva.username];
+            }
+        }
+
         console.log(`✅ Config cargado desde ${CONFIG_PATH}`);
+        console.log(`   📺 TikTok views: ${parsed.TIKTOK_VIEWS.length} | activa: ${parsed.TIKTOK_ACTIVE_VIEW}`);
+        console.log(`   🏳️🌈 Pride: ${parsed.PRIDE.mode} | carpeta: ${parsed.PRIDE.folder}`);
+        console.log(`   🚂 Hype Train: tema ${parsed.HYPE_TRAIN.theme} | duración ${parsed.HYPE_TRAIN.duration}s`);
         return parsed;
     } catch (e) {
         console.log(`⚠️ No se pudo leer config.json (${e.message}). Usando defaults.`);
@@ -773,7 +858,15 @@ function loadConfig() {
                     openrouter: { apiKey: '', modelo: 'meta-llama/llama-3.1-8b-instruct:free' }
                 }
             },
-            JAR_META: 500
+            JAR_META: 500,
+            PRIDE: { ...PRIDE_DEFAULTS },
+            HYPE_TRAIN: { ...HYPE_TRAIN_DEFAULTS },
+            TIKTOK_VIEWS: [
+                { id: 'slot1', name: 'Cuenta 1', username: '', url: 'https://livecenter.tiktok.com/live_monitor', partition: 'persist:tiktok-slot-1' },
+                { id: 'slot2', name: 'Cuenta 2', username: '', url: 'https://livecenter.tiktok.com/live_monitor', partition: 'persist:tiktok-slot-2' },
+                { id: 'slot3', name: 'Cuenta 3', username: '', url: 'https://livecenter.tiktok.com/live_monitor', partition: 'persist:tiktok-slot-3' }
+            ],
+            TIKTOK_ACTIVE_VIEW: 'slot1'
         };
         if (!fs.existsSync(CONFIG_PATH)) {
             try { fs.writeFileSync(CONFIG_PATH, JSON.stringify(defaults, null, 2)); } catch (e) {}
@@ -783,6 +876,25 @@ function loadConfig() {
 }
 
 let config = loadConfig();
+
+// ================================================================
+// 🏳️🌈 PRIDE — helpers (dependen de `config` y `CONFIG_PATH`)
+// ================================================================
+function getPrideConfig() {
+    const p = config.PRIDE || {};
+    return { ...PRIDE_DEFAULTS, ...p };
+}
+
+function savePrideConfig(nueva) {
+    config.PRIDE = { ...PRIDE_DEFAULTS, ...(config.PRIDE || {}), ...nueva };
+    try {
+        fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
+        return true;
+    } catch (e) {
+        console.error('❌ [PRIDE] Error guardando config:', e.message);
+        return false;
+    }
+}
 
 // 🤖 Cargar proveedores de IA con la config actual
 aiKeyPool.cargarProveedores(config);
@@ -811,7 +923,7 @@ app.get('/api/tiktok/views', (req, res) => {
     }
 });
 
-app.post('/api/tiktok/active-view', (req, res) => {
+app.post('/api/tiktok/active-view', async (req, res) => {
     try {
         const { id } = req.body || {};
         if (!id) return res.status(400).json({ ok: false, error: 'Falta id' });
@@ -819,19 +931,144 @@ app.post('/api/tiktok/active-view', (req, res) => {
         const views = Array.isArray(config.TIKTOK_VIEWS) && config.TIKTOK_VIEWS.length > 0
             ? config.TIKTOK_VIEWS
             : DEFAULT_TIKTOK_VIEWS;
-        if (!views.some(v => v.id === id)) {
+        const target = views.find(v => v.id === id);
+        if (!target) {
             return res.status(400).json({ ok: false, error: 'Vista desconocida: ' + id });
         }
 
         config.TIKTOK_ACTIVE_VIEW = id;
+
+        // 🔥 Sincronizar TIKTOK_USER_ID/USERS con el username de la vista activa
+        const usernameVista = (target.username || '').replace(/^@/, '').trim();
+        let reconectado = false;
+        if (usernameVista) {
+            config.TIKTOK_USER_ID = usernameVista;
+            config.TIKTOK_USERS = [usernameVista];
+            try {
+                if (isPlatformEnabled('tiktok')) {
+                    await tiktokChat.setUsuarios([usernameVista]);
+                    reconectado = true;
+                    console.log(`🎵 [TIKTOK] Reconectado a @${usernameVista} por cambio de vista`);
+                }
+            } catch (err) {
+                console.error('❌ [TIKTOK] Error reconectando por cambio de vista:', err.message);
+            }
+        }
+
         fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
-        console.log(`📺 [TIKTOK VIEW] Vista activa: ${id}`);
-        res.json({ ok: true, active: id });
+        console.log(`📺 [TIKTOK VIEW] Vista activa: ${id}${usernameVista ? ' (@' + usernameVista + ')' : ''}`);
+
+        io.emit('tiktok:active-view-changed', { id, username: usernameVista, reconectado });
+
+        res.json({ ok: true, active: id, username: usernameVista, reconectado });
     } catch (e) {
         res.status(500).json({ ok: false, error: e.message });
     }
 });
 
+// ================================================================
+// 🔥 NUEVO ENDPOINT — Renombrar una vista TikTok
+// POST /api/tiktok/rename-view
+// body: { id: "slot1", name: "Cuenta Elio" }
+// ================================================================
+app.post('/api/tiktok/rename-view', (req, res) => {
+    try {
+        const { id, name } = req.body || {};
+        if (!id || typeof name !== 'string') {
+            return res.status(400).json({ ok: false, error: 'Faltan id o name' });
+        }
+
+        const cleanName = name.trim().slice(0, 40);
+        if (!cleanName) {
+            return res.status(400).json({ ok: false, error: 'Nombre vacío' });
+        }
+
+        const views = Array.isArray(config.TIKTOK_VIEWS) && config.TIKTOK_VIEWS.length > 0
+            ? config.TIKTOK_VIEWS
+            : JSON.parse(JSON.stringify(DEFAULT_TIKTOK_VIEWS));
+
+        const target = views.find(v => v.id === id);
+        if (!target) {
+            return res.status(404).json({ ok: false, error: 'Vista no encontrada: ' + id });
+        }
+
+        const antes = target.name;
+        target.name = cleanName;
+        config.TIKTOK_VIEWS = views;
+
+        fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
+        console.log(`📺 [TIKTOK VIEW] Renombrada "${antes}" → "${cleanName}" (id: ${id})`);
+
+        // 🔥 Notifica a todos los dashboards abiertos
+        io.emit('tiktok:view-renamed', { id, name: cleanName });
+
+        res.json({ ok: true, id, name: cleanName });
+    } catch (e) {
+        console.error('❌ [TIKTOK VIEW] Error renombrando:', e.message);
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+// ================================================================
+// 🔥 NUEVO ENDPOINT — Asignar/editar el @username real de una vista
+// POST /api/tiktok/set-username
+// body: { id: "slot1", username: "togivt_main" }
+// ================================================================
+app.post('/api/tiktok/set-username', async (req, res) => {
+    try {
+        const { id, username } = req.body || {};
+        if (!id || typeof username !== 'string') {
+            return res.status(400).json({ ok: false, error: 'Faltan id o username' });
+        }
+
+        const clean = username.trim().replace(/^@/, '').slice(0, 60);
+
+        const views = Array.isArray(config.TIKTOK_VIEWS) && config.TIKTOK_VIEWS.length > 0
+            ? config.TIKTOK_VIEWS
+            : JSON.parse(JSON.stringify(DEFAULT_TIKTOK_VIEWS));
+
+        const target = views.find(v => v.id === id);
+        if (!target) {
+            return res.status(404).json({ ok: false, error: 'Vista no encontrada: ' + id });
+        }
+
+        const antes = target.username || '';
+        target.username = clean;
+        config.TIKTOK_VIEWS = views;
+
+        let reconectado = false;
+        // Si es la vista activa, actualizamos también TIKTOK_USER_ID real y reconectamos
+        if (config.TIKTOK_ACTIVE_VIEW === id) {
+            if (clean) {
+                config.TIKTOK_USER_ID = clean;
+                config.TIKTOK_USERS = [clean];
+                try {
+                    if (isPlatformEnabled('tiktok')) {
+                        await tiktokChat.setUsuarios([clean]);
+                        reconectado = true;
+                        console.log(`🎵 [TIKTOK] Reconectado a @${clean} (vista activa)`);
+                    }
+                } catch (err) {
+                    console.error('❌ [TIKTOK] Error reconectando:', err.message);
+                }
+            } else {
+                config.TIKTOK_USER_ID = '';
+                config.TIKTOK_USERS = [];
+                try { tiktokChat.detenerTodo(); } catch {}
+                console.log('🔌 [TIKTOK] Vista activa sin username → desconectado');
+            }
+        }
+
+        fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
+        console.log(`📺 [TIKTOK VIEW] Username de ${id}: "${antes || '(vacío)'}" → "${clean || '(vacío)'}"${reconectado ? ' (reconectado)' : ''}`);
+
+        io.emit('tiktok:username-changed', { id, username: clean, reconectado });
+
+        res.json({ ok: true, id, username: clean, reconectado });
+    } catch (e) {
+        console.error('❌ [TIKTOK VIEW] Error set-username:', e.message);
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
 app.post('/api/tiktok/views', (req, res) => {
     try {
         const { views } = req.body || {};
@@ -878,6 +1115,176 @@ app.post('/api/jar-state/meta', (req, res) => {
         console.error(`❌ [META] Error:`, e.message);
         res.status(500).json({ error: e.message });
     }
+});
+
+// ================================================================
+// 🏳️🌈 PRIDE FLAGS — API
+// ================================================================
+
+// GET /api/pride/config → devuelve config actual (o defaults)
+app.get('/api/pride/config', (req, res) => {
+    try {
+        res.json({ ok: true, config: getPrideConfig() });
+    } catch (e) {
+        console.error('[pride] GET config error:', e);
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+// POST /api/pride/config → guarda config y emite pride:config-updated
+app.post('/api/pride/config', (req, res) => {
+    try {
+        const body = req.body || {};
+
+        // Saneamiento básico
+        if (body.mode && !['rotate', 'fixed', 'chat'].includes(body.mode)) {
+            body.mode = 'rotate';
+        }
+        if (body.rotateMs !== undefined) {
+            const n = Number(body.rotateMs);
+            body.rotateMs = (isNaN(n) || n < 1000) ? PRIDE_DEFAULTS.rotateMs : n;
+        }
+        if (body.enabled !== null && body.enabled !== undefined && !Array.isArray(body.enabled)) {
+            body.enabled = null;
+        }
+
+        const merged = { ...getPrideConfig(), ...body };
+        if (!savePrideConfig(merged)) {
+            return res.status(500).json({ ok: false, error: 'No se pudo guardar' });
+        }
+
+        io.emit('pride:config-updated', merged);
+        console.log('🏳️🌈 [PRIDE] Config guardada:', merged);
+        res.json({ ok: true, config: merged });
+    } catch (e) {
+        console.error('[pride] POST config error:', e);
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+// DELETE /api/pride/config → resetea a defaults
+app.delete('/api/pride/config', (req, res) => {
+    try {
+        config.PRIDE = { ...PRIDE_DEFAULTS };
+        fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
+
+        io.emit('pride:config-updated', config.PRIDE);
+        console.log('🏳️🌈 [PRIDE] Config reseteada a defaults');
+        res.json({ ok: true, config: config.PRIDE });
+    } catch (e) {
+        console.error('[pride] DELETE config error:', e);
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+// GET /pride → sirve public/pride.html
+app.get('/pride', (req, res) => {
+    res.sendFile(path.join(publicDir, 'pride.html'));
+});
+
+// ================================================================
+// 🚂 HYPE TRAIN — API
+// ================================================================
+
+// GET /api/hype-train/config
+app.get('/api/hype-train/config', (req, res) => {
+    try {
+        res.json({ ok: true, config: getHypeTrainConfig() });
+    } catch (e) {
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+// POST /api/hype-train/config
+app.post('/api/hype-train/config', (req, res) => {
+    try {
+        const body = req.body || {};
+        const merged = { ...getHypeTrainConfig(), ...body };
+
+        // Saneamiento básico
+        if (merged.duration !== undefined) {
+            const n = Number(merged.duration);
+            merged.duration = (isNaN(n) || n < 30) ? 300 : n;
+        }
+        if (merged.base !== undefined) {
+            const n = Number(merged.base);
+            merged.base = (isNaN(n) || n < 1) ? 100 : n;
+        }
+        if (merged.factor !== undefined) {
+            const n = Number(merged.factor);
+            merged.factor = (isNaN(n) || n <= 1) ? 1.4 : n;
+        }
+        if (!Array.isArray(merged.milestones)) {
+            merged.milestones = HYPE_TRAIN_DEFAULTS.milestones;
+        }
+        if (!Array.isArray(merged.titles)) {
+            merged.titles = HYPE_TRAIN_DEFAULTS.titles;
+        }
+
+        if (!saveHypeTrainConfig(merged)) {
+            return res.status(500).json({ ok: false, error: 'No se pudo guardar' });
+        }
+
+        hypeTrain.onConfigUpdated(merged);
+        console.log('🚂 [HYPE] Config guardada');
+        res.json({ ok: true, config: merged });
+    } catch (e) {
+        console.error('[hype] POST config error:', e);
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+// DELETE /api/hype-train/config → reset a defaults
+app.delete('/api/hype-train/config', (req, res) => {
+    try {
+        config.HYPE_TRAIN = { ...HYPE_TRAIN_DEFAULTS };
+        fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
+        hypeTrain.onConfigUpdated(config.HYPE_TRAIN);
+        console.log('🚂 [HYPE] Config reseteada a defaults');
+        res.json({ ok: true, config: config.HYPE_TRAIN });
+    } catch (e) {
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+// GET /api/hype-train/state
+app.get('/api/hype-train/state', (req, res) => {
+    res.json({ ok: true, state: hypeTrain.getState() });
+});
+
+// POST /api/hype-train/start
+app.post('/api/hype-train/start', (req, res) => {
+    try {
+        const state = hypeTrain.start({ reason: 'Manual desde API' });
+        res.json({ ok: true, state });
+    } catch (e) {
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+// POST /api/hype-train/end
+app.post('/api/hype-train/end', (req, res) => {
+    try {
+        const result = hypeTrain.end();
+        res.json({ ok: true, result });
+    } catch (e) {
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+// POST /api/hype-train/reset
+app.post('/api/hype-train/reset', (req, res) => {
+    try {
+        const state = hypeTrain.reset();
+        res.json({ ok: true, state });
+    } catch (e) {
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+// GET /hype-train → sirve public/hype-train.html
+app.get('/hype-train', (req, res) => {
+    res.sendFile(path.join(publicDir, 'hype-train.html'));
 });
 
 // ================================================================
@@ -1042,6 +1449,8 @@ console.log(`   YouTube Users: ${getYouTubeUsers().join(', ') || '(ninguno)'}`);
 console.log(`   🔊 TTS: ${config.TTS?.enabled ? 'ACTIVADO' : 'desactivado'} | Voz: ${config.TTS?.voice || 'N/A'}`);
 console.log(`   🤖 AI Co-Host: ${config.aiCohost?.enabled ? 'ACTIVADO' : 'desactivado'} | Nombre: ${config.aiCohost?.nombre || '(sin nombre)'}`);
 console.log(`   🏺 Meta cristal: ${config.JAR_META} 💎`);
+console.log(`   🏳️🌈 Pride: ${config.PRIDE?.mode || 'rotate'} | carpeta: ${config.PRIDE?.folder || 'HD 1080p'}`);
+console.log(`   🚂 Hype Train: tema ${config.HYPE_TRAIN?.theme || 'cyberpunk'} | duración ${config.HYPE_TRAIN?.duration || 300}s`);
 
 // ================================================================
 // 🛠️ VARIABLES
@@ -1129,6 +1538,32 @@ function broadcastMessage(msgData) {
 }
 
 // ================================================================
+// 🏳️🌈 PRIDE — Comando !bandera <nombre>
+// ================================================================
+const PRIDE_IDS = [
+    'agender','asexual','bigender','bisexual','demigender','demisexual',
+    'gay mens pride trans inclusive','genderfluid','genderqueer',
+    'gilbert baker','intersex','intersex progress','lesbian','non-binary',
+    'pansexual','philadelphia','polysexual','pride','progress pride',
+    'queer','trans'
+];
+
+function handlePrideCommand(text, source = 'chat') {
+    if (!text || typeof text !== 'string') return false;
+    const m = text.trim().match(/^!bandera\s+([a-z0-9\-_ ]+)$/i);
+    if (!m) return false;
+
+    const nombre = m[1].trim().toLowerCase();
+    const norm = s => s.replace(/[\s\-_]/g, '');
+    const id = PRIDE_IDS.find(x => x === nombre || norm(x) === norm(nombre));
+    if (!id) return false;
+
+    io.emit('pride:show', { id, nombre, ts: Date.now() });
+    console.log(`🏳️🌈 [PRIDE] !bandera ${nombre} (${source}) → emitido`);
+    return true;
+}
+
+// ================================================================
 // 🤖 AI CO-HOST — Helper de invocación
 // ================================================================
 async function procesarCoHost(usuario, texto, plataforma, canal) {
@@ -1177,6 +1612,10 @@ async function procesarCoHost(usuario, texto, plataforma, canal) {
 // 🔊 TTS — Cola + helper central
 // ================================================================
 const ttsQueue = new TTSQueue(io);
+
+// 🚂 HYPE TRAIN — instancia única
+const hypeTrain = new HypeTrain(io, getHypeTrainConfig);
+console.log(`🚂 [HYPE] Instancia creada (tema=${getHypeTrainConfig().theme}, duración=${getHypeTrainConfig().duration}s)`);
 
 const BOTS_CONOCIDOS = new Set([
     'nightbot', 'streamelements', 'streamlabs', 'moobot', 'fossabot', 'wizebot',
@@ -1228,6 +1667,9 @@ function tryEnqueueTTS({ text, type = 'chat', platform, user }) {
 // ================================================================
 const tiktokChat = new TikTokChat({
     onChat: (msg) => {
+        // 🏳️🌈 Comando !bandera
+        if (handlePrideCommand(msg.message, 'tiktok')) return;
+
         const msgData = {
             platform: 'tiktok', username: msg.username, message: msg.message,
             channel: msg.channel, avatar: msg.avatar || TIKTOK_DEFAULT_AVATAR,
@@ -1289,6 +1731,16 @@ const tiktokChat = new TikTokChat({
                 giftIcon: data.giftIcon || null,
                 extendedGiftInfo: data.extendedGiftInfo || null
             });
+
+            // 🚂 HYPE TRAIN
+            try {
+                hypeTrain.addGift({
+                    giftName: data.giftName,
+                    points: data.diamantesTotales,
+                    username: data.username,
+                    platform: 'tiktok'
+                });
+            } catch (e) { console.error('❌ [HYPE] Error addGift tiktok:', e.message); }
         }
     },
     onFollow: (data) => {
@@ -1364,6 +1816,9 @@ async function startTikTok() {
 // ================================================================
 const youtubeChat = new YouTubeChat({
     onChat: (msg) => {
+        // 🏳️🌈 Comando !bandera
+        if (handlePrideCommand(msg.message, 'youtube')) return;
+
         const msgData = {
             platform: 'youtube', username: msg.username, message: msg.message,
             channel: msg.channel, avatar: msg.avatar || YOUTUBE_DEFAULT_AVATAR,
@@ -1394,6 +1849,16 @@ const youtubeChat = new YouTubeChat({
             giftTier: data.tier,
             extendedGiftInfo: data
         });
+
+        // 🚂 HYPE TRAIN
+        try {
+            hypeTrain.addGift({
+                giftName: data.giftName || 'SuperChat',
+                points: Number(data.amount) || 1,
+                username: data.username,
+                platform: 'youtube'
+            });
+        } catch (e) { console.error('❌ [HYPE] Error addGift youtube:', e.message); }
     },
     onMember: (data) => {
         io.emit('youtube-member', data);
@@ -1457,6 +1922,8 @@ app.get('/get-config', (req, res) => {
         CONTROL_URL: config.CONTROL_URL || 'https://livecenter.tiktok.com/live_monitor',
         TTS: config.TTS || {},
         JAR_META: config.JAR_META || 500,
+        PRIDE: getPrideConfig(),
+        HYPE_TRAIN: getHypeTrainConfig(),
         aiCohost: {
             enabled: !!(config.aiCohost && config.aiCohost.enabled),
             nombre: config.aiCohost?.nombre || '',
@@ -1531,6 +1998,20 @@ app.post('/save-config', (req, res) => {
             newConfig.JAR_META = config.JAR_META || 500;
         }
 
+        // 🏳️🌈 PRIDE — preservar si no viene en el body
+        if (!newConfig.PRIDE || typeof newConfig.PRIDE !== 'object') {
+            newConfig.PRIDE = config.PRIDE || { ...PRIDE_DEFAULTS };
+        } else {
+            newConfig.PRIDE = { ...PRIDE_DEFAULTS, ...(config.PRIDE || {}), ...newConfig.PRIDE };
+        }
+
+        // 🚂 HYPE TRAIN — preservar si no viene en el body
+        if (!newConfig.HYPE_TRAIN || typeof newConfig.HYPE_TRAIN !== 'object') {
+            newConfig.HYPE_TRAIN = config.HYPE_TRAIN || { ...HYPE_TRAIN_DEFAULTS };
+        } else {
+            newConfig.HYPE_TRAIN = { ...HYPE_TRAIN_DEFAULTS, ...(config.HYPE_TRAIN || {}), ...newConfig.HYPE_TRAIN };
+        }
+
         const canalesPlanos = newConfig.TWITCH_ACCOUNTS
             ? newConfig.TWITCH_ACCOUNTS.flatMap(a => a.channels)
             : (newConfig.channels || []);
@@ -1550,6 +2031,9 @@ app.post('/save-config', (req, res) => {
         } catch (e) {
             console.error('❌ Error recargando pool IA:', e.message);
         }
+
+        // 🚂 HYPE TRAIN — notificar config nueva
+        try { hypeTrain.onConfigUpdated(getHypeTrainConfig()); } catch (e) {}
 
         cargarMapaGifts();
 
@@ -1627,6 +2111,12 @@ app.get('/youtube-status', (req, res) => {
     try { res.json({ ok: true, status: youtubeChat.getStatus() }); }
     catch (err) { res.status(500).json({ ok: false, error: err.message }); }
 });
+
+// ================================================================
+// 🎛️ STREAMDECK
+// ================================================================
+const deck = require('./deck');
+deck.init(app, io);
 
 // ================================================================
 // 🖼️ RUTAS DE PÁGINAS
@@ -1980,6 +2470,10 @@ async function connectTwitchChannel(channelName, account) {
 
         client.on('message', async (channel, tags, message, self) => {
             if (self) return;
+
+            // 🏳️🌈 Comando !bandera
+            if (handlePrideCommand(message, 'twitch')) return;
+
             const username = tags['display-name'] || tags.username;
             const canal = channel.replace('#', '');
             console.log(`📩 [TWITCH ${canal}] ${username}: ${message}`);
@@ -2016,6 +2510,16 @@ async function connectTwitchChannel(channelName, account) {
             };
             if (isDuplicateMessage(msgData)) return;
             io.emit('chat-message', msgData);
+
+            // 🚂 HYPE TRAIN
+            try {
+                hypeTrain.addGift({
+                    giftName: 'Bits',
+                    points: bits,
+                    username,
+                    platform: 'twitch'
+                });
+            } catch (e) { console.error('❌ [HYPE] Error addGift twitch:', e.message); }
         });
 
         client.on('subscription', async (channel, username, method, message, userstate) => {
@@ -2177,6 +2681,9 @@ async function connectKick() {
             if (msg.event === 'App\\Events\\ChatMessageEvent') {
                 const payload = typeof msg.data === 'string' ? JSON.parse(msg.data) : msg.data;
                 if (payload && payload.sender && payload.content) {
+                    // 🏳️🌈 Comando !bandera
+                    if (handlePrideCommand(payload.content, 'kick')) return;
+
                     const kickUsername = payload.sender.username || 'Usuario';
                     broadcastMessage({
                         platform: 'kick', channel: kickUser,
@@ -2205,6 +2712,18 @@ async function connectKick() {
                         message: `🎁 Envió ${payload.gift?.name || 'un regalo'}`,
                         avatar: payload.sender.profile_pic || KICK_DEFAULT_AVATAR
                     });
+
+                    // 🚂 HYPE TRAIN
+                    try {
+                        const giftName = payload.gift?.name || 'Gift';
+                        const giftAmount = Number(payload.gift?.amount) || 1;
+                        hypeTrain.addGift({
+                            giftName,
+                            points: giftAmount,
+                            username: payload.sender.username,
+                            platform: 'kick'
+                        });
+                    } catch (e) { console.error('❌ [HYPE] Error addGift kick:', e.message); }
                 }
             }
         } catch (e) {}
@@ -2252,6 +2771,24 @@ io.on('connection', (socket) => {
             socket.emit('youtube-canales-ok', { ok: false, error: err.message });
         }
     });
+    socket.on('tiktok-reconnect', async ({ username } = {}) => {
+        try {
+            if (!isPlatformEnabled('tiktok')) {
+                socket.emit('tiktok-reconnect-result', { ok: false, error: 'TikTok deshabilitado' });
+                return;
+            }
+            const user = (username || config.TIKTOK_USER_ID || '').trim().replace(/^@/, '');
+            if (!user) {
+                socket.emit('tiktok-reconnect-result', { ok: false, error: 'Sin username' });
+                return;
+            }
+            await tiktokChat.setUsuarios([user]);
+            socket.emit('tiktok-reconnect-result', { ok: true, username: user });
+            console.log(`🎵 [TIKTOK] Reconectado vía socket a @${user}`);
+        } catch (err) {
+            socket.emit('tiktok-reconnect-result', { ok: false, error: err.message });
+        }
+    });
 
     socket.on('tiktok-get-stats', () => { socket.emit('tiktok-stats-all', tiktokChat.getAllStats()); });
     socket.on('tiktok-reset-stats', (usuario) => { tiktokChat.resetStats(usuario || undefined); });
@@ -2293,7 +2830,39 @@ io.on('connection', (socket) => {
         }
     });
 
+    // ============================================================
+    //  🏳️🌈 PRIDE — Socket.io
+    // ============================================================
+    socket.on('pride:show', (data = {}) => {
+        const payload = {
+            id: data.id || null,
+            nombre: data.nombre || null,
+            ts: Date.now()
+        };
+        io.emit('pride:show', payload);
+        console.log('🏳️🌈 [PRIDE] pride:show →', payload);
+    });
+
+    // ============================================================
+    //  🚂 HYPE TRAIN — Socket.io
+    // ============================================================
+    socket.emit('hype-train:config', getHypeTrainConfig());
+    socket.emit('hype-train:update', hypeTrain.getState());
+
+    socket.on('hype-train:request-config', () => {
+        socket.emit('hype-train:config', getHypeTrainConfig());
+        socket.emit('hype-train:update', hypeTrain.getState());
+    });
+
+    socket.on('hype-train:ended', (data = {}) => {
+        console.log('🚂 [HYPE] Cliente reportó fin:', data);
+        io.emit('hype-train:end', data);
+    });
+
     socket.emit('ai-status', aiKeyPool.estadoProveedores());
+
+    // Enviar config actual de Pride al conectar
+    socket.emit('pride:config-updated', getPrideConfig());
 
     socket.on('disconnect', () => { console.log(`💻 Navegador desconectado: ${socket.id}`); });
 });
@@ -2308,6 +2877,7 @@ async function shutdown(reason = 'unknown') {
     console.log(`\n🛑 Cerrando servidor (${reason})...`);
 
     try { guardarJarState(); } catch (e) {}
+    try { hypeTrain.destroy(); } catch (e) {}
 
     if (kickWs) { try { kickWs.close(); } catch {} try { kickWs.terminate(); } catch {} }
     if (kickReconnectTimer) clearTimeout(kickReconnectTimer);

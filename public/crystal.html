@@ -63,7 +63,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 20px;
+    gap: 4px;
   }
 
   .ambient {
@@ -89,10 +89,11 @@
     100% { transform: translateY(-400px) scale(0.3); opacity: 0; }
   }
 
+  /* ── Cristal más grande ── */
   .crystal-stage {
     position: relative;
-    width: 280px;
-    height: 340px;
+    width: 340px;
+    height: 420px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -117,8 +118,8 @@
 
   .crystal {
     position: relative;
-    width: 220px;
-    height: 260px;
+    width: 280px;
+    height: 330px;
     animation: float 7s ease-in-out infinite;
     filter: drop-shadow(0 0 var(--crystal-glow-size) var(--crystal-glow));
     transition: filter 0.6s ease;
@@ -135,26 +136,41 @@
     height: 100%;
   }
 
+  /*
+    Contenedor de partículas: alineado con el hexágono INTERIOR del SVG
+    y recortado con clip-path para que nada se salga del cristal.
+  */
   .particles {
     position: absolute;
-    left: 50%;
-    top: 48%;
-    transform: translate(-50%, -50%);
-    width: 130px;
-    height: 140px;
-    display: flex;
-    flex-wrap: wrap-reverse;
-    align-content: flex-end;
-    justify-content: center;
-    gap: 3px;
+    left: 25px;
+    top: 13px;
+    width: 229px;
+    height: 305px;
     pointer-events: none;
     overflow: hidden;
-    padding-bottom: 20px;
     z-index: 2;
+    clip-path: polygon(
+      50% 0%,
+      100% 21%,
+      100% 79%,
+      50% 100%,
+      0% 79%,
+      0% 21%
+    );
+    -webkit-clip-path: polygon(
+      50% 0%,
+      100% 21%,
+      100% 79%,
+      50% 100%,
+      0% 79%,
+      0% 21%
+    );
   }
+
   .particle {
-    width: 10px;
-    height: 10px;
+    position: absolute;
+    width: 12px;
+    height: 12px;
     border-radius: 50%;
     background: radial-gradient(circle at 30% 30%,
       var(--particle-1),
@@ -163,13 +179,12 @@
     box-shadow:
       0 0 8px var(--particle-glow),
       0 0 16px var(--particle-glow);
-    animation: particleIn 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
-    flex-shrink: 0;
-    transition: background 0.5s ease, box-shadow 0.5s ease;
+    transition: background 0.5s ease, box-shadow 0.5s ease,
+                opacity 0.6s ease, transform 0.6s ease;
+    will-change: transform, opacity;
   }
-  @keyframes particleIn {
-    0%   { transform: scale(0) translateY(-30px); opacity: 0; }
-    100% { transform: scale(1) translateY(0); opacity: 1; }
+  .particle.falling {
+    opacity: 0;
   }
   .particle.gold {
     background: radial-gradient(circle at 30% 30%,
@@ -179,22 +194,29 @@
     box-shadow:
       0 0 10px var(--gold-glow),
       0 0 22px var(--gold-glow);
-    animation: particleIn 0.7s cubic-bezier(0.34, 1.56, 0.64, 1),
-               goldShine 1.8s ease-in-out infinite;
+    animation: goldShine 1.8s ease-in-out infinite;
   }
   @keyframes goldShine {
     0%, 100% { box-shadow: 0 0 10px var(--gold-glow), 0 0 22px var(--gold-glow); }
     50%      { box-shadow: 0 0 18px var(--gold-glow), 0 0 40px var(--gold-glow); }
   }
+  /* Iconos de regalo: 18x18, centrados en la celda de 20px */
   .particle.gift-icon {
+    width: 18px;
+    height: 18px;
     background-color: transparent;
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
-    width: 18px;
-    height: 18px;
     box-shadow: none;
     filter: drop-shadow(0 0 6px var(--crystal-glow));
+  }
+
+  /* Animación de "derretir" (fade out suave) */
+  .particle.melting {
+    opacity: 0 !important;
+    transform: scale(0.5) !important;
+    transition: opacity 0.6s ease, transform 0.6s ease;
   }
 
   body.meta-reached .crystal {
@@ -207,12 +229,14 @@
       transparent 70%);
   }
 
+  /* ── Info pegada al cristal ── */
   .info {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 14px;
-    min-height: 110px;
+    gap: 8px;
+    min-height: auto;
+    margin-top: -16px;
     z-index: 3;
   }
 
@@ -405,6 +429,7 @@
     flex-direction: column;
     align-items: center;
     gap: 8px;
+    margin-top: -4px;
     opacity: 0;
     transform: translateY(6px);
     transition: opacity 0.4s ease, transform 0.4s ease;
@@ -641,6 +666,126 @@
   let topDonorTimer = null;
   let themeApplied = false;
 
+  // ============================================================
+  // SISTEMA DE PARTÍCULAS CON FÍSICA DE CAÍDA Y APILADO
+  // ============================================================
+  const COLS = 10;              // columnas lógicas dentro del frasco
+  const COL_W = 20;             // ancho de columna en px (18 icono + 2 gap)
+  const ROW_H = 14;             // alto de fila en px (12 normal + 2 gap)
+  const MAX_ROWS = 18;          // filas máximas antes de derretir
+  const PARTICLE_FLOOR_OFFSET = 12; // margen desde el vértice inferior
+  const MAX_CAPACITY = COLS * MAX_ROWS; // 180 slots lógicos
+
+  // stack[col] = cuántas partículas hay apiladas en esa columna
+  const stack = new Array(COLS).fill(0);
+
+  function pickColumnWithFewest() {
+    let min = Infinity, candidates = [];
+    for (let c = 0; c < COLS; c++) {
+      if (stack[c] < min) { min = stack[c]; candidates = [c]; }
+      else if (stack[c] === min) candidates.push(c);
+    }
+    return candidates[Math.floor(Math.random() * candidates.length)];
+  }
+
+  function particlePositionFor(col, row) {
+    const x = col * COL_W + (COL_W - 12) / 2; // para 12px
+    const y = (MAX_ROWS - 1 - row) * ROW_H + PARTICLE_FLOOR_OFFSET;
+    return { x, y };
+  }
+
+  function particlePositionForGift(col, row) {
+    const x = col * COL_W + (COL_W - 18) / 2;
+    const y = (MAX_ROWS - 1 - row) * ROW_H + PARTICLE_FLOOR_OFFSET;
+    return { x, y };
+  }
+
+  function colRowFromIndex(idx) {
+    return { col: idx % COLS, row: Math.floor(idx / COLS) };
+  }
+
+  function meltOldestParticles(count) {
+    const candidates = Array.from(particles.children).filter(el => !el.classList.contains('melting'));
+    for (let i = 0; i < count && i < candidates.length; i++) {
+      const el = candidates[i];
+      el.classList.add('melting');
+      setTimeout(() => el.remove(), 650);
+    }
+  }
+
+  function updateStackFromDOM() {
+    stack.fill(0);
+    for (const el of particles.children) {
+      if (el.classList.contains('melting')) continue;
+      const col = parseInt(el.dataset.col, 10);
+      if (!isNaN(col) && col >= 0 && col < COLS) stack[col]++;
+    }
+  }
+
+  function addParticle(iconUrl, isGold = false) {
+    const activeCount = Array.from(particles.children).filter(el => !el.classList.contains('melting')).length;
+    if (activeCount >= MAX_CAPACITY) {
+      meltOldestParticles(Math.ceil(activeCount * 0.15));
+    }
+
+    updateStackFromDOM();
+
+    const col = pickColumnWithFewest();
+    const row = stack[col];
+    if (row >= MAX_ROWS) return;
+
+    stack[col]++;
+
+    const isGift = !!iconUrl;
+    const p = document.createElement('div');
+    p.className = 'particle' + (isGold ? ' gold' : '') + (isGift ? ' gift-icon' : '');
+    if (isGift) p.style.backgroundImage = `url('${iconUrl}')`;
+
+    const pos = isGift ? particlePositionForGift(col, row) : particlePositionFor(col, row);
+    p.style.left = pos.x + 'px';
+    p.style.top  = pos.y + 'px';
+    p.dataset.col = col;
+    p.dataset.row = row;
+
+    p.style.transform = 'translateY(-400px)';
+    p.style.opacity = '0';
+
+    particles.appendChild(p);
+
+    void p.offsetWidth;
+
+    requestAnimationFrame(() => {
+      p.style.transition = 'transform 0.7s cubic-bezier(0.34, 1.35, 0.64, 1), opacity 0.25s ease-out, background 0.5s ease, box-shadow 0.5s ease';
+      p.style.transform = 'translateY(0)';
+      p.style.opacity = '1';
+    });
+  }
+
+  function reconstruirParticulas() {
+    particles.innerHTML = '';
+    stack.fill(0);
+
+    const cantidad = Math.min(Math.floor(totalDiamonds / 15), MAX_PARTICLES);
+    for (let i = 0; i < cantidad; i++) {
+      const { col, row } = colRowFromIndex(i);
+      if (col >= COLS) break;
+      stack[col] = Math.max(stack[col], row + 1);
+
+      const p = document.createElement('div');
+      p.className = 'particle';
+      if (Math.random() < 0.15) p.classList.add('gold');
+      const pos = particlePositionFor(col, row);
+      p.style.left = pos.x + 'px';
+      p.style.top  = pos.y + 'px';
+      p.dataset.col = col;
+      p.dataset.row = row;
+      particles.appendChild(p);
+    }
+  }
+
+  // ============================================================
+  // GIFT EMOJI FALLBACK
+  // ============================================================
   const GIFT_EMOJI_FALLBACK = {
     'rosa': '🌹', 'rose': '🌹',
     'gg': '🎮',
@@ -777,30 +922,6 @@
     } catch (e) { console.warn('Sin estado:', e.message); }
   }
 
-  function reconstruirParticulas() {
-    particles.innerHTML = '';
-    const cantidad = Math.min(Math.floor(totalDiamonds / 15), MAX_PARTICLES);
-    for (let i = 0; i < cantidad; i++) {
-      const p = document.createElement('div');
-      p.className = 'particle';
-      if (Math.random() < 0.15) p.classList.add('gold');
-      particles.appendChild(p);
-    }
-  }
-
-  function addParticle(iconUrl, isGold = false) {
-    const p = document.createElement('div');
-    p.className = 'particle' + (isGold ? ' gold' : '');
-    if (iconUrl) {
-      p.classList.add('gift-icon');
-      p.style.backgroundImage = `url('${iconUrl}')`;
-    }
-    particles.appendChild(p);
-    while (particles.children.length > MAX_PARTICLES) {
-      particles.firstChild.remove();
-    }
-  }
-
   function showTopDonorTemporal({ username, avatar, diamonds, giftName, giftImage, giftIcon, repeatCount }) {
     topAvatar.src = avatar || 'https://i.imgur.com/OmnpuQH.png';
     topName.textContent = username;
@@ -935,6 +1056,7 @@
 
   socket.on('jar-reset', () => {
     particles.innerHTML = '';
+    stack.fill(0);
     userTotals.clear();
     userAvatars.clear();
     userLastGift.clear();

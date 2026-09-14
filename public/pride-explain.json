@@ -1,0 +1,248 @@
+{
+  "agender-pride": {
+    "file": "agender pride.png",
+    "name": "Agénero",
+    "meaning": "Personas que no se identifican con ningún género.",
+    "colors": [
+      { "hex": "#000000", "label": "Negro", "desc": "Sin género" },
+      { "hex": "#a3a3a3", "label": "Gris", "desc": "Semigénero" },
+      { "hex": "#ffffff", "label": "Blanco", "desc": "No binario" },
+      { "hex": "#b8f483", "label": "Verde", "desc": "Agénero" }
+    ]
+  },
+  "asexual-pride": {
+    "file": "asexual pride.png",
+    "name": "Asexual",
+    "meaning": "Personas que no sienten atracción sexual (o la sienten poco).",
+    "colors": [
+      { "hex": "#000000", "label": "Negro", "desc": "Asexualidad" },
+      { "hex": "#a3a3a3", "label": "Gris", "desc": "Grissexualidad" },
+      { "hex": "#ffffff", "label": "Blanco", "desc": "Alosexualidad" },
+      { "hex": "#800080", "label": "Violeta", "desc": "Comunidad" }
+    ]
+  },
+  "bigender-pride": {
+    "file": "bigender pride.png",
+    "name": "Bigénero",
+    "meaning": "Personas que se identifican con dos géneros a la vez o alternando.",
+    "colors": [
+      { "hex": "#c479c0", "label": "Rosa", "desc": "Femenino" },
+      { "hex": "#9b4f96", "label": "Violeta", "desc": "Ambos" },
+      { "hex": "#0038a8", "label": "Azul", "desc": "Masculino" }
+    ]
+  },
+  "bisexual-pride": {
+    "file": "bisexual pride.png",
+    "name": "Bisexual",
+    "meaning": "Personas atraídas por más de un género.",
+    "colors": [
+      { "hex": "#d60270", "label": "Rosa", "desc": "Atracción a mujeres" },
+      { "hex": "#9b4f96", "label": "Violeta", "desc": "Atracción a varios géneros" },
+      { "hex": "#0038a8", "label": "Azul", "desc": "Atracción a hombres" }
+    ]
+  },
+  "demigender-pride": {
+    "file": "demigender pride.png",
+    "name": "Demigénero",
+    "meaning": "Identidad parcial dentro de un género (demiboy, demigirl, etc.).",
+    "colors": [
+      { "hex": "#7f7f7f", "label": "Gris", "desc": "Parcialidad" },
+      { "hex": "#c4c4c4", "label": "Gris claro", "desc": "Neutralidad" },
+      { "hex": "#9ad9ea", "label": "Cian", "desc": "Género parcial" }
+    ]
+  },
+  "demisexual-pride": {
+    "file": "demisexual pride.png",
+    "name": "Demisexual",
+    "meaning": "Atracción sexual solo tras un vínculo emocional fuerte.",
+    "colors": [
+      { "hex": "#000000", "label": "Negro", "desc": "Asexualidad" },
+      { "hex": "#7f7f7f", "label": "Gris", "desc": "Espectro gris" },
+      { "hex": "#ffffff", "label": "Blanco", "desc": "Sexualidad" },
+      { "hex": "#800080", "label": "Violeta", "desc": "Comunidad" }
+    ]
+  },
+  "gay-mens-pride-trans-inclusive": {
+    "file": "gay mens pride trans inclusive.png",
+    "name": "Gay (hombres, trans inclusive)",
+    "meaning": "Representa a los hombres que aman a otros hombres, incluyendo a los trans.",
+    "colors": [
+      { "hex": "#078d70", "label": "Verde", "desc": "Naturaleza" },
+      { "hex": "#26ceaa", "label": "Cian", "desc": "Comunidad" },
+      { "hex": "#98e8c1", "label": "Verde claro", "desc": "Armonía" },
+      { "hex": "#ffffff", "label": "Blanco", "desc": "Trans inclusive" },
+      { "hex": "#7bade2", "label": "Azul claro", "desc": "Serenidad" },
+      { "hex": "#5049cc", "label": "Violeta", "desc": "Espíritu" },
+      { "hex": "#3d1a78", "label": "Índigo", "desc": "Diversidad" }
+    ]
+  },
+  "genderfluid-pride": {
+    "file": "genderfluid pride.png",
+    "name": "Género Fluido",
+    "meaning": "Personas cuya identidad de género cambia con el tiempo.",
+    "colors": [
+      { "hex": "#ff75a2", "label": "Rosa", "desc": "Feminidad" },
+      { "hex": "#ffffff", "label": "Blanco", "desc": "Todos los géneros" },
+      { "hex": "#be18d6", "label": "Violeta", "desc": "Mezcla" },
+      { "hex": "#000000", "label": "Negro", "desc": "Sin género" },
+      { "hex": "#333ebd", "label": "Azul", "desc": "Masculinidad" }
+    ]
+  },
+  "genderqueer-pride": {
+    "file": "genderqueer pride.png",
+    "name": "Genderqueer",
+    "meaning": "Identidad que rompe o cuestiona las normas tradicionales de género.",
+    "colors": [
+      { "hex": "#b57edc", "label": "Violeta", "desc": "Androginia / queer" },
+      { "hex": "#ffffff", "label": "Blanco", "desc": "Neutralidad" },
+      { "hex": "#4a8123", "label": "Verde", "desc": "Fuera del binario" }
+    ]
+  },
+  "gilbert-baker-pride": {
+    "file": "gilbert baker pride.png",
+    "name": "Gilbert Baker",
+    "meaning": "La bandera arcoíris original de 1978, creada por Gilbert Baker.",
+    "colors": [
+      { "hex": "#e40303", "label": "Rojo", "desc": "Vida" },
+      { "hex": "#ff8c00", "label": "Naranja", "desc": "Salud" },
+      { "hex": "#ffed00", "label": "Amarillo", "desc": "Luz del sol" },
+      { "hex": "#008026", "label": "Verde", "desc": "Naturaleza" },
+      { "hex": "#24408e", "label": "Azul", "desc": "Serenidad" },
+      { "hex": "#732982", "label": "Violeta", "desc": "Espíritu" }
+    ]
+  },
+  "intersex-pride": {
+    "file": "intersex pride.png",
+    "name": "Intersex",
+    "meaning": "Personas con características sexuales que no encajan en el binario típico.",
+    "colors": [
+      { "hex": "#ffd800", "label": "Amarillo", "desc": "Fondo" },
+      { "hex": "#7a5cff", "label": "Círculo violeta", "desc": "Totalidad" }
+    ]
+  },
+  "intersex-progress-pride": {
+    "file": "intersex progress pride.png",
+    "name": "Intersex Progress",
+    "meaning": "Versión de la bandera Progreso que incluye a las personas intersex.",
+    "colors": [
+      { "hex": "#e40303", "label": "Rojo", "desc": "Vida" },
+      { "hex": "#ff8c00", "label": "Naranja", "desc": "Salud" },
+      { "hex": "#ffed00", "label": "Amarillo", "desc": "Luz del sol" },
+      { "hex": "#008026", "label": "Verde", "desc": "Naturaleza" },
+      { "hex": "#24408e", "label": "Azul", "desc": "Serenidad" },
+      { "hex": "#732982", "label": "Violeta", "desc": "Espíritu" },
+      { "hex": "#ffd800", "label": "Amarillo intersex", "desc": "Intersex" }
+    ]
+  },
+  "lesbian-pride": {
+    "file": "lesbian pride.png",
+    "name": "Lesbiana",
+    "meaning": "Representa a las mujeres que aman a otras mujeres.",
+    "colors": [
+      { "hex": "#d52d00", "label": "Naranja", "desc": "Atracción no binaria" },
+      { "hex": "#ef7627", "label": "Naranja claro", "desc": "Comunidad" },
+      { "hex": "#ff9a56", "label": "Melocotón", "desc": "Amor" },
+      { "hex": "#ffffff", "label": "Blanco", "desc": "Relaciones lésbicas" },
+      { "hex": "#d162a4", "label": "Rosa", "desc": "Feminidad" },
+      { "hex": "#b55690", "label": "Rosa oscuro", "desc": "Fortaleza" },
+      { "hex": "#a30262", "label": "Magenta", "desc": "Resistencia" }
+    ]
+  },
+  "non-binary-pride": {
+    "file": "non-binary pride.png",
+    "name": "No Binaria",
+    "meaning": "Personas que no se identifican exclusivamente como hombre ni mujer.",
+    "colors": [
+      { "hex": "#fcf434", "label": "Amarillo", "desc": "Fuera del binario" },
+      { "hex": "#ffffff", "label": "Blanco", "desc": "Múltiples géneros" },
+      { "hex": "#9c59d1", "label": "Violeta", "desc": "Mezcla hombre/mujer" },
+      { "hex": "#2c2c2c", "label": "Negro", "desc": "Sin género" }
+    ]
+  },
+  "pansexual-pride": {
+    "file": "pansexual pride.png",
+    "name": "Pansexual",
+    "meaning": "Atracción hacia personas de cualquier género.",
+    "colors": [
+      { "hex": "#ff1b8d", "label": "Rosa", "desc": "Atracción a mujeres" },
+      { "hex": "#ffda00", "label": "Amarillo", "desc": "Atracción a no binarios" },
+      { "hex": "#1bb3ff", "label": "Azul", "desc": "Atracción a hombres" }
+    ]
+  },
+  "philadelphia-pride": {
+    "file": "philadelphia pride.png",
+    "name": "Philadelphia Pride",
+    "meaning": "Variante del arcoíris con franjas negra y marrón por las personas racializadas.",
+    "colors": [
+      { "hex": "#000000", "label": "Negro", "desc": "Personas negras" },
+      { "hex": "#785a3c", "label": "Marrón", "desc": "Personas racializadas" },
+      { "hex": "#e40303", "label": "Rojo", "desc": "Vida" },
+      { "hex": "#ff8c00", "label": "Naranja", "desc": "Salud" },
+      { "hex": "#ffed00", "label": "Amarillo", "desc": "Luz del sol" },
+      { "hex": "#008026", "label": "Verde", "desc": "Naturaleza" },
+      { "hex": "#24408e", "label": "Azul", "desc": "Serenidad" },
+      { "hex": "#732982", "label": "Violeta", "desc": "Espíritu" }
+    ]
+  },
+  "polysexual-pride": {
+    "file": "polysexual pride.png",
+    "name": "Polisexual",
+    "meaning": "Atracción hacia múltiples géneros, pero no todos.",
+    "colors": [
+      { "hex": "#f61cb9", "label": "Magenta", "desc": "Atracción a mujeres" },
+      { "hex": "#07d569", "label": "Verde", "desc": "Atracción a no binarios" },
+      { "hex": "#1c92f6", "label": "Azul", "desc": "Atracción a hombres" }
+    ]
+  },
+  "pride": {
+    "file": "pride.png",
+    "name": "Pride / Arcoíris",
+    "meaning": "La bandera clásica del orgullo LGBTQ+.",
+    "colors": [
+      { "hex": "#e40303", "label": "Rojo", "desc": "Vida" },
+      { "hex": "#ff8c00", "label": "Naranja", "desc": "Salud" },
+      { "hex": "#ffed00", "label": "Amarillo", "desc": "Luz del sol" },
+      { "hex": "#008026", "label": "Verde", "desc": "Naturaleza" },
+      { "hex": "#24408e", "label": "Azul", "desc": "Serenidad" },
+      { "hex": "#732982", "label": "Violeta", "desc": "Espíritu" }
+    ]
+  },
+  "progress-pride": {
+    "file": "progress pride.png",
+    "name": "Progress Pride",
+    "meaning": "Versión inclusiva con chevron trans y colores por personas racializadas y afectadas por el VIH.",
+    "colors": [
+      { "hex": "#000000", "label": "Negro", "desc": "Personas negras" },
+      { "hex": "#785a3c", "label": "Marrón", "desc": "Personas racializadas" },
+      { "hex": "#5bcefa", "label": "Azul claro", "desc": "Trans masculino" },
+      { "hex": "#f5a9b8", "label": "Rosa", "desc": "Trans femenino" },
+      { "hex": "#ffffff", "label": "Blanco", "desc": "No binario" },
+      { "hex": "#e40303", "label": "Rojo", "desc": "Vida" },
+      { "hex": "#ff8c00", "label": "Naranja", "desc": "Salud" },
+      { "hex": "#ffed00", "label": "Amarillo", "desc": "Luz del sol" },
+      { "hex": "#008026", "label": "Verde", "desc": "Naturaleza" },
+      { "hex": "#24408e", "label": "Azul", "desc": "Serenidad" },
+      { "hex": "#732982", "label": "Violeta", "desc": "Espíritu" }
+    ]
+  },
+  "queer-pride": {
+    "file": "queer pride.png",
+    "name": "Queer",
+    "meaning": "Término paraguas para identidades y orientaciones fuera de la norma.",
+    "colors": [
+      { "hex": "#000000", "label": "Negro", "desc": "Diversidad" },
+      { "hex": "#f5a9b8", "label": "Rosa", "desc": "Comunidad" },
+      { "hex": "#5bcefa", "label": "Azul", "desc": "Identidad" }
+    ]
+  },
+  "trans-pride": {
+    "file": "trans pride.png",
+    "name": "Trans",
+    "meaning": "Representa a las personas transgénero.",
+    "colors": [
+      { "hex": "#5bcefa", "label": "Azul claro", "desc": "Masculino" },
+      { "hex": "#f5a9b8", "label": "Rosa", "desc": "Femenino" },
+      { "hex": "#ffffff", "label": "Blanco", "desc": "No binario / transición" }
+    ]
+  }
+}

@@ -53,14 +53,7 @@
     body::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 5px; }
     body::-webkit-scrollbar-thumb:hover { background: #3a4150; }
 
-    /* ============================================
-       LAYOUT CON SIDEBAR
-       ============================================ */
-    .layout {
-      display: flex;
-      width: 100%;
-      min-height: 100vh;
-    }
+    .layout { display: flex; width: 100%; min-height: 100vh; }
 
     .sidebar {
       width: 220px;
@@ -70,9 +63,7 @@
       display: flex;
       flex-direction: column;
       position: fixed;
-      top: 0;
-      left: 0;
-      bottom: 0;
+      top: 0; left: 0; bottom: 0;
       overflow-y: auto;
       z-index: 10;
     }
@@ -80,9 +71,7 @@
     .sidebar::-webkit-scrollbar-thumb { background: #23262e; border-radius: 3px; }
 
     .sidebar-logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
+      display: flex; align-items: center; gap: 10px;
       padding: 0 10px 20px;
       border-bottom: 1px solid #1a1d24;
       margin-bottom: 20px;
@@ -94,73 +83,42 @@
       display: flex; align-items: center; justify-content: center;
       color: white; font-size: 18px; flex-shrink: 0;
     }
-    .sidebar-logo span {
-      font-weight: 600; color: #e4e6eb;
-      font-size: 14px; letter-spacing: -0.01em;
-    }
+    .sidebar-logo span { font-weight: 600; color: #e4e6eb; font-size: 14px; letter-spacing: -0.01em; }
 
     .sidebar-section-title {
-      font-size: 10px;
-      color: #565b66;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      padding: 0 10px;
-      margin-bottom: 8px;
-      margin-top: 4px;
-      font-weight: 600;
+      font-size: 10px; color: #565b66;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      padding: 0 10px; margin-bottom: 8px; margin-top: 4px; font-weight: 600;
     }
 
     .sidebar-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 8px 10px;
-      border-radius: 6px;
-      color: #9198a4;
-      font-size: 13px;
-      cursor: pointer;
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 10px; border-radius: 6px;
+      color: #9198a4; font-size: 13px; cursor: pointer;
       transition: background 0.15s, color 0.15s;
-      text-decoration: none;
-      margin-bottom: 2px;
-      user-select: none;
-      border: none;
-      background: transparent;
-      width: 100%;
-      text-align: left;
-      font-family: inherit;
+      text-decoration: none; margin-bottom: 2px;
+      user-select: none; border: none; background: transparent;
+      width: 100%; text-align: left; font-family: inherit;
     }
     .sidebar-item:hover { background: #141720; color: #e4e6eb; }
     .sidebar-item.active { background: #161b26; color: #e4e6eb; font-weight: 500; }
     .sidebar-item.active i:first-child { color: #4d7cc7; }
     .sidebar-item i { font-size: 15px; flex-shrink: 0; transition: color 0.15s; }
     .sidebar-item .count {
-      margin-left: auto;
-      font-size: 11px;
-      background: #1c1f26;
-      padding: 1px 7px;
-      border-radius: 10px;
-      color: #7b8090;
-      font-variant-numeric: tabular-nums;
-      min-width: 22px;
-      text-align: center;
+      margin-left: auto; font-size: 11px; background: #1c1f26;
+      padding: 1px 7px; border-radius: 10px; color: #7b8090;
+      font-variant-numeric: tabular-nums; min-width: 22px; text-align: center;
       font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
       transition: color 0.15s, background 0.15s;
     }
     .sidebar-item.active .count { background: #1e2836; color: #8badd8; }
     .sidebar-item .count.live { background: #1e2a1e; color: #4fa87a; }
-
-    .sidebar-bottom {
-      margin-top: auto;
-      padding-top: 20px;
-      border-top: 1px solid #1a1d24;
-    }
+    .sidebar-bottom { margin-top: auto; padding-top: 20px; border-top: 1px solid #1a1d24; }
 
     .main-content {
-      flex: 1;
-      margin-left: 220px;
+      flex: 1; margin-left: 220px;
       padding: 24px 28px 40px;
-      width: calc(100% - 220px);
-      min-height: 100vh;
+      width: calc(100% - 220px); min-height: 100vh;
     }
 
     @media (max-width: 900px) {
@@ -168,9 +126,6 @@
       .main-content { margin-left: 0; width: 100%; padding: 16px 14px 40px; }
     }
 
-    /* ============================================
-       TODO EL CSS ORIGINAL DEL DASHBOARD
-       ============================================ */
     .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; gap: 16px; flex-wrap: wrap; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
     .header-left h1 { font-size: 19px; font-weight: 600; letter-spacing: -0.01em; color: #f1f2f4; margin: 0; }
     .header-left p { color: var(--text-dim); font-size: 12.5px; margin-top: 3px; }
@@ -194,35 +149,18 @@
     .toggle-right-btn.tiktok-btn:hover { color: var(--secondary); border-color: rgba(214,123,168,0.3); }
     .toggle-right-btn.youtube-btn:hover { color: var(--youtube); border-color: rgba(201,90,90,0.3); }
 
-    /* ============================================
-       DROPDOWN SELECTOR DE VISTAS TIKTOK
-       ============================================ */
+    /* SELECTOR DE VISTAS TIKTOK */
     .tiktok-view-selector {
-      position: relative;
-      display: inline-flex;
-      align-items: center;
-      gap: 0;
-      border-radius: 100px;
-      background: var(--bg-panel);
-      border: 1px solid var(--border);
-      overflow: visible;
+      position: relative; display: inline-flex; align-items: center; gap: 0;
+      border-radius: 100px; background: var(--bg-panel);
+      border: 1px solid var(--border); overflow: visible;
     }
     .tiktok-view-selector .tiktok-view-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 7px 12px;
-      background: transparent;
-      color: var(--text-dim);
-      font-weight: 500;
-      font-size: 12px;
-      border: none;
-      cursor: pointer;
-      font-family: inherit;
-      border-radius: 100px 0 0 100px;
-      transition: all 0.15s;
-      white-space: nowrap;
-      max-width: 180px;
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 7px 12px; background: transparent; color: var(--text-dim);
+      font-weight: 500; font-size: 12px; border: none; cursor: pointer;
+      font-family: inherit; border-radius: 100px 0 0 100px;
+      transition: all 0.15s; white-space: nowrap; max-width: 180px;
     }
     .tiktok-view-selector .tiktok-view-btn:hover { color: var(--secondary); }
     .tiktok-view-selector .tiktok-view-btn i.tk-icon { color: var(--secondary); font-size: 13px; }
@@ -230,82 +168,62 @@
     .tiktok-view-selector.open .tiktok-view-btn i.tk-caret { transform: rotate(180deg); }
 
     .tiktok-view-selector .tiktok-eye-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 7px 10px;
-      background: transparent;
-      color: var(--text-dim);
-      border: none;
-      border-left: 1px solid var(--border);
-      cursor: pointer;
-      font-size: 13px;
-      border-radius: 0 100px 100px 0;
-      transition: all 0.15s;
-      font-family: inherit;
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 7px 10px; background: transparent; color: var(--text-dim);
+      border: none; border-left: 1px solid var(--border); cursor: pointer;
+      font-size: 13px; border-radius: 0 100px 100px 0;
+      transition: all 0.15s; font-family: inherit;
     }
     .tiktok-view-selector .tiktok-eye-btn:hover { color: var(--secondary); }
 
     .tiktok-view-dropdown {
-      position: absolute;
-      top: calc(100% + 6px);
-      right: 0;
-      min-width: 220px;
-      background: var(--bg-elevated);
-      border: 1px solid var(--border-strong);
-      border-radius: var(--r-md);
-      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-      padding: 6px;
-      z-index: 200;
-      display: none;
-      animation: tkDropIn 0.12s ease;
+      position: absolute; top: calc(100% + 6px); right: 0;
+      min-width: 240px; background: var(--bg-elevated);
+      border: 1px solid var(--border-strong); border-radius: var(--r-md);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6); padding: 6px;
+      z-index: 200; display: none; animation: tkDropIn 0.12s ease;
     }
     @keyframes tkDropIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
     .tiktok-view-selector.open .tiktok-view-dropdown { display: block; }
 
     .tiktok-view-dropdown .tk-item {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      padding: 8px 10px;
-      border-radius: var(--r-sm);
-      cursor: pointer;
-      font-size: 12.5px;
-      color: var(--text-dim);
+      display: flex; align-items: center; gap: 9px;
+      padding: 8px 10px; border-radius: var(--r-sm);
+      cursor: pointer; font-size: 12.5px; color: var(--text-dim);
       transition: background 0.12s, color 0.12s;
-      border: none;
-      background: transparent;
-      width: 100%;
-      text-align: left;
-      font-family: inherit;
+      border: none; background: transparent; width: 100%;
+      text-align: left; font-family: inherit;
     }
     .tiktok-view-dropdown .tk-item:hover { background: var(--bg-hover); color: var(--text); }
     .tiktok-view-dropdown .tk-item.active { background: rgba(214,123,168,0.08); color: var(--secondary); font-weight: 500; }
     .tiktok-view-dropdown .tk-item .tk-check { margin-left: auto; font-size: 14px; opacity: 0; color: var(--secondary); }
     .tiktok-view-dropdown .tk-item.active .tk-check { opacity: 1; }
-    .tiktok-view-dropdown .tk-item .tk-label { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
-    .tiktok-view-dropdown .tk-item .tk-label .tk-name { color: inherit; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .tiktok-view-dropdown .tk-item .tk-label .tk-user { font-size: 10.5px; color: var(--text-muted); font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; }
-
-    .tiktok-view-dropdown .tk-sep {
-      height: 1px;
-      background: var(--border);
-      margin: 5px 6px;
+    .tiktok-view-dropdown .tk-item .tk-label { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
+    .tiktok-view-dropdown .tk-item .tk-label .tk-name {
+      color: inherit; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      padding: 1px 3px; border-radius: 3px;
     }
+    .tiktok-view-dropdown .tk-item .tk-label .tk-user {
+      font-size: 10.5px; color: var(--text-muted);
+      font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+      padding: 1px 3px; border-radius: 3px;
+    }
+    /* Estado de edición inline (nombre o username) */
+    .tiktok-view-dropdown .tk-item .tk-name.editing,
+    .tiktok-view-dropdown .tk-item .tk-user.editing {
+      background: var(--bg-input);
+      outline: 1px solid var(--primary);
+      color: var(--text);
+      cursor: text;
+    }
+
+    .tiktok-view-dropdown .tk-sep { height: 1px; background: var(--border); margin: 5px 6px; }
     .tiktok-view-dropdown .tk-action {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 7px 10px;
-      border-radius: var(--r-sm);
-      cursor: pointer;
-      font-size: 12px;
-      color: var(--text-dim);
-      border: none;
-      background: transparent;
-      width: 100%;
-      text-align: left;
-      font-family: inherit;
+      display: flex; align-items: center; gap: 8px;
+      padding: 7px 10px; border-radius: var(--r-sm);
+      cursor: pointer; font-size: 12px; color: var(--text-dim);
+      border: none; background: transparent; width: 100%;
+      text-align: left; font-family: inherit;
       transition: background 0.12s, color 0.12s;
     }
     .tiktok-view-dropdown .tk-action:hover { background: var(--bg-hover); color: var(--text); }
@@ -322,8 +240,7 @@
     .main-layout {
       display: grid; grid-template-columns: 1fr 1.2fr 1fr; gap: 12px;
       height: 72vh; min-height: 560px;
-      transition: grid-template-columns 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-                  height 0.3s ease;
+      transition: grid-template-columns 0.3s cubic-bezier(0.4, 0, 0.2, 1), height 0.3s ease;
     }
     .main-layout.tiktok-collapsed { grid-template-columns: 1.4fr 0fr 1fr; height: 62vh; min-height: 460px; }
     .main-layout.right-collapsed { grid-template-columns: 1fr 2.2fr 0fr; height: 78vh; min-height: 620px; }
@@ -373,8 +290,7 @@
     .tiktok-view-container {
       background: var(--bg-panel); border: 1px solid var(--border); border-radius: var(--r-lg);
       padding: 14px; display: flex; flex-direction: column; height: 100%; overflow: hidden; min-width: 0;
-      min-height: 0;
-      transition: opacity 0.25s ease, padding 0.25s ease;
+      min-height: 0; transition: opacity 0.25s ease, padding 0.25s ease;
       scroll-margin-top: 20px;
     }
     .tiktok-view-container.hidden { opacity: 0; pointer-events: none; padding: 0; border-width: 0; overflow: hidden; }
@@ -386,14 +302,9 @@
     .tiktok-view-container h2 > span { display: flex; align-items: center; gap: 8px; }
     .tiktok-view-container h2 > span i { color: var(--secondary); font-size: 15px; }
     .tiktok-view-container h2 .tk-current-view {
-      font-size: 11px;
-      color: var(--text-muted);
-      font-weight: 500;
-      padding: 2px 8px;
-      background: var(--bg-input);
-      border: 1px solid var(--border);
-      border-radius: 100px;
-      margin-left: 4px;
+      font-size: 11px; color: var(--text-muted); font-weight: 500;
+      padding: 2px 8px; background: var(--bg-input);
+      border: 1px solid var(--border); border-radius: 100px; margin-left: 4px;
     }
     .tiktok-view-container webview {
       width: 100%; flex: 1; min-height: 100%;
@@ -408,6 +319,12 @@
       transition: all 0.15s; font-family: inherit;
     }
     .open-native-btn:hover { color: var(--secondary); border-color: rgba(214,123,168,0.3); }
+
+    /* Estado del botón Refresh */
+    #refreshTikTokBtn.loading i { animation: tkSpin 0.8s linear infinite; }
+    @keyframes tkSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    #refreshTikTokBtn.error { color: var(--danger); border-color: rgba(194,106,106,0.4); }
+    #refreshTikTokBtn.retrying { color: var(--warning); border-color: rgba(214,168,74,0.4); }
 
     .right-column {
       display: flex; flex-direction: column; gap: 10px; overflow-y: auto;
@@ -598,9 +515,6 @@
 
   <div class="layout">
 
-    <!-- ============================= -->
-    <!-- SIDEBAR                       -->
-    <!-- ============================= -->
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-logo">
         <div class="logo-icon"><i class="ri-live-line"></i></div>
@@ -675,9 +589,6 @@
     </div>
     <div class="header-right">
 
-      <!-- ============================================
-           SELECTOR DE VISTAS TIKTOK (dropdown + ojo)
-           ============================================ -->
       <div class="tiktok-view-selector" id="tiktokViewSelector">
         <button class="tiktok-view-btn" onclick="toggleTikTokDropdown(event)" title="Seleccionar cuenta de TikTok Live Center">
           <i class="ri-tiktok-fill tk-icon"></i>
@@ -688,9 +599,7 @@
           <i class="ri-eye-line" id="toggleTikTokIcon"></i>
         </button>
 
-        <div class="tiktok-view-dropdown" id="tiktokViewDropdown">
-          <!-- se rellena por JS -->
-        </div>
+        <div class="tiktok-view-dropdown" id="tiktokViewDropdown"></div>
       </div>
 
       <button class="toggle-right-btn youtube-btn" onclick="toggleYouTubeStats()" id="toggleYouTubeBtn">
@@ -724,7 +633,12 @@
           <i class="ri-tiktok-fill"></i> TikTok Live Center
           <span class="tk-current-view" id="tkCurrentViewBadge">—</span>
         </span>
-        <button class="open-native-btn" onclick="openTikTokNative()"><i class="ri-external-link-line"></i> Ventana externa</button>
+        <span style="display:flex; gap:6px; align-items:center;">
+          <button class="open-native-btn" onclick="refreshTikTokView()" id="refreshTikTokBtn" title="Recargar vista TikTok (F5)">
+            <i class="ri-refresh-line"></i> Refresh
+          </button>
+          <button class="open-native-btn" onclick="openTikTokNative()"><i class="ri-external-link-line"></i> Ventana externa</button>
+        </span>
       </h2>
       <webview id="tiktokView" src="about:blank" partition="persist:tiktok-session"></webview>
     </div>
@@ -880,7 +794,6 @@
   </div>
 
   <script>
-    // 🌐 SERVER_BASE viene de /js/server-url.js (autodetectado)
     const socket = io(window.SERVER_BASE, { reconnection: true });
     const stats = { messages: 0, bans: 0, actions: 0 };
     let currentNativePoll = null;
@@ -901,13 +814,9 @@
     const translationCache = new Map();
     let translationQueue = [];
     let isTranslating = false;
-
     const MYMEMORY_EMAIL = '';
-
     const TRANSLATION_DELAY_MS = 1200;
-
     const SUPPORTED_LANGS = ['en','pt','fr','it','de','ru','ja','ko','zh-CN','ar','tr','nl','pl'];
-
     let translationPausedUntil = 0;
     let consecutive429 = 0;
 
@@ -942,7 +851,6 @@
 
     function detectLanguage(text) {
       if (!text || /^[\d\s.,!?¿¡]+$/.test(text)) return 'en';
-
       if (/[\u3040-\u30FF]/.test(text)) return 'ja';
       if (/[\u4E00-\u9FFF]/.test(text)) return 'zh-CN';
       if (/[\uAC00-\uD7AF]/.test(text)) return 'ko';
@@ -950,12 +858,10 @@
       if (/[\u0400-\u04FF]/.test(text)) return 'ru';
       if (/[ăâđêôơư]/i.test(text)) return 'vi';
       if (/[\u0E00-\u0E7F]/.test(text)) return 'th';
-
       const spanishWords = ['el','la','los','las','un','una','es','son','está','están','y','o','pero','porque','qué','cómo','dónde','quién','con','sin','para','por','de','del','al','a','en','se','su','mis','tus','sus','hola','gracias','muy','bien','mal','todo','nada','este','esta'];
       const words = text.toLowerCase().split(/\s+/).filter(Boolean);
       const spanishHits = words.filter(w => spanishWords.includes(w)).length;
       if (spanishHits >= 1 && spanishHits / words.length >= 0.2) return 'es';
-
       return 'en';
     }
 
@@ -990,35 +896,26 @@
 
     function processTranslationQueue() {
       if (isTranslating || translationQueue.length === 0) return;
-
       const now = Date.now();
       if (now < translationPausedUntil) {
         const wait = translationPausedUntil - now;
         setTimeout(processTranslationQueue, wait);
         return;
       }
-
       isTranslating = true;
       const item = translationQueue.shift();
       const { text, resolve, sourceLang } = item;
       const url = buildTranslateUrl(text, sourceLang);
-
       const xhr = new XMLHttpRequest();
       xhr.open('GET', url, true);
       xhr.timeout = 7000;
-
       const finish = (result, extraDelay = TRANSLATION_DELAY_MS) => {
         resolve(result);
-        setTimeout(() => {
-          isTranslating = false;
-          processTranslationQueue();
-        }, extraDelay);
+        setTimeout(() => { isTranslating = false; processTranslationQueue(); }, extraDelay);
       };
-
       xhr.onload = function() {
         let translated = text;
         let ok = false;
-
         if (xhr.status === 429) {
           consecutive429++;
           const backoff = Math.min(5000 * Math.pow(2, consecutive429 - 1), 30000);
@@ -1027,37 +924,23 @@
           finish({ translated: text, sourceLang, translated_ok: false }, 200);
           return;
         }
-
         if (xhr.status === 403) {
-          console.warn(`[MyMemory] 403 par inválido: ${sourceLang}|es — saltando.`);
           finish({ translated: text, sourceLang, translated_ok: false });
           return;
         }
-
         if (xhr.status === 200) {
           try {
             const data = JSON.parse(xhr.responseText);
             const candidate = data.responseData?.translatedText || '';
             const isErrorMsg = /^(please|quota|you used all|invalid|too many|mymemory warning)/i.test(candidate);
-            if (candidate && !isErrorMsg) {
-              translated = candidate;
-              ok = true;
-              consecutive429 = 0;
-            }
+            if (candidate && !isErrorMsg) { translated = candidate; ok = true; consecutive429 = 0; }
           } catch (e) { }
         }
-
         if (ok) translationCache.set(`${text}|es`, translated);
         finish({ translated, sourceLang, translated_ok: ok });
       };
-
-      xhr.onerror = function() {
-        finish({ translated: text, sourceLang, translated_ok: false });
-      };
-      xhr.ontimeout = function() {
-        finish({ translated: text, sourceLang, translated_ok: false });
-      };
-
+      xhr.onerror = function() { finish({ translated: text, sourceLang, translated_ok: false }); };
+      xhr.ontimeout = function() { finish({ translated: text, sourceLang, translated_ok: false }); };
       xhr.send();
     }
 
@@ -1077,53 +960,82 @@
       })[c]);
     }
 
-    let tiktokCollapsed = false;
-    let rightCollapsed = false;
-    let youtubeCollapsed = false;
+    // ============================================
+    // PERSISTENCIA UI (localStorage)
+    // ============================================
+    const LS_KEYS = {
+      TIKTOK_COLLAPSED: 'dashboard:tiktokCollapsed',
+      RIGHT_COLLAPSED: 'dashboard:rightCollapsed',
+      YOUTUBE_COLLAPSED: 'dashboard:youtubeCollapsed',
+      TIKTOK_ACTIVE_VIEW: 'TIKTOK_ACTIVE_VIEW'
+    };
+
+    function lsGetBool(key, def = false) {
+      try {
+        const v = localStorage.getItem(key);
+        if (v === null) return def;
+        return v === '1' || v === 'true';
+      } catch (e) { return def; }
+    }
+    function lsSetBool(key, val) {
+      try { localStorage.setItem(key, val ? '1' : '0'); } catch (e) {}
+    }
+
+    let tiktokCollapsed  = lsGetBool(LS_KEYS.TIKTOK_COLLAPSED, false);
+    let rightCollapsed   = lsGetBool(LS_KEYS.RIGHT_COLLAPSED, false);
+    let youtubeCollapsed = lsGetBool(LS_KEYS.YOUTUBE_COLLAPSED, false);
 
     function applyLayout() {
       const layout = document.getElementById('mainLayout');
       const tiktokContainer = document.getElementById('tiktokViewContainer');
       const rightColumn = document.getElementById('rightColumn');
-
       layout.classList.remove('tiktok-collapsed', 'right-collapsed', 'both-collapsed');
       if (tiktokCollapsed && rightCollapsed) layout.classList.add('both-collapsed');
       else if (tiktokCollapsed) layout.classList.add('tiktok-collapsed');
       else if (rightCollapsed) layout.classList.add('right-collapsed');
-
       tiktokContainer.classList.toggle('hidden', tiktokCollapsed);
       rightColumn.classList.toggle('hidden', rightCollapsed);
-
-      // Actualizar icono del ojo
       const eyeIcon = document.getElementById('toggleTikTokIcon');
       if (eyeIcon) eyeIcon.className = tiktokCollapsed ? 'ri-eye-off-line' : 'ri-eye-line';
-
       document.getElementById('toggleIcon').className = rightCollapsed ? 'ri-layout-left-line' : 'ri-layout-right-line';
       document.getElementById('toggleText').textContent = rightCollapsed ? 'Mostrar Panel' : 'Ocultar Panel';
+
+      // YouTube
+      const ytSection = document.getElementById('section-stats-youtube');
+      if (ytSection) ytSection.classList.toggle('hidden', youtubeCollapsed);
+      const ytText = document.getElementById('toggleYouTubeText');
+      if (ytText) ytText.textContent = youtubeCollapsed ? 'Mostrar YouTube' : 'Ocultar YouTube';
     }
 
-    function toggleTikTokColumn() { tiktokCollapsed = !tiktokCollapsed; applyLayout(); }
-    function toggleRightColumn() { rightCollapsed = !rightCollapsed; applyLayout(); }
+    function toggleTikTokColumn() {
+      tiktokCollapsed = !tiktokCollapsed;
+      lsSetBool(LS_KEYS.TIKTOK_COLLAPSED, tiktokCollapsed);
+      applyLayout();
+    }
+    function toggleRightColumn() {
+      rightCollapsed = !rightCollapsed;
+      lsSetBool(LS_KEYS.RIGHT_COLLAPSED, rightCollapsed);
+      applyLayout();
+    }
     function toggleYouTubeStats() {
       youtubeCollapsed = !youtubeCollapsed;
-      document.getElementById('section-stats-youtube').classList.toggle('hidden', youtubeCollapsed);
-      document.getElementById('toggleYouTubeText').textContent = youtubeCollapsed ? 'Mostrar YouTube' : 'Ocultar YouTube';
+      lsSetBool(LS_KEYS.YOUTUBE_COLLAPSED, youtubeCollapsed);
+      applyLayout();
     }
 
-       // ============================================
+    // ============================================
     // SELECTOR DE VISTAS TIKTOK
     // ============================================
     const DEFAULT_TIKTOK_VIEWS = [
-      { id: 'slot1', name: 'Cuenta 1', url: 'https://livecenter.tiktok.com/live_monitor', partition: 'persist:tiktok-slot-1' },
-      { id: 'slot2', name: 'Cuenta 2', url: 'https://livecenter.tiktok.com/live_monitor', partition: 'persist:tiktok-slot-2' },
-      { id: 'slot3', name: 'Cuenta 3', url: 'https://livecenter.tiktok.com/live_monitor', partition: 'persist:tiktok-slot-3' }
+      { id: 'slot1', name: 'Cuenta 1', username: '', url: 'https://livecenter.tiktok.com/live_monitor', partition: 'persist:tiktok-slot-1' },
+      { id: 'slot2', name: 'Cuenta 2', username: '', url: 'https://livecenter.tiktok.com/live_monitor', partition: 'persist:tiktok-slot-2' },
+      { id: 'slot3', name: 'Cuenta 3', username: '', url: 'https://livecenter.tiktok.com/live_monitor', partition: 'persist:tiktok-slot-3' }
     ];
 
     let TIKTOK_VIEWS = [...DEFAULT_TIKTOK_VIEWS];
     let TIKTOK_ACTIVE_VIEW = 'slot1';
 
     async function loadTikTokViews() {
-      // 1. Intentar desde el endpoint
       try {
         const r = await fetch(`${window.SERVER_BASE}/api/tiktok/views`);
         if (r.ok) {
@@ -1135,18 +1047,11 @@
             return;
           }
         }
-      } catch (e) {
-        // silencioso: el endpoint puede no existir todavía
-      }
-
-      // 2. Fallback: localStorage
-      try {
-        const saved = localStorage.getItem('TIKTOK_ACTIVE_VIEW');
-        if (saved && TIKTOK_VIEWS.some(v => v.id === saved)) {
-          TIKTOK_ACTIVE_VIEW = saved;
-        }
       } catch (e) {}
-
+      try {
+        const saved = localStorage.getItem(LS_KEYS.TIKTOK_ACTIVE_VIEW);
+        if (saved && TIKTOK_VIEWS.some(v => v.id === saved)) TIKTOK_ACTIVE_VIEW = saved;
+      } catch (e) {}
       renderTikTokDropdown();
     }
 
@@ -1162,11 +1067,11 @@
       }
 
       dd.innerHTML = TIKTOK_VIEWS.map(v => `
-        <button class="tk-item ${v.id === TIKTOK_ACTIVE_VIEW ? 'active' : ''}" onclick="switchTikTokView('${v.id}')">
+        <button class="tk-item ${v.id === TIKTOK_ACTIVE_VIEW ? 'active' : ''}" data-view-id="${v.id}">
           <i class="ri-tiktok-fill" style="color:var(--secondary);font-size:13px;"></i>
           <span class="tk-label">
-            <span class="tk-name">${escapeHtml(v.name)}</span>
-            ${v.username ? `<span class="tk-user">@${escapeHtml(v.username)}</span>` : ''}
+            <span class="tk-name" data-name-id="${v.id}" title="Doble clic para renombrar">${escapeHtml(v.name)}</span>
+            <span class="tk-user" data-user-id="${v.id}" title="Doble clic para editar @username">${v.username ? '@' + escapeHtml(v.username) : '+ añadir @'}</span>
           </span>
           <i class="ri-check-line tk-check"></i>
         </button>
@@ -1177,6 +1082,35 @@
           <span>Abrir en ventana externa</span>
         </button>
       `;
+
+      // Enganchar eventos a cada item
+      dd.querySelectorAll('.tk-item').forEach(item => {
+        const id = item.getAttribute('data-view-id');
+
+        item.addEventListener('click', (ev) => {
+          // Ignorar clic si estamos editando
+          if (ev.target.classList.contains('editing')) return;
+          if (ev.target.closest('.editing')) return;
+          switchTikTokView(id);
+        });
+
+        const nameEl = item.querySelector('.tk-name');
+        const userEl = item.querySelector('.tk-user');
+
+        if (nameEl) {
+          nameEl.addEventListener('dblclick', (ev) => {
+            ev.stopPropagation();
+            startRenameView(ev, id, nameEl);
+          });
+        }
+
+        if (userEl) {
+          userEl.addEventListener('dblclick', (ev) => {
+            ev.stopPropagation();
+            startRenameUsername(ev, id, userEl);
+          });
+        }
+      });
     }
 
     function toggleTikTokDropdown(ev) {
@@ -1185,7 +1119,6 @@
       sel.classList.toggle('open');
     }
 
-    // Cerrar dropdown al hacer click fuera
     document.addEventListener('click', (e) => {
       const sel = document.getElementById('tiktokViewSelector');
       if (!sel) return;
@@ -1195,10 +1128,8 @@
     function switchTikTokView(id) {
       const view = TIKTOK_VIEWS.find(v => v.id === id);
       if (!view) return;
-
       TIKTOK_ACTIVE_VIEW = id;
 
-      // Recrear el webview porque Electron no permite cambiar partition en caliente
       const oldWv = document.getElementById('tiktokView');
       if (!oldWv) return;
 
@@ -1210,18 +1141,120 @@
       oldWv.replaceWith(newWv);
 
       bindTikTokWebviewEvents(newWv);
-
-      // Actualizar UI del dropdown
       renderTikTokDropdown();
       document.getElementById('tiktokViewSelector').classList.remove('open');
 
-      // Guardar selección: 1) en el server si existe endpoint, 2) en localStorage
-      try { localStorage.setItem('TIKTOK_ACTIVE_VIEW', id); } catch (e) {}
+      try { localStorage.setItem(LS_KEYS.TIKTOK_ACTIVE_VIEW, id); } catch (e) {}
       fetch(`${window.SERVER_BASE}/api/tiktok/active-view`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id })
-      }).catch(() => { /* endpoint puede no existir todavía */ });
+      }).catch(() => {});
+    }
+
+    // ─── Renombrar vista (nombre) ───
+    function startRenameView(ev, id, el) {
+      ev.stopPropagation();
+      const original = el.textContent.trim();
+      el.contentEditable = 'true';
+      el.classList.add('editing');
+      el.focus();
+
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+
+      let saved = false;
+      const save = async () => {
+        if (saved) return;
+        saved = true;
+        el.contentEditable = 'false';
+        el.classList.remove('editing');
+        const nuevo = el.textContent.trim().slice(0, 40);
+        if (!nuevo || nuevo === original) { el.textContent = original; return; }
+        el.textContent = nuevo;
+        const v = TIKTOK_VIEWS.find(x => x.id === id);
+        if (v) v.name = nuevo;
+        renderTikTokDropdown();
+        try {
+          await fetch(`${window.SERVER_BASE}/api/tiktok/rename-view`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, name: nuevo })
+          });
+        } catch (e) { console.warn('No se pudo guardar el nombre:', e); }
+      };
+      const cancel = () => {
+        if (saved) return;
+        saved = true;
+        el.contentEditable = 'false';
+        el.classList.remove('editing');
+        el.textContent = original;
+      };
+
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); save(); }
+        else if (e.key === 'Escape') { e.preventDefault(); cancel(); }
+      });
+      el.addEventListener('blur', save, { once: true });
+    }
+
+    // ─── Editar @username real ───
+    function startRenameUsername(ev, id, el) {
+      ev.stopPropagation();
+      const originalRaw = el.textContent.trim();
+      const original = originalRaw === '+ añadir @' ? '' : originalRaw.replace(/^@/, '');
+      el.textContent = original;
+      el.contentEditable = 'true';
+      el.classList.add('editing');
+      el.focus();
+
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+
+      let saved = false;
+      const save = async () => {
+        if (saved) return;
+        saved = true;
+        el.contentEditable = 'false';
+        el.classList.remove('editing');
+        const nuevo = el.textContent.trim().replace(/^@/, '').slice(0, 60);
+        if (nuevo === original) {
+          el.textContent = nuevo ? '@' + nuevo : '+ añadir @';
+          return;
+        }
+        const v = TIKTOK_VIEWS.find(x => x.id === id);
+        if (v) v.username = nuevo;
+        el.textContent = nuevo ? '@' + nuevo : '+ añadir @';
+        renderTikTokDropdown();
+        try {
+          const r = await fetch(`${window.SERVER_BASE}/api/tiktok/set-username`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, username: nuevo })
+          });
+          const data = await r.json();
+          console.log('📺 set-username →', data);
+        } catch (e) { console.warn('No se pudo guardar el username:', e); }
+      };
+      const cancel = () => {
+        if (saved) return;
+        saved = true;
+        el.contentEditable = 'false';
+        el.classList.remove('editing');
+        el.textContent = original ? '@' + original : '+ añadir @';
+      };
+
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); save(); }
+        else if (e.key === 'Escape') { e.preventDefault(); cancel(); }
+      });
+      el.addEventListener('blur', save, { once: true });
     }
 
     function bindTikTokWebviewEvents(webview) {
@@ -1248,10 +1281,148 @@
           if (ipcRenderer) ipcRenderer.invoke('tiktok:capturar-cookies').catch(() => {});
         }
       });
+
+      bindTikTokRetryEvents(webview);
+      resetTikTokRetryState();
     }
 
     // ============================================
-    // SIDEBAR: SCROLL + ACTIVE + UNCOLLAPSE
+    // 🔄 REFRESH + AUTO-RETRY
+    // ============================================
+    const TIKTOK_RETRY_DELAY_MS = 8000;
+    const TIKTOK_MAX_RETRIES = 5;
+
+    let tiktokRetryState = { retries: 0, timerId: null, lastGoodUrl: null, failing: false };
+
+    function getTikTokWebview() { return document.getElementById('tiktokView'); }
+    function setRefreshBtnState(state) {
+      const btn = document.getElementById('refreshTikTokBtn');
+      if (!btn) return;
+      btn.classList.remove('loading', 'error', 'retrying');
+      if (state) btn.classList.add(state);
+    }
+    function clearTikTokRetryTimer() {
+      if (tiktokRetryState.timerId) { clearTimeout(tiktokRetryState.timerId); tiktokRetryState.timerId = null; }
+    }
+    function resetTikTokRetryState() {
+      clearTikTokRetryTimer();
+      tiktokRetryState.retries = 0;
+      tiktokRetryState.failing = false;
+      setRefreshBtnState(null);
+    }
+
+    function refreshTikTokView(isAutoRetry = false) {
+      const wv = getTikTokWebview();
+      if (!wv) return;
+      if (!isAutoRetry) {
+        tiktokRetryState.retries = 0;
+        tiktokRetryState.failing = false;
+        setRefreshBtnState('loading');
+      } else {
+        setRefreshBtnState('retrying');
+      }
+      try {
+        const currentView = TIKTOK_VIEWS.find(v => v.id === TIKTOK_ACTIVE_VIEW) || TIKTOK_VIEWS[0];
+        const targetUrl = (currentView && currentView.url) || 'https://livecenter.tiktok.com/live_monitor';
+        const wvUrl = (typeof wv.getURL === 'function') ? wv.getURL() : (wv.src || '');
+        if (typeof wv.reload === 'function' && wvUrl && wvUrl !== 'about:blank') {
+          wv.reload();
+        } else if (typeof wv.loadURL === 'function') {
+          wv.loadURL(targetUrl);
+        } else if (typeof wv.reload === 'function') {
+          wv.reload();
+        } else {
+          recreateTikTokWebview();
+        }
+        console.log(`🔄 TikTok refresh ${isAutoRetry ? '(auto-retry ' + tiktokRetryState.retries + '/' + TIKTOK_MAX_RETRIES + ')' : '(manual)'}`);
+      } catch (e) {
+        console.warn('⚠️ Error al recargar webview TikTok:', e);
+        recreateTikTokWebview();
+      }
+    }
+
+    function recreateTikTokWebview() {
+      const oldWv = getTikTokWebview();
+      if (!oldWv) return;
+      const currentView = TIKTOK_VIEWS.find(v => v.id === TIKTOK_ACTIVE_VIEW) || TIKTOK_VIEWS[0];
+      const url = (currentView && currentView.url) || 'https://livecenter.tiktok.com/live_monitor';
+      const partition = (currentView && currentView.partition) || 'persist:tiktok-session';
+      const newWv = document.createElement('webview');
+      newWv.id = 'tiktokView';
+      newWv.setAttribute('src', url);
+      newWv.setAttribute('partition', partition);
+      newWv.setAttribute('allowpopups', '');
+      oldWv.replaceWith(newWv);
+      bindTikTokWebviewEvents(newWv);
+      console.log('🔁 Webview TikTok recreada en', url);
+    }
+
+    function scheduleTikTokAutoRetry() {
+      clearTikTokRetryTimer();
+      if (tiktokRetryState.retries >= TIKTOK_MAX_RETRIES) {
+        console.warn(`❌ TikTok: límite de ${TIKTOK_MAX_RETRIES} reintentos alcanzado.`);
+        setRefreshBtnState('error');
+        return;
+      }
+      tiktokRetryState.retries++;
+      console.log(`⏱️ TikTok auto-retry en ${TIKTOK_RETRY_DELAY_MS/1000}s (intento ${tiktokRetryState.retries}/${TIKTOK_MAX_RETRIES})`);
+      setRefreshBtnState('retrying');
+      tiktokRetryState.timerId = setTimeout(() => {
+        tiktokRetryState.timerId = null;
+        refreshTikTokView(true);
+      }, TIKTOK_RETRY_DELAY_MS);
+    }
+
+    function bindTikTokRetryEvents(webview) {
+      webview.addEventListener('did-finish-load', () => {
+        clearTikTokRetryTimer();
+        tiktokRetryState.retries = 0;
+        tiktokRetryState.failing = false;
+        tiktokRetryState.lastGoodUrl = (typeof webview.getURL === 'function') ? webview.getURL() : null;
+        setRefreshBtnState(null);
+        console.log('✅ TikTok webview cargada correctamente');
+      });
+      webview.addEventListener('did-fail-load', (e) => {
+        if (e && e.errorCode === -3) return;
+        const url = (e && e.validatedURL) || '';
+        if (!url || url === 'about:blank') return;
+        console.warn(`⚠️ TikTok did-fail-load: ${e.errorCode} ${e.errorDescription} (${url})`);
+        tiktokRetryState.failing = true;
+        scheduleTikTokAutoRetry();
+      });
+      webview.addEventListener('render-process-gone', (e) => {
+        console.error('💥 TikTok render-process-gone:', e);
+        tiktokRetryState.failing = true;
+        scheduleTikTokAutoRetry();
+      });
+    }
+
+    function isEditableTarget(el) {
+      if (!el) return false;
+      const tag = (el.tagName || '').toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || tag === 'select') return true;
+      if (el.isContentEditable) return true;
+      return false;
+    }
+
+    function setupTikTokRefreshShortcuts() {
+      document.addEventListener('keydown', (e) => {
+        const isF5 = e.key === 'F5';
+        const isCtrlR = (e.ctrlKey || e.metaKey) && (e.key === 'r' || e.key === 'R');
+        if (!isF5 && !isCtrlR) return;
+        if (isEditableTarget(e.target)) return;
+        if (tiktokCollapsed) return;
+        const wv = getTikTokWebview();
+        if (!wv) return;
+        e.preventDefault();
+        e.stopPropagation();
+        console.log(`⌨️ Atajo ${isF5 ? 'F5' : 'Ctrl+R'} → refresh webview TikTok`);
+        refreshTikTokView(false);
+      }, true);
+    }
+
+    // ============================================
+    // SIDEBAR
     // ============================================
     function scrollToSection(targetId) {
       if (targetId === 'section-tiktok-live' && tiktokCollapsed) {
@@ -1290,9 +1461,7 @@
       const sections = ['section-overview', 'section-chat', 'section-tiktok-live', 'section-moderation', 'section-polls', 'section-title-category', 'section-stats-tiktok', 'section-stats-youtube'];
       const observer = new IntersectionObserver((entries) => {
         const visibles = entries.filter(e => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
-        if (visibles.length > 0) {
-          marcarSidebarActivo(visibles[0].target.id);
-        }
+        if (visibles.length > 0) marcarSidebarActivo(visibles[0].target.id);
       }, { rootMargin: '-20% 0px -70% 0px', threshold: 0 });
       sections.forEach(id => {
         const el = document.getElementById(id);
@@ -1302,15 +1471,9 @@
 
     function updateSidebarCounts() {
       const chatEl = document.getElementById('sideChatCount');
-      if (chatEl) {
-        chatEl.textContent = stats.messages;
-        chatEl.classList.toggle('live', stats.messages > 0);
-      }
+      if (chatEl) { chatEl.textContent = stats.messages; chatEl.classList.toggle('live', stats.messages > 0); }
       const modEl = document.getElementById('sideModCount');
-      if (modEl) {
-        modEl.textContent = stats.actions;
-        modEl.classList.toggle('live', stats.actions > 0);
-      }
+      if (modEl) { modEl.textContent = stats.actions; modEl.classList.toggle('live', stats.actions > 0); }
     }
 
     function initSidebar() {
@@ -1326,7 +1489,6 @@
     let selectedCategoryIndex = -1;
 
     function getSelectedChannel() { return document.getElementById('titleChannelSelect').value; }
-
     async function onTitleCategoryChannelChange() { await loadStreamInfo(); }
 
     async function loadStreamInfo() {
@@ -1373,11 +1535,7 @@
       try {
         const r = await fetch(`${window.SERVER_BASE}/api/twitch/search-category?q=${encodeURIComponent(query)}&channel=${encodeURIComponent(channel)}`);
         const data = await r.json();
-        if (!data.ok) {
-          categoryResults = [];
-          renderCategoryDropdown([], 'Error al buscar');
-          return;
-        }
+        if (!data.ok) { categoryResults = []; renderCategoryDropdown([], 'Error al buscar'); return; }
         categoryResults = data.results || [];
         selectedCategoryIndex = categoryResults.length > 0 ? 0 : -1;
         renderCategoryDropdown(categoryResults);
@@ -1474,26 +1632,17 @@
       } catch (e) { console.error('Error loadChannels:', e); }
     }
 
-    // ============================================
-    // 🍪 TIKTOK VIEW + CAPTURA DE COOKIES (Fase 1B)
-    // ============================================
     async function loadTikTokView() {
       const webview = document.getElementById('tiktokView');
       if (!webview) return;
-
-      // Si el endpoint de vistas existe, ya carga la activa con su partition.
-      // Si no, cargamos la URL del config como antes.
       try {
         const response = await fetch(`${window.SERVER_BASE}/get-config`);
         const config = await response.json();
         const url = config.CONTROL_URL || 'https://livecenter.tiktok.com/live_monitor';
-
-        // Si el webview sigue en about:blank y no se ha cambiado por el selector,
-        // aplicamos la vista activa.
-        if (!webview.src || webview.src === 'about:blank' || webview.src === '') {
+        const src = (typeof webview.getURL === 'function') ? webview.getURL() : (webview.src || '');
+        if (!src || src === 'about:blank' || src === '') {
           const current = TIKTOK_VIEWS.find(v => v.id === TIKTOK_ACTIVE_VIEW) || TIKTOK_VIEWS[0];
           if (current) {
-            // Recrear con la partition de la vista activa
             const newWv = document.createElement('webview');
             newWv.id = 'tiktokView';
             newWv.setAttribute('src', current.url || url);
@@ -1504,7 +1653,6 @@
             return;
           }
         }
-
         bindTikTokWebviewEvents(webview);
       } catch (e) { console.error('Error loadTikTokView:', e); }
     }
@@ -1556,6 +1704,42 @@
       if (typeof count === 'number') document.getElementById('tkViewers').textContent = count;
     });
 
+    // 🔥 Sincronización de vistas entre pestañas
+    socket.on('tiktok:view-renamed', ({ id, name }) => {
+      const v = TIKTOK_VIEWS.find(x => x.id === id);
+      if (v) { v.name = name; renderTikTokDropdown(); }
+    });
+    socket.on('tiktok:username-changed', ({ id, username }) => {
+      const v = TIKTOK_VIEWS.find(x => x.id === id);
+      if (v) {
+        v.username = username;
+        renderTikTokDropdown();
+      }
+    });
+    socket.on('tiktok:active-view-changed', ({ id, username }) => {
+      if (id && id !== TIKTOK_ACTIVE_VIEW) {
+        TIKTOK_ACTIVE_VIEW = id;
+        renderTikTokDropdown();
+        const oldWv = document.getElementById('tiktokView');
+        if (oldWv) {
+          const view = TIKTOK_VIEWS.find(v => v.id === id);
+          if (view) {
+            const newWv = document.createElement('webview');
+            newWv.id = 'tiktokView';
+            newWv.setAttribute('src', view.url || 'https://livecenter.tiktok.com/live_monitor');
+            newWv.setAttribute('partition', view.partition || 'persist:tiktok-session');
+            newWv.setAttribute('allowpopups', '');
+            oldWv.replaceWith(newWv);
+            bindTikTokWebviewEvents(newWv);
+          }
+        }
+      } else if (id === TIKTOK_ACTIVE_VIEW && typeof username !== 'undefined') {
+        const v = TIKTOK_VIEWS.find(x => x.id === id);
+        if (v) v.username = username;
+        renderTikTokDropdown();
+      }
+    });
+
     socket.on('youtube-superchat', (data) => {
       if (!data) return;
       youtubeStats.superchats++;
@@ -1576,7 +1760,6 @@
     function renderTablasTikTok() {
       let totalLikes = 0, totalFollows = 0, totalShares = 0, totalDiamantes = 0, totalViewers = 0;
       const giftersMap = new Map(), likersMap = new Map(), sharersMap = new Map();
-
       for (const usuario in ultimosStatsTikTok) {
         const s = ultimosStatsTikTok[usuario];
         totalLikes += s.likes || 0;
@@ -1600,13 +1783,11 @@
           sharersMap.set(sh.username, cur);
         }
       }
-
       document.getElementById('tkLikes').textContent = totalLikes.toLocaleString('es-ES');
       document.getElementById('tkFollows').textContent = totalFollows.toLocaleString('es-ES');
       document.getElementById('tkShares').textContent = totalShares.toLocaleString('es-ES');
       document.getElementById('tkDiamonds').textContent = totalDiamantes.toLocaleString('es-ES');
       document.getElementById('tkViewers').textContent = totalViewers.toLocaleString('es-ES');
-
       renderTabla('topGiftersTable', Array.from(giftersMap.values()).sort((a, b) => b.diamantes - a.diamantes).slice(0, 10), 'diamantes', '💎');
       renderTabla('topLikersTable', Array.from(likersMap.values()).sort((a, b) => b.likes - a.likes).slice(0, 10), 'likes', '❤️');
       renderTabla('topSharersTable', Array.from(sharersMap.values()).sort((a, b) => b.veces - a.veces).slice(0, 10), 'veces', '🔗');
@@ -1623,13 +1804,10 @@
       document.getElementById('ytSuperchatAmount').textContent = '$' + youtubeStats.totalAmount.toFixed(2);
       document.getElementById('ytMembers').textContent = youtubeStats.members.toLocaleString('es-ES');
       document.getElementById('ytMessages').textContent = youtubeStats.messages.toLocaleString('es-ES');
-
       const superArr = Array.from(youtubeStats.topSuperchatters.entries()).map(([username, amount]) => ({ username, amount })).sort((a, b) => b.amount - a.amount).slice(0, 10);
       renderTablaAmount('topSuperchattersTable', superArr);
-
       const membersArr = Array.from(youtubeStats.topMembers.entries()).map(([username, count]) => ({ username, count })).sort((a, b) => b.count - a.count).slice(0, 10);
       renderTabla('topMembersTable', membersArr, 'count', '⭐');
-
       const chattersArr = Array.from(youtubeStats.topChatters.entries()).map(([username, count]) => ({ username, count })).sort((a, b) => b.count - a.count).slice(0, 10);
       renderTabla('topChattersTable', chattersArr, 'count', '💬');
     }
@@ -1737,18 +1915,15 @@
       const feed = document.getElementById('liveChat');
       const entry = document.createElement('div');
       entry.className = 'chat-message';
-
       const avatarImg = document.createElement('img');
       avatarImg.className = 'avatar';
       avatarImg.src = msg.avatar || DEFAULT_AVATAR;
       avatarImg.onerror = function() { this.src = DEFAULT_AVATAR; };
-
       const platform = (msg.platform || 'twitch').toLowerCase();
       let platformClass = 'platform-twitch';
       if (platform === 'tiktok') platformClass = 'platform-tiktok';
       else if (platform === 'kick') platformClass = 'platform-kick';
       else if (platform === 'youtube') platformClass = 'platform-youtube';
-
       const contentDiv = document.createElement('div');
       contentDiv.style.flex = '1';
       contentDiv.style.minWidth = '0';
@@ -1759,7 +1934,6 @@
         </div>
         <div class="message">...</div>
       `;
-
       const modActions = document.createElement('div');
       modActions.className = 'mod-actions';
       modActions.innerHTML = `
@@ -1767,7 +1941,6 @@
         <button class="mod-btn" onclick="quickTimeout('${msg.username.replace(/'/g, "\\'")}')"><i class="ri-time-line"></i></button>
         <button class="mod-btn" onclick="quickWarn('${msg.username.replace(/'/g, "\\'")}')"><i class="ri-alert-line"></i></button>
       `;
-
       entry.appendChild(avatarImg);
       entry.appendChild(contentDiv);
       entry.appendChild(modActions);
@@ -1775,16 +1948,13 @@
       if (feed.children.length > 50) feed.lastChild.remove();
       stats.messages++;
       updateStats();
-
       const messageEl = contentDiv.querySelector('.message');
       translateText(msg.message).then(result => {
         let finalText = result.translated;
         if (censorshipEnabled) finalText = applyGenderReplacements(finalText);
-
         if (result.translated_ok && result.sourceLang !== 'es') {
           const flag = getFlagByLang(result.sourceLang);
-          messageEl.innerHTML =
-            `<span class="lang-flag">${flag}</span> ${escapeHtml(finalText)}`;
+          messageEl.innerHTML = `<span class="lang-flag">${flag}</span> ${escapeHtml(finalText)}`;
         } else {
           messageEl.innerHTML = escapeHtml(finalText);
         }
@@ -1885,11 +2055,10 @@
     applyLayout();
     initSidebar();
 
-    // Cargar vistas TikTok y luego el webview activo
     loadTikTokViews().then(() => loadTikTokView());
+    setupTikTokRefreshShortcuts();
   </script>
 
-  <!-- Auto-Stream UI (se carga al final para que el DOM exista) -->
   <script src="/js/autostream.js" defer></script>
 </body>
 </html>

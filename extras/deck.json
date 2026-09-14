@@ -1,0 +1,59 @@
+{
+  "token": "deck-xxxxxxxx",
+  "theme": "cristal",
+  "enabled": true,
+  "obs": {
+    "host": "127.0.0.1",
+    "port": 4455,
+    "password": "9LCOGgRwkbtpLKLh"
+  },
+  "categories": [
+    {
+      "id": "cat-1789347110570",
+      "name": "General",
+      "icon": "ri-folder-line",
+      "color": "#5a8ad6"
+    }
+  ],
+  "buttons": [
+    {
+      "id": "b-1789344627972",
+      "label": "Mute",
+      "categoryId": "",
+      "icon": "ri-mic-line",
+      "color": "#5a8ad6",
+      "action": "obs:scene",
+      "payload": {}
+    },
+    {
+      "id": "b-1789344682126",
+      "label": "Streaming",
+      "categoryId": "",
+      "icon": "ri-stop-circle-line",
+      "color": "#5a8ad6",
+      "action": "obs:stream:start",
+      "payload": {}
+    }
+  ],
+  "widgets": [],
+  "userPrefs": {
+    "views": {
+      "deck": true,
+      "dashboard": true,
+      "stats": true,
+      "overlays": true,
+      "config": true,
+      "aitum": true
+    },
+    "panelRight": {
+      "stats": true,
+      "rankings": true
+    },
+    "chat": {
+      "translate": true,
+      "censor": false,
+      "avatars": true
+    },
+    "theme": "cristal"
+  }
+}

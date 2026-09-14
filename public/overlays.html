@@ -50,14 +50,8 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    /* ═══════════════════════════════════════════════════════════
-       LAYOUT PRINCIPAL — SIDEBAR + CONTENIDO
-       ═══════════════════════════════════════════════════════════ */
-    .app {
-      display: grid;
-      grid-template-columns: 220px 1fr;
-      min-height: 100vh;
-    }
+    /* ═══ LAYOUT ═══ */
+    .app { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
 
     /* ─── SIDEBAR ─── */
     .sidebar {
@@ -72,294 +66,139 @@
       height: 100vh;
       overflow-y: auto;
     }
-
     .sidebar::-webkit-scrollbar { width: 6px; }
     .sidebar::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
 
-    .sidebar-brand {
-      display: flex;
-      align-items: center;
-      gap: 11px;
-      padding: 0 6px;
-    }
-
+    .sidebar-brand { display: flex; align-items: center; gap: 11px; padding: 0 6px; }
     .brand-logo {
-      width: 36px;
-      height: 36px;
-      border-radius: 7px;
+      width: 36px; height: 36px; border-radius: 7px;
       background: var(--primary);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-      color: white;
-      flex-shrink: 0;
-      transition: background 0.15s;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; color: white; flex-shrink: 0; transition: background 0.15s;
     }
     .brand-logo:hover { background: #5a8ad6; }
+    .brand-text h1 { font-size: 15px; font-weight: 600; color: #f1f2f4; letter-spacing: -0.01em; margin: 0; }
 
-    .brand-text h1 {
-      font-size: 15px;
-      font-weight: 600;
-      color: #f1f2f4;
-      letter-spacing: -0.01em;
-      margin: 0;
-    }
-
-    .sidebar-nav {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
+    .sidebar-nav { display: flex; flex-direction: column; gap: 2px; }
     .nav-section-title {
-      font-size: 10.5px;
-      font-weight: 600;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      padding: 10px 10px 6px;
+      font-size: 10.5px; font-weight: 600; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.08em; padding: 10px 10px 6px;
     }
-
     .nav-item {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      padding: 8px 10px;
-      border-radius: var(--r-sm);
-      color: var(--text-dim);
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.15s ease;
-      border: none;
-      background: transparent;
-      font-family: inherit;
-      width: 100%;
-      text-align: left;
+      display: flex; align-items: center; gap: 9px;
+      padding: 8px 10px; border-radius: var(--r-sm);
+      color: var(--text-dim); font-size: 13px; font-weight: 500;
+      cursor: pointer; transition: all 0.15s ease;
+      border: none; background: transparent; font-family: inherit;
+      width: 100%; text-align: left;
     }
-    .nav-item:hover {
-      background: var(--bg-hover);
-      color: var(--text);
-    }
-    .nav-item.active {
-      background: rgba(77,124,199,0.1);
-      color: var(--primary-soft);
-    }
+    .nav-item:hover { background: var(--bg-hover); color: var(--text); }
+    .nav-item.active { background: rgba(77,124,199,0.1); color: var(--primary-soft); }
     .nav-item .nav-count {
-      margin-left: auto;
-      font-size: 11px;
-      font-weight: 600;
-      padding: 1px 7px;
-      background: rgba(255,255,255,0.04);
-      border-radius: 10px;
-      color: var(--text-muted);
+      margin-left: auto; font-size: 11px; font-weight: 600;
+      padding: 1px 7px; background: rgba(255,255,255,0.04);
+      border-radius: 10px; color: var(--text-muted);
       font-variant-numeric: tabular-nums;
     }
-    .nav-item.active .nav-count {
-      background: rgba(77,124,199,0.18);
-      color: var(--primary-soft);
-    }
-    .nav-item i {
-      font-size: 15px;
-      flex-shrink: 0;
-    }
+    .nav-item.active .nav-count { background: rgba(77,124,199,0.18); color: var(--primary-soft); }
+    .nav-item i { font-size: 15px; flex-shrink: 0; }
 
     .sidebar-footer {
-      margin-top: auto;
-      padding: 12px 6px 0;
+      margin-top: auto; padding: 12px 6px 0;
       border-top: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
+      display: flex; flex-direction: column; gap: 3px;
     }
-
     .sidebar-link {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 7px 9px;
-      border-radius: var(--r-sm);
-      color: var(--text-dim);
-      font-size: 12.5px;
-      font-weight: 500;
-      text-decoration: none;
-      transition: all 0.15s ease;
+      display: flex; align-items: center; gap: 8px;
+      padding: 7px 9px; border-radius: var(--r-sm);
+      color: var(--text-dim); font-size: 12.5px; font-weight: 500;
+      text-decoration: none; transition: all 0.15s ease;
     }
-    .sidebar-link:hover {
-      background: var(--bg-hover);
-      color: var(--text);
-    }
+    .sidebar-link:hover { background: var(--bg-hover); color: var(--text); }
     .sidebar-link i { font-size: 15px; }
 
     /* ─── CONTENIDO ─── */
-    .content {
-      padding: 28px 32px 60px;
-      max-width: 1400px;
-    }
-
+    .content { padding: 28px 32px 60px; max-width: 1400px; }
     .content-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      margin-bottom: 24px;
-      gap: 20px;
-      flex-wrap: wrap;
-      padding-bottom: 20px;
-      border-bottom: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: flex-end;
+      margin-bottom: 24px; gap: 20px; flex-wrap: wrap;
+      padding-bottom: 20px; border-bottom: 1px solid var(--border);
     }
+    .content-header h2 { font-size: 19px; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 3px; color: #f1f2f4; }
+    .content-header p { color: var(--text-dim); font-size: 12.5px; }
 
-    .content-header h2 {
-      font-size: 19px;
-      font-weight: 600;
-      letter-spacing: -0.01em;
-      margin-bottom: 3px;
-      color: #f1f2f4;
-    }
-    .content-header p {
-      color: var(--text-dim);
-      font-size: 12.5px;
-    }
-
-    /* ─── BUSCADOR ─── */
     .search-box {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: var(--bg-panel);
-      border: 1px solid var(--border);
-      border-radius: var(--r-md);
-      padding: 8px 14px;
-      min-width: 240px;
+      display: flex; align-items: center; gap: 8px;
+      background: var(--bg-panel); border: 1px solid var(--border);
+      border-radius: var(--r-md); padding: 8px 14px; min-width: 240px;
       transition: border-color 0.15s, box-shadow 0.15s;
     }
-    .search-box:focus-within {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(77,124,199,0.12);
-    }
-    .search-box i {
-      color: var(--text-muted);
-      font-size: 15px;
-    }
+    .search-box:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(77,124,199,0.12); }
+    .search-box i { color: var(--text-muted); font-size: 15px; }
     .search-box input {
-      flex: 1;
-      background: transparent;
-      border: none;
-      outline: none;
-      color: var(--text);
-      font-size: 13px;
-      font-family: inherit;
+      flex: 1; background: transparent; border: none; outline: none;
+      color: var(--text); font-size: 13px; font-family: inherit;
     }
-    .search-box input::placeholder {
-      color: var(--text-muted);
-    }
+    .search-box input::placeholder { color: var(--text-muted); }
 
-    /* ═══════════════════════════════════════════════════════════
-       GRID DE OVERLAYS
-       ═══════════════════════════════════════════════════════════ */
+    /* ═══ GRID ═══ */
     .overlay-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-      gap: 12px;
-      align-items: start;
+      gap: 12px; align-items: start;
     }
 
     .overlay-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--r-lg);
-      padding: 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      transition: border-color 0.15s ease;
-      position: relative;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--r-lg); padding: 14px;
+      display: flex; flex-direction: column; gap: 10px;
+      transition: border-color 0.15s ease; position: relative;
     }
+    .overlay-card:hover { border-color: var(--border-strong); }
+    .overlay-card.live { border-color: rgba(214,123,168,0.55); box-shadow: 0 0 0 1px rgba(214,123,168,0.15), 0 6px 22px rgba(214,123,168,0.08); }
 
-    .overlay-card:hover {
-      border-color: var(--border-strong);
-    }
-
-    /* ─── CABECERA DEL CARD ─── */
-    .card-top {
-      display: flex;
-      align-items: center;
-      gap: 11px;
-    }
-
+    .card-top { display: flex; align-items: center; gap: 11px; }
     .card-icon {
-      width: 36px;
-      height: 36px;
-      border-radius: 7px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-      flex-shrink: 0;
+      width: 36px; height: 36px; border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex-shrink: 0;
     }
     .card-icon.purple { background: rgba(77,124,199,0.12); color: var(--primary-soft); border: 1px solid rgba(77,124,199,0.22); }
     .card-icon.pink   { background: rgba(214,123,168,0.1); color: var(--secondary);   border: 1px solid rgba(214,123,168,0.22); }
     .card-icon.green  { background: rgba(79,168,122,0.1);  color: var(--success);     border: 1px solid rgba(79,168,122,0.22); }
     .card-icon.blue   { background: rgba(90,138,214,0.1);  color: var(--info);        border: 1px solid rgba(90,138,214,0.22); }
     .card-icon.amber  { background: rgba(214,168,74,0.1);  color: var(--warning);     border: 1px solid rgba(214,168,74,0.22); }
+    .card-icon.hype   { background: linear-gradient(135deg,#ff5ea8,#a78bfa); color: white; border: 1px solid rgba(255,255,255,0.15); }
 
-    .card-title {
-      flex: 1;
-      min-width: 0;
+    .card-icon.rainbow {
+      background: linear-gradient(135deg,#ff5ea8,#ffd166,#4ade80,#22d3ee,#a78bfa);
+      background-size: 300% 300%;
+      animation: rainbowShift 6s ease infinite;
+      color: white;
+      border: 1px solid rgba(255,255,255,0.15);
     }
-    .card-title h3 {
-      font-size: 13.5px;
-      font-weight: 600;
-      color: var(--text);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .card-title p {
-      font-size: 12px;
-      color: var(--text-dim);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      margin-top: 2px;
+    @keyframes rainbowShift {
+      0%,100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
     }
 
-    /* ─── BOTONES DEL HEADER ─── */
-    .card-header-actions {
-      display: flex;
-      gap: 4px;
-      flex-shrink: 0;
-    }
+    .card-title { flex: 1; min-width: 0; }
+    .card-title h3 { font-size: 13.5px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-title p { font-size: 12px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
 
+    .card-header-actions { display: flex; gap: 4px; flex-shrink: 0; }
     .icon-btn {
-      width: 30px;
-      height: 30px;
-      border-radius: var(--r-sm);
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--text-muted);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.15s ease;
-      flex-shrink: 0;
-      font-size: 14px;
+      width: 30px; height: 30px; border-radius: var(--r-sm);
+      background: transparent; border: 1px solid var(--border);
+      color: var(--text-muted); cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s ease; flex-shrink: 0; font-size: 14px;
     }
-    .icon-btn:hover {
-      background: var(--bg-hover);
-      color: var(--text);
-      border-color: var(--border-strong);
-    }
-    .icon-btn.danger:hover {
-      color: var(--danger);
-      border-color: rgba(194,106,106,0.4);
-      background: rgba(194,106,106,0.08);
-    }
+    .icon-btn:hover { background: var(--bg-hover); color: var(--text); border-color: var(--border-strong); }
+    .icon-btn.danger:hover { color: var(--danger); border-color: rgba(194,106,106,0.4); background: rgba(194,106,106,0.08); }
+    .icon-btn.copy:hover { color: var(--success); border-color: rgba(79,168,122,0.4); background: rgba(79,168,122,0.08); }
 
-    /* ═══════════════════════════════════════════════════════════
-       PREVIEW CON PROPORCIÓN REAL DEL OVERLAY
-       ═══════════════════════════════════════════════════════════ */
+    /* ═══ PREVIEW ═══ */
     .preview-box {
       background: #000;
       border: 1px solid var(--border);
@@ -369,446 +208,386 @@
       cursor: pointer;
       transition: border-color 0.15s ease;
       width: 100%;
+      max-height: 420px;
+      min-height: 120px;
     }
     .preview-box:hover { border-color: var(--border-strong); }
 
     .preview-box .preview-empty-hint {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: rgba(255,255,255,0.25);
-      font-size: 12px;
-      font-weight: 500;
-      letter-spacing: 0.02em;
-      pointer-events: none;
-      z-index: 0;
-      text-align: center;
-      padding: 20px;
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      color: rgba(255,255,255,0.25); font-size: 12px; font-weight: 500;
+      letter-spacing: 0.02em; pointer-events: none; z-index: 0;
+      text-align: center; padding: 20px;
     }
 
     .preview-box .preview-frame {
-      position: absolute;
-      top: 0;
-      left: 0;
-      transform-origin: top left;
-      transform: scale(0);
-      pointer-events: none;
-      z-index: 1;
-      will-change: transform;
+      position: absolute; top: 0; left: 0;
+      transform-origin: top left; transform: scale(0);
+      pointer-events: none; z-index: 1; will-change: transform;
+      background: transparent;
     }
 
     .preview-box iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
-      display: block;
+      width: 100%; height: 100%; border: none; display: block;
       background: transparent;
+    }
+
+    /* Hint mientras el iframe no ha cargado */
+    .preview-box:has(iframe:not([src]))::after {
+      content: 'Cargando preview...';
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      color: rgba(255,255,255,0.25); font-size: 12px;
+      pointer-events: none; z-index: 0;
     }
 
     .preview-box .preview-placeholder {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      color: var(--text-muted);
-      font-size: 12px;
-      text-align: center;
-      padding: 20px;
-      width: 100%;
-      height: 100%;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 8px; color: var(--text-muted); font-size: 12px;
+      text-align: center; padding: 20px; width: 100%; height: 100%;
       background: linear-gradient(180deg, #0f1115, #0b0d10);
-      position: absolute;
-      inset: 0;
+      position: absolute; inset: 0;
     }
-    .preview-box .preview-placeholder i {
-      font-size: 32px;
-      color: var(--text-muted);
-      opacity: 0.6;
-    }
-    .preview-box .preview-placeholder span {
-      max-width: 220px;
-      line-height: 1.5;
-    }
+    .preview-box .preview-placeholder i { font-size: 32px; color: var(--text-muted); opacity: 0.6; }
+    .preview-box .preview-placeholder span { max-width: 220px; line-height: 1.5; }
 
     .preview-footer {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
+      position: absolute; bottom: 0; left: 0; right: 0;
       padding: 6px 10px;
       background: linear-gradient(180deg, transparent, rgba(0,0,0,0.85));
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.15s ease;
-      z-index: 5;
+      display: flex; align-items: center; justify-content: space-between;
+      pointer-events: none; opacity: 0; transition: opacity 0.15s ease; z-index: 5;
     }
     .preview-box:hover .preview-footer { opacity: 1; }
     .preview-footer .url-text {
-      font-size: 11px;
-      font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
-      color: rgba(255,255,255,0.85);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      font-size: 11px; font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+      color: rgba(255,255,255,0.85); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .preview-footer .open-hint {
-      font-size: 11px;
-      color: rgba(255,255,255,0.7);
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      flex-shrink: 0;
+      font-size: 11px; color: rgba(255,255,255,0.7);
+      display: flex; align-items: center; gap: 4px; flex-shrink: 0;
     }
 
-    /* ─── ACCIONES DEL CARD ─── */
-    .card-actions {
-      display: flex;
-      gap: 6px;
-      align-items: center;
-    }
-
+    /* ─── ACCIONES CARD ─── */
+    .card-actions { display: flex; gap: 6px; align-items: center; }
     .action-btn {
-      flex: 1;
-      padding: 8px 12px;
-      border-radius: var(--r-sm);
-      border: 1px solid transparent;
-      font-size: 12px;
-      font-weight: 500;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      transition: all 0.15s ease;
-      font-family: inherit;
+      flex: 1; padding: 8px 12px; border-radius: var(--r-sm);
+      border: 1px solid transparent; font-size: 12px; font-weight: 500;
+      cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+      gap: 6px; transition: all 0.15s ease; font-family: inherit;
     }
-
-    .action-btn.primary {
-      background: var(--primary);
-      color: white;
-    }
+    .action-btn.primary { background: var(--primary); color: white; }
     .action-btn.primary:hover { background: #5a8ad6; }
+    .action-btn.secondary { background: transparent; border-color: var(--border); color: var(--text-dim); }
+    .action-btn.secondary:hover { background: var(--bg-hover); color: var(--text); border-color: var(--border-strong); }
 
-    .action-btn.secondary {
-      background: transparent;
-      border-color: var(--border);
-      color: var(--text-dim);
+    /* Estado en vivo para la card del Hype Train */
+    .hype-live {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
+      background: var(--bg-input); border: 1px solid var(--border);
+      border-radius: var(--r-sm); padding: 8px 10px; margin-top: 2px;
     }
-    .action-btn.secondary:hover {
-      background: var(--bg-hover);
-      color: var(--text);
-      border-color: var(--border-strong);
-    }
+    .hype-live-cell { display: flex; flex-direction: column; gap: 2px; }
+    .hype-live-cell .lbl { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+    .hype-live-cell .val { font-size: 13px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+    .hype-live .val.gold { color: #ffd166; }
 
-    /* ═══════════════════════════════════════════════════════════
-       DRAWER LATERAL (configuración)
-       ═══════════════════════════════════════════════════════════ */
+    /* ═══ DRAWER ═══ */
     .drawer-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(8,9,11,0.7);
-      backdrop-filter: blur(3px);
-      z-index: 900;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.25s ease;
+      position: fixed; inset: 0; background: rgba(8,9,11,0.7);
+      backdrop-filter: blur(3px); z-index: 900;
+      opacity: 0; pointer-events: none; transition: opacity 0.25s ease;
     }
     .drawer-overlay.show { opacity: 1; pointer-events: auto; }
 
     .drawer {
-      position: fixed;
-      top: 0;
-      right: 0;
-      bottom: 0;
-      width: 460px;
-      max-width: 92vw;
-      background: var(--bg-panel);
-      border-left: 1px solid var(--border-strong);
-      box-shadow: -12px 0 40px rgba(0,0,0,0.5);
-      z-index: 901;
+      position: fixed; top: 0; right: 0; bottom: 0;
+      width: 460px; max-width: 92vw;
+      background: var(--bg-panel); border-left: 1px solid var(--border-strong);
+      box-shadow: -12px 0 40px rgba(0,0,0,0.5); z-index: 901;
       transform: translateX(100%);
       transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      display: flex;
-      flex-direction: column;
+      display: flex; flex-direction: column;
     }
     .drawer.show { transform: translateX(0); }
 
     .drawer-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 18px 22px;
-      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 22px; border-bottom: 1px solid var(--border);
     }
     .drawer-head h3 {
-      font-size: 14px;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      color: #f1f2f4;
+      font-size: 14px; font-weight: 600;
+      display: flex; align-items: center; gap: 9px; color: #f1f2f4;
     }
     .drawer-head h3 i { color: var(--text-muted); font-size: 16px; }
 
     .close-btn {
-      background: transparent;
-      border: 1px solid var(--border);
-      width: 30px;
-      height: 30px;
-      border-radius: var(--r-sm);
-      color: var(--text-muted);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.15s ease;
-      font-size: 15px;
+      background: transparent; border: 1px solid var(--border);
+      width: 30px; height: 30px; border-radius: var(--r-sm);
+      color: var(--text-muted); cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s ease; font-size: 15px;
     }
-    .close-btn:hover {
-      background: var(--bg-hover);
-      color: var(--text);
-      border-color: var(--border-strong);
-    }
+    .close-btn:hover { background: var(--bg-hover); color: var(--text); border-color: var(--border-strong); }
 
     .drawer-body {
-      flex: 1;
-      overflow-y: auto;
-      padding: 20px 22px;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
+      flex: 1; overflow-y: auto; padding: 20px 22px;
+      display: flex; flex-direction: column; gap: 20px;
     }
     .drawer-body::-webkit-scrollbar { width: 6px; }
-    .drawer-body::-webkit-scrollbar-thumb {
-      background: var(--border-strong);
-      border-radius: 3px;
-    }
+    .drawer-body::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
 
     .drawer-foot {
-      padding: 14px 22px;
-      border-top: 1px solid var(--border);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      background: var(--bg-card);
+      padding: 14px 22px; border-top: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 12px; background: var(--bg-card);
     }
-    .drawer-foot .hint {
-      font-size: 11.5px;
-      color: var(--text-muted);
-      flex: 1;
-    }
-
+    .drawer-foot .hint { font-size: 11.5px; color: var(--text-muted); flex: 1; }
     .drawer-actions { display: flex; gap: 6px; }
 
-    /* ─── Grupos de configuración ─── */
-    .cfg-group {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
+    .cfg-group { display: flex; flex-direction: column; gap: 10px; }
     .cfg-group-title {
-      font-size: 10.5px;
-      font-weight: 600;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      padding-bottom: 6px;
-      border-bottom: 1px solid var(--border);
+      font-size: 10.5px; font-weight: 600; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.08em;
+      padding-bottom: 6px; border-bottom: 1px solid var(--border);
     }
 
-    .cfg-row {
-      display: grid;
-      grid-template-columns: 1fr 42px 88px;
-      gap: 10px;
-      align-items: center;
-    }
-    .cfg-row label {
-      font-size: 12.5px;
-      color: var(--text-dim);
-      font-weight: 500;
-    }
+    .cfg-row { display: grid; grid-template-columns: 1fr 42px 88px; gap: 10px; align-items: center; }
+    .cfg-row label { font-size: 12.5px; color: var(--text-dim); font-weight: 500; }
     .cfg-row input[type="color"] {
-      appearance: none;
-      -webkit-appearance: none;
-      width: 42px;
-      height: 30px;
-      border: 1px solid var(--border);
-      border-radius: var(--r-sm);
-      cursor: pointer;
-      background: transparent;
-      padding: 2px;
-      transition: border-color 0.15s;
+      appearance: none; -webkit-appearance: none;
+      width: 42px; height: 30px; border: 1px solid var(--border);
+      border-radius: var(--r-sm); cursor: pointer; background: transparent;
+      padding: 2px; transition: border-color 0.15s;
     }
     .cfg-row input[type="color"]:hover { border-color: var(--border-strong); }
     .cfg-row input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
-    .cfg-row input[type="color"]::-webkit-color-swatch {
-      border: none;
-      border-radius: 3px;
-    }
+    .cfg-row input[type="color"]::-webkit-color-swatch { border: none; border-radius: 3px; }
     .cfg-row input[type="text"],
     .cfg-row input[type="number"] {
-      background: var(--bg-input);
-      border: 1px solid var(--border);
-      border-radius: var(--r-sm);
-      padding: 7px 10px;
-      color: var(--text);
-      font-size: 12px;
-      font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
-      outline: none;
-      text-align: center;
-      transition: border-color 0.15s, box-shadow 0.15s;
-      width: 100%;
+      background: var(--bg-input); border: 1px solid var(--border);
+      border-radius: var(--r-sm); padding: 7px 10px; color: var(--text);
+      font-size: 12px; font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+      outline: none; text-align: center;
+      transition: border-color 0.15s, box-shadow 0.15s; width: 100%;
     }
     .cfg-row input[type="text"]:focus,
     .cfg-row input[type="number"]:focus {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(77,124,199,0.12);
+      border-color: var(--primary); box-shadow: 0 0 0 3px rgba(77,124,199,0.12);
     }
 
-    .cfg-input-row {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-    .cfg-input-row label {
-      font-size: 12px;
-      color: var(--text-dim);
-      font-weight: 500;
-    }
+    .cfg-input-row { display: flex; flex-direction: column; gap: 6px; }
+    .cfg-input-row label { font-size: 12px; color: var(--text-dim); font-weight: 500; }
     .cfg-input-row > div { display: flex; gap: 6px; }
-    .cfg-input-row input {
-      flex: 1;
-      background: var(--bg-input);
-      border: 1px solid var(--border);
-      border-radius: var(--r-sm);
-      padding: 8px 11px;
-      color: var(--text);
-      font-size: 12.5px;
-      outline: none;
-      font-family: inherit;
+    .cfg-input-row input,
+    .cfg-input-row select {
+      flex: 1; background: var(--bg-input); border: 1px solid var(--border);
+      border-radius: var(--r-sm); padding: 8px 11px; color: var(--text);
+      font-size: 12.5px; outline: none; font-family: inherit;
       transition: border-color 0.15s, box-shadow 0.15s;
     }
-    .cfg-input-row input:focus {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(77,124,199,0.12);
+    .cfg-input-row input:focus,
+    .cfg-input-row select:focus {
+      border-color: var(--primary); box-shadow: 0 0 0 3px rgba(77,124,199,0.12);
     }
+    .cfg-input-row select { cursor: pointer; }
+    .cfg-input-row select option { background: var(--bg-panel); color: var(--text); }
 
     .cfg-check-row {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      padding: 5px 0;
-      cursor: pointer;
+      display: flex; align-items: center; gap: 9px;
+      padding: 5px 0; cursor: pointer;
     }
     .cfg-check-row input[type="checkbox"] {
-      width: 15px;
-      height: 15px;
-      accent-color: var(--primary);
-      cursor: pointer;
+      width: 15px; height: 15px; accent-color: var(--primary); cursor: pointer;
     }
-    .cfg-check-row label {
-      font-size: 12.5px;
-      color: var(--text-dim);
-      cursor: pointer;
+    .cfg-check-row label { font-size: 12.5px; color: var(--text-dim); cursor: pointer; user-select: none; }
+
+    .cfg-radio-row {
+      display: flex; align-items: center; gap: 9px;
+      padding: 7px 10px; border-radius: var(--r-sm);
+      background: var(--bg-card); border: 1px solid var(--border);
+      cursor: pointer; transition: all 0.15s ease;
+    }
+    .cfg-radio-row:hover { border-color: var(--border-strong); background: var(--bg-hover); }
+    .cfg-radio-row input[type="radio"] {
+      width: 15px; height: 15px; accent-color: var(--primary); cursor: pointer;
+    }
+    .cfg-radio-row label { font-size: 12.5px; color: var(--text-dim); cursor: pointer; user-select: none; flex: 1; }
+    .cfg-radio-row small { font-size: 11px; color: var(--text-muted); display: block; margin-top: 1px; }
+
+    .cfg-slider-row { display: flex; flex-direction: column; gap: 6px; }
+    .cfg-slider-row label {
+      font-size: 12px; color: var(--text-dim); font-weight: 500;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .cfg-slider-row label span { color: var(--primary-soft); font-weight: 600; }
+    .cfg-slider-row input[type="range"] {
+      width: 100%; accent-color: var(--primary); cursor: pointer;
+    }
+
+    /* ─── Selector de temas del tren ─── */
+    .theme-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
+    }
+    .theme-option {
+      border-radius: var(--r-sm); border: 1px solid var(--border);
+      background: var(--bg-card); cursor: pointer; overflow: hidden;
+      transition: all 0.15s ease; padding: 0; font-family: inherit;
+      text-align: left;
+    }
+    .theme-option:hover { border-color: var(--border-strong); }
+    .theme-option.active {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(77,124,199,0.2);
+    }
+    .theme-preview {
+      height: 56px; width: 100%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; color: white;
+      position: relative; overflow: hidden;
+    }
+    .theme-preview span {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.05em;
+      text-transform: uppercase; opacity: 0.95;
+    }
+    .theme-option .theme-name {
+      display: block; padding: 7px 9px; font-size: 12px;
+      font-weight: 600; color: var(--text); border-top: 1px solid var(--border);
+    }
+    .theme-option .theme-desc {
+      display: block; padding: 0 9px 8px; font-size: 10.5px;
+      color: var(--text-muted); line-height: 1.35;
+    }
+
+    .theme-preview.cyberpunk {
+      background: linear-gradient(135deg, #ff00e5, #00e5ff);
+    }
+    .theme-preview.cyberpunk::before {
+      content: ''; position: absolute; inset: 0;
+      background: repeating-linear-gradient(0deg, transparent 0 3px, rgba(0,0,0,0.25) 3px 4px);
+    }
+    .theme-preview.cristal {
+      background: linear-gradient(135deg, #7c3aed, #f472b6, #c4b5fd);
+      filter: blur(0.3px);
+    }
+    .theme-preview.minimal {
+      background: linear-gradient(135deg, #ffffff, #e5e7eb);
+    }
+    .theme-preview.minimal span { color: #111; }
+    .theme-preview.tiktok {
+      background: linear-gradient(135deg, #ff0050, #00e5ff);
+    }
+
+    /* Preview de hitos */
+    .milestone-chips {
+      display: flex; flex-wrap: wrap; gap: 5px;
+      background: var(--bg-input); border: 1px solid var(--border);
+      border-radius: var(--r-sm); padding: 8px; min-height: 38px;
+    }
+    .milestone-chip {
+      padding: 3px 9px; border-radius: 12px;
+      background: rgba(77,124,199,0.14); color: var(--primary-soft);
+      font-size: 11px; font-weight: 700;
+      font-family: ui-monospace, monospace;
+      border: 1px solid rgba(77,124,199,0.28);
+    }
+
+    .presets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .preset-btn {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--r-sm); padding: 8px 10px;
+      color: var(--text-dim); font-size: 11px; font-weight: 500;
+      cursor: pointer; display: flex; align-items: center; gap: 7px;
+      transition: all 0.15s ease; font-family: inherit;
+    }
+    .preset-btn:hover { border-color: var(--primary); color: var(--text); }
+    .preset-swatch {
+      width: 14px; height: 14px; border-radius: 3px;
+      flex-shrink: 0; border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    /* Grid de banderas */
+    .flags-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px;
+      max-height: 320px; overflow-y: auto; padding: 4px;
+      background: var(--bg-input); border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+    }
+    .flags-grid::-webkit-scrollbar { width: 5px; }
+    .flags-grid::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+
+    .flag-check {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 8px; border-radius: var(--r-sm);
+      cursor: pointer; transition: background 0.15s ease;
       user-select: none;
     }
+    .flag-check:hover { background: rgba(255,255,255,0.03); }
+    .flag-check input[type="checkbox"] {
+      width: 14px; height: 14px; accent-color: var(--primary); cursor: pointer; flex-shrink: 0;
+    }
+    .flag-check span {
+      font-size: 11.5px; color: var(--text-dim);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
 
-    .presets {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 6px;
+    .flags-actions {
+      display: flex; gap: 6px; margin-top: 4px;
     }
-    .preset-btn {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--r-sm);
-      padding: 8px 10px;
-      color: var(--text-dim);
-      font-size: 11px;
-      font-weight: 500;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 7px;
+    .flags-actions button {
+      flex: 1; padding: 6px 10px; border-radius: var(--r-sm);
+      background: var(--bg-card); border: 1px solid var(--border);
+      color: var(--text-dim); font-size: 11px; font-weight: 500;
+      cursor: pointer; font-family: inherit; transition: all 0.15s ease;
+    }
+    .flags-actions button:hover { border-color: var(--primary); color: var(--text); }
+
+    .hype-actions {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
+    }
+    .hype-actions button {
+      padding: 9px 10px; border-radius: var(--r-sm);
+      font-size: 12px; font-weight: 600; font-family: inherit;
+      cursor: pointer; border: 1px solid var(--border);
+      background: var(--bg-card); color: var(--text-dim);
+      display: inline-flex; align-items: center; justify-content: center; gap: 5px;
       transition: all 0.15s ease;
-      font-family: inherit;
     }
-    .preset-btn:hover {
-      border-color: var(--primary);
-      color: var(--text);
-    }
-    .preset-swatch {
-      width: 14px;
-      height: 14px;
-      border-radius: 3px;
-      flex-shrink: 0;
-      border: 1px solid rgba(255,255,255,0.1);
-    }
+    .hype-actions button:hover { color: var(--text); border-color: var(--border-strong); }
+    .hype-actions .start { border-color: rgba(79,168,122,0.4); color: var(--success); }
+    .hype-actions .start:hover { background: rgba(79,168,122,0.1); }
+    .hype-actions .end   { border-color: rgba(214,168,74,0.4); color: var(--warning); }
+    .hype-actions .end:hover { background: rgba(214,168,74,0.1); }
+    .hype-actions .reset { border-color: rgba(194,106,106,0.4); color: var(--danger); }
+    .hype-actions .reset:hover { background: rgba(194,106,106,0.1); }
 
     .btn {
-      padding: 9px 14px;
-      border-radius: var(--r-sm);
-      border: 1px solid transparent;
-      font-size: 12.5px;
-      font-weight: 500;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      font-family: inherit;
-      transition: all 0.15s ease;
+      padding: 9px 14px; border-radius: var(--r-sm);
+      border: 1px solid transparent; font-size: 12.5px; font-weight: 500;
+      cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+      gap: 6px; font-family: inherit; transition: all 0.15s ease;
     }
     .btn.primary { background: var(--primary); color: white; }
     .btn.primary:hover { background: #5a8ad6; }
-    .btn.ghost {
-      background: transparent;
-      border-color: var(--border);
-      color: var(--text-dim);
-    }
-    .btn.ghost:hover {
-      background: var(--bg-hover);
-      color: var(--text);
-      border-color: var(--border-strong);
-    }
+    .btn.ghost { background: transparent; border-color: var(--border); color: var(--text-dim); }
+    .btn.ghost:hover { background: var(--bg-hover); color: var(--text); border-color: var(--border-strong); }
     .btn-sm { padding: 6px 11px; font-size: 11.5px; }
 
-    /* ═══════════════════════════════════════════════════════════
-       TOAST
-       ═══════════════════════════════════════════════════════════ */
+    /* ═══ TOAST ═══ */
     .toast {
-      position: fixed;
-      bottom: 26px;
-      left: 50%;
+      position: fixed; bottom: 26px; left: 50%;
       transform: translateX(-50%) translateY(90px);
-      background: var(--bg-elevated);
-      border: 1px solid var(--border);
-      border-left: 3px solid var(--success);
-      color: var(--text);
-      padding: 11px 18px;
-      border-radius: var(--r-sm);
-      font-size: 13px;
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-      gap: 9px;
+      background: var(--bg-elevated); border: 1px solid var(--border);
+      border-left: 3px solid var(--success); color: var(--text);
+      padding: 11px 18px; border-radius: var(--r-sm);
+      font-size: 13px; font-weight: 500;
+      display: flex; align-items: center; gap: 9px;
       box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-      opacity: 0;
-      pointer-events: none;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      z-index: 1000;
+      opacity: 0; pointer-events: none;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 1000;
     }
-    .toast.show {
-      opacity: 1;
-      transform: translateX(-50%) translateY(0);
-    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
     .toast i { color: var(--success); font-size: 15px; }
     .toast.error { border-left-color: var(--danger); }
     .toast.error i { color: var(--danger); }
@@ -816,12 +595,8 @@
     @media (max-width: 900px) {
       .app { grid-template-columns: 1fr; }
       .sidebar {
-        position: relative;
-        height: auto;
-        flex-direction: row;
-        overflow-x: auto;
-        padding: 14px;
-        gap: 14px;
+        position: relative; height: auto; flex-direction: row;
+        overflow-x: auto; padding: 14px; gap: 14px;
       }
       .sidebar-brand { padding: 0; }
       .brand-text { display: none; }
@@ -829,15 +604,13 @@
       .nav-section-title { display: none; }
       .nav-item .nav-count { display: none; }
       .sidebar-footer {
-        flex-direction: row;
-        border-top: none;
-        padding: 0;
-        margin-top: 0;
-        margin-left: auto;
+        flex-direction: row; border-top: none; padding: 0;
+        margin-top: 0; margin-left: auto;
       }
       .sidebar-link span { display: none; }
       .content { padding: 20px; }
       .overlay-grid { grid-template-columns: 1fr; }
+      .flags-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -860,7 +633,7 @@
       <button class="nav-item active" data-filter="all" onclick="filtrar('all', this)">
         <i class="ri-apps-2-line"></i>
         <span>Todos</span>
-        <span class="nav-count">8</span>
+        <span class="nav-count">10</span>
       </button>
       <button class="nav-item" data-filter="crystal" onclick="filtrar('crystal', this)">
         <i class="ri-vip-diamond-line"></i>
@@ -892,6 +665,16 @@
         <span>TTS</span>
         <span class="nav-count">1</span>
       </button>
+      <button class="nav-item" data-filter="pride" onclick="filtrar('pride', this)">
+        <i class="ri-flag-2-line"></i>
+        <span>Pride</span>
+        <span class="nav-count">1</span>
+      </button>
+      <button class="nav-item" data-filter="hype" onclick="filtrar('hype', this)">
+        <i class="ri-train-line"></i>
+        <span>Hype Train</span>
+        <span class="nav-count">1</span>
+      </button>
     </nav>
 
     <div class="sidebar-footer">
@@ -911,7 +694,7 @@
     <div class="content-header">
       <div>
         <h2>Galería de Overlays</h2>
-        <p>Cada overlay tiene su propia URL para OBS. Personaliza los colores sin tocar código.</p>
+        <p>Cada overlay tiene su propia URL para OBS. Copia la URL, personaliza y listo.</p>
       </div>
       <div class="search-box">
         <i class="ri-search-line"></i>
@@ -930,6 +713,9 @@
             <p>Todos tus chats en una sola ventana</p>
           </div>
           <div class="card-header-actions">
+            <button class="icon-btn copy" onclick="copiarUrl('/overlay')" title="Copiar URL">
+              <i class="ri-file-copy-line"></i>
+            </button>
             <button class="icon-btn" onclick="probar('/overlay')" title="Abrir en nueva pestaña">
               <i class="ri-external-link-line"></i>
             </button>
@@ -946,6 +732,9 @@
           </div>
         </div>
         <div class="card-actions">
+          <button class="action-btn secondary" onclick="copiarUrl('/overlay')">
+            <i class="ri-file-copy-line"></i> Copiar URL
+          </button>
           <button class="action-btn secondary" onclick="probar('/overlay')">
             <i class="ri-eye-line"></i> Ver
           </button>
@@ -961,6 +750,9 @@
             <p>Quién más ha donado durante el directo</p>
           </div>
           <div class="card-header-actions">
+            <button class="icon-btn copy" onclick="copiarUrl('/top-donadores')" title="Copiar URL">
+              <i class="ri-file-copy-line"></i>
+            </button>
             <button class="icon-btn" onclick="probar('/top-donadores')" title="Abrir en nueva pestaña">
               <i class="ri-external-link-line"></i>
             </button>
@@ -976,6 +768,9 @@
           </div>
         </div>
         <div class="card-actions">
+          <button class="action-btn secondary" onclick="copiarUrl('/top-donadores')">
+            <i class="ri-file-copy-line"></i> Copiar URL
+          </button>
           <button class="action-btn primary" onclick="abrirConfig('top-donadores', 'Top Donadores')">
             <i class="ri-palette-line"></i> Configurar
           </button>
@@ -991,6 +786,9 @@
             <p>Los que más corazones han enviado</p>
           </div>
           <div class="card-header-actions">
+            <button class="icon-btn copy" onclick="copiarUrl('/top-likes')" title="Copiar URL">
+              <i class="ri-file-copy-line"></i>
+            </button>
             <button class="icon-btn" onclick="probar('/top-likes')" title="Abrir en nueva pestaña">
               <i class="ri-external-link-line"></i>
             </button>
@@ -1006,6 +804,9 @@
           </div>
         </div>
         <div class="card-actions">
+          <button class="action-btn secondary" onclick="copiarUrl('/top-likes')">
+            <i class="ri-file-copy-line"></i> Copiar URL
+          </button>
           <button class="action-btn primary" onclick="abrirConfig('top-likes', 'Top Likes')">
             <i class="ri-palette-line"></i> Configurar
           </button>
@@ -1021,6 +822,9 @@
             <p>Los que más han compartido el live</p>
           </div>
           <div class="card-header-actions">
+            <button class="icon-btn copy" onclick="copiarUrl('/top-shares')" title="Copiar URL">
+              <i class="ri-file-copy-line"></i>
+            </button>
             <button class="icon-btn" onclick="probar('/top-shares')" title="Abrir en nueva pestaña">
               <i class="ri-external-link-line"></i>
             </button>
@@ -1036,6 +840,9 @@
           </div>
         </div>
         <div class="card-actions">
+          <button class="action-btn secondary" onclick="copiarUrl('/top-shares')">
+            <i class="ri-file-copy-line"></i> Copiar URL
+          </button>
           <button class="action-btn primary" onclick="abrirConfig('top-shares', 'Top Compartidos')">
             <i class="ri-palette-line"></i> Configurar
           </button>
@@ -1051,6 +858,9 @@
             <p>Aparece en pantalla al recibir un seguidor</p>
           </div>
           <div class="card-header-actions">
+            <button class="icon-btn copy" onclick="copiarUrl('/follows')" title="Copiar URL">
+              <i class="ri-file-copy-line"></i>
+            </button>
             <button class="icon-btn" onclick="probar('/follows')" title="Abrir en nueva pestaña">
               <i class="ri-external-link-line"></i>
             </button>
@@ -1066,6 +876,9 @@
           </div>
         </div>
         <div class="card-actions">
+          <button class="action-btn secondary" onclick="copiarUrl('/follows')">
+            <i class="ri-file-copy-line"></i> Copiar URL
+          </button>
           <button class="action-btn primary" onclick="abrirConfig('follows', 'Último Follow')">
             <i class="ri-palette-line"></i> Configurar
           </button>
@@ -1081,6 +894,9 @@
             <p>Todos los contadores del directo de un vistazo</p>
           </div>
           <div class="card-header-actions">
+            <button class="icon-btn copy" onclick="copiarUrl('/stats')" title="Copiar URL">
+              <i class="ri-file-copy-line"></i>
+            </button>
             <button class="icon-btn" onclick="probar('/stats')" title="Abrir en nueva pestaña">
               <i class="ri-external-link-line"></i>
             </button>
@@ -1096,6 +912,9 @@
           </div>
         </div>
         <div class="card-actions">
+          <button class="action-btn secondary" onclick="copiarUrl('/stats')">
+            <i class="ri-file-copy-line"></i> Copiar URL
+          </button>
           <button class="action-btn primary" onclick="abrirConfig('stats', 'Estadísticas en Vivo')">
             <i class="ri-palette-line"></i> Configurar
           </button>
@@ -1111,6 +930,9 @@
             <p>Lee el chat en voz alta, sin mostrarse en pantalla</p>
           </div>
           <div class="card-header-actions">
+            <button class="icon-btn copy" onclick="copiarUrl('/overlays/tts.html')" title="Copiar URL">
+              <i class="ri-file-copy-line"></i>
+            </button>
             <button class="icon-btn" onclick="probar('/overlays/tts.html')" title="Abrir en nueva pestaña">
               <i class="ri-external-link-line"></i>
             </button>
@@ -1123,6 +945,9 @@
           </div>
         </div>
         <div class="card-actions">
+          <button class="action-btn secondary" onclick="copiarUrl('/overlays/tts.html')">
+            <i class="ri-file-copy-line"></i> Copiar URL
+          </button>
           <button class="action-btn secondary" onclick="probar('/overlays/tts.html')">
             <i class="ri-external-link-line"></i> Abrir en OBS
           </button>
@@ -1138,6 +963,9 @@
             <p>Muestra cuánto falta para llegar a la meta de diamantes</p>
           </div>
           <div class="card-header-actions">
+            <button class="icon-btn copy" onclick="copiarUrl('/crystal')" title="Copiar URL">
+              <i class="ri-file-copy-line"></i>
+            </button>
             <button class="icon-btn" onclick="probar('/crystal')" title="Abrir en nueva pestaña">
               <i class="ri-external-link-line"></i>
             </button>
@@ -1156,7 +984,106 @@
           </div>
         </div>
         <div class="card-actions">
+          <button class="action-btn secondary" onclick="copiarUrl('/crystal')">
+            <i class="ri-file-copy-line"></i> Copiar URL
+          </button>
           <button class="action-btn primary" onclick="abrirConfigCristal()">
+            <i class="ri-palette-line"></i> Configurar
+          </button>
+        </div>
+      </div>
+
+      <!-- PRIDE FLAGS -->
+      <div class="overlay-card" data-category="pride">
+        <div class="card-top">
+          <div class="card-icon rainbow"><i class="ri-flag-2-line"></i></div>
+          <div class="card-title">
+            <h3>Banderas Pride</h3>
+            <p>Banderas LGBTQ+ con su explicación y colores</p>
+          </div>
+          <div class="card-header-actions">
+            <button class="icon-btn copy" onclick="copiarUrl('/pride')" title="Copiar URL">
+              <i class="ri-file-copy-line"></i>
+            </button>
+            <button class="icon-btn" onclick="probar('/pride')" title="Abrir en nueva pestaña">
+              <i class="ri-external-link-line"></i>
+            </button>
+            <button class="icon-btn danger" onclick="resetearConfigPride()" title="Resetear Pride">
+              <i class="ri-refresh-line"></i>
+            </button>
+          </div>
+        </div>
+        <div class="preview-box" data-w="520" data-h="300" onclick="probar('/pride')">
+          <div class="preview-frame">
+            <iframe data-src="/pride?preview=1" loading="lazy"></iframe>
+          </div>
+          <div class="preview-footer">
+            <span class="url-text">/pride</span>
+            <span class="open-hint"><i class="ri-external-link-line"></i> Abrir</span>
+          </div>
+        </div>
+        <div class="card-actions">
+          <button class="action-btn secondary" onclick="copiarUrl('/pride')">
+            <i class="ri-file-copy-line"></i> Copiar URL
+          </button>
+          <button class="action-btn primary" onclick="abrirConfigPride()">
+            <i class="ri-palette-line"></i> Configurar
+          </button>
+        </div>
+      </div>
+
+      <!-- HYPE TRAIN -->
+      <div class="overlay-card" data-category="hype" id="hypeCard">
+        <div class="card-top">
+          <div class="card-icon hype"><i class="ri-train-line"></i></div>
+          <div class="card-title">
+            <h3>Hype Train</h3>
+            <p>Tren del hype que sube de nivel con los regalos</p>
+          </div>
+          <div class="card-header-actions">
+            <button class="icon-btn copy" onclick="copiarUrl('/hype-train')" title="Copiar URL">
+              <i class="ri-file-copy-line"></i>
+            </button>
+            <button class="icon-btn" onclick="probar('/hype-train')" title="Abrir en nueva pestaña">
+              <i class="ri-external-link-line"></i>
+            </button>
+            <button class="icon-btn danger" onclick="resetHypeTrain()" title="Reset del tren">
+              <i class="ri-refresh-line"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="preview-box" data-w="520" data-h="300" onclick="probar('/hype-train')">
+          <div class="preview-frame">
+            <iframe data-src="/hype-train?preview=1" loading="lazy"></iframe>
+          </div>
+          <div class="preview-footer">
+            <span class="url-text">/hype-train</span>
+            <span class="open-hint"><i class="ri-external-link-line"></i> Abrir</span>
+          </div>
+        </div>
+
+        <!-- Estado en vivo -->
+        <div class="hype-live" id="hypeLiveBox">
+          <div class="hype-live-cell">
+            <span class="lbl">Estado</span>
+            <span class="val" id="hypeLiveEstado">Inactivo</span>
+          </div>
+          <div class="hype-live-cell">
+            <span class="lbl">Nivel</span>
+            <span class="val" id="hypeLiveNivel">0</span>
+          </div>
+          <div class="hype-live-cell">
+            <span class="lbl">Puntos</span>
+            <span class="val gold" id="hypeLivePuntos">0</span>
+          </div>
+        </div>
+
+        <div class="card-actions">
+          <button class="action-btn secondary" onclick="copiarUrl('/hype-train')">
+            <i class="ri-file-copy-line"></i> Copiar URL
+          </button>
+          <button class="action-btn primary" onclick="abrirConfigHype()">
             <i class="ri-palette-line"></i> Configurar
           </button>
         </div>
@@ -1167,6 +1094,7 @@
   </main>
 </div>
 
+<!-- ═══ DRAWER GENÉRICO ═══ -->
 <div class="drawer-overlay" id="drawerOverlay" onclick="cerrarDrawer()"></div>
 <div class="drawer" id="drawer">
   <div class="drawer-head">
@@ -1187,6 +1115,7 @@
   </div>
 </div>
 
+<!-- ═══ DRAWER CRISTAL ═══ -->
 <div class="drawer-overlay" id="crystalDrawerOverlay" onclick="cerrarConfigCristal()"></div>
 <div class="drawer" id="crystalDrawer">
   <div class="drawer-head">
@@ -1207,6 +1136,48 @@
   </div>
 </div>
 
+<!-- ═══ DRAWER PRIDE ═══ -->
+<div class="drawer-overlay" id="prideDrawerOverlay" onclick="cerrarConfigPride()"></div>
+<div class="drawer" id="prideDrawer">
+  <div class="drawer-head">
+    <h3><i class="ri-flag-2-line"></i> Configurar Banderas Pride</h3>
+    <button class="close-btn" onclick="cerrarConfigPride()"><i class="ri-close-line"></i></button>
+  </div>
+  <div class="drawer-body" id="prideDrawerBody"></div>
+  <div class="drawer-foot">
+    <span class="hint">Los cambios se aplican en vivo en el overlay</span>
+    <div class="drawer-actions">
+      <button class="btn ghost btn-sm" onclick="resetearConfigPride()">
+        <i class="ri-refresh-line"></i> Resetear
+      </button>
+      <button class="btn primary btn-sm" onclick="guardarConfigPride()">
+        <i class="ri-check-line"></i> Guardar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ DRAWER HYPE TRAIN ═══ -->
+<div class="drawer-overlay" id="hypeDrawerOverlay" onclick="cerrarConfigHype()"></div>
+<div class="drawer" id="hypeDrawer">
+  <div class="drawer-head">
+    <h3><i class="ri-train-line"></i> Configurar Hype Train</h3>
+    <button class="close-btn" onclick="cerrarConfigHype()"><i class="ri-close-line"></i></button>
+  </div>
+  <div class="drawer-body" id="hypeDrawerBody"></div>
+  <div class="drawer-foot">
+    <span class="hint">Los cambios se aplican en vivo en el overlay</span>
+    <div class="drawer-actions">
+      <button class="btn ghost btn-sm" onclick="resetHypeConfig()">
+        <i class="ri-refresh-line"></i> Resetear
+      </button>
+      <button class="btn primary btn-sm" onclick="guardarConfigHype()">
+        <i class="ri-check-line"></i> Guardar
+      </button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast">
   <i class="ri-checkbox-circle-fill"></i>
   <span id="toastText">Listo</span>
@@ -1215,6 +1186,9 @@
 <script>
   // 🌐 SERVER_BASE viene de /js/server-url.js (autodetectado)
 
+  // ═══════════════════════════════════════════════════════════
+  //  CONFIGS DE OVERLAYS GENÉRICOS
+  // ═══════════════════════════════════════════════════════════
   const OVERLAY_CONFIGS = {
     'top-donadores': {
       groups: [
@@ -1389,10 +1363,12 @@
   let cristalValores = {};
   let cristalMeta = 500;
 
+  // ═══════════════════════════════════════════════════════════
+  //  FILTROS Y BÚSQUEDA
+  // ═══════════════════════════════════════════════════════════
   function filtrar(categoria, boton) {
     document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
     boton.classList.add('active');
-    
     document.querySelectorAll('.overlay-card').forEach(card => {
       const cardCat = card.dataset.category || '';
       const visible = categoria === 'all' || cardCat === categoria;
@@ -1410,23 +1386,49 @@
     });
   }
 
+  // ═══════════════════════════════════════════════════════════
+  //  COPIAR URL (NUEVO)
+  // ═══════════════════════════════════════════════════════════
+  async function copiarUrl(path) {
+    const base = (window.SERVER_BASE || window.location.origin).replace(/\/$/, '');
+    const url = base + path;
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        // Fallback para http:// (no secure context)
+        const ta = document.createElement('textarea');
+        ta.value = url;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      }
+      mostrarToast('URL copiada: ' + url);
+    } catch (e) {
+      mostrarToast('Error copiando URL');
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  PREVIEWS
+  // ═══════════════════════════════════════════════════════════
   function ajustarProporcionesYEscala() {
     document.querySelectorAll('.preview-box').forEach(box => {
       const w = parseInt(box.dataset.w, 10) || 380;
       const h = parseInt(box.dataset.h, 10) || 620;
-
       const boxW = box.clientWidth;
       if (!boxW) return;
-
       const aspect = w / h;
-      const boxH = Math.round(boxW / aspect);
+      let boxH = Math.round(boxW / aspect);
+      // Tope máximo de altura para que no quede gigante
+      if (boxH > 420) boxH = 420;
       box.style.height = boxH + 'px';
-
       const frame = box.querySelector('.preview-frame');
       if (!frame) return;
-
       const scale = boxW / w;
-
       frame.style.width  = w + 'px';
       frame.style.height = h + 'px';
       frame.style.transform = `scale(${scale})`;
@@ -1435,7 +1437,6 @@
 
   function cargarPreviewsDiferido() {
     ajustarProporcionesYEscala();
-
     const iframes = document.querySelectorAll('.preview-box iframe[data-src]');
     iframes.forEach((iframe, i) => {
       setTimeout(() => {
@@ -1457,12 +1458,12 @@
   document.addEventListener('DOMContentLoaded', cargarPreviewsDiferido);
   if (document.readyState !== 'loading') cargarPreviewsDiferido();
 
+  // ═══════════════════════════════════════════════════════════
+  //  DRAWER GENÉRICO
+  // ═══════════════════════════════════════════════════════════
   async function abrirConfig(overlayKey, titulo) {
     const config = OVERLAY_CONFIGS[overlayKey];
-    if (!config) {
-      mostrarToast('Este overlay no tiene configuración');
-      return;
-    }
+    if (!config) { mostrarToast('Este overlay no tiene configuración'); return; }
 
     overlayActual = overlayKey;
     document.getElementById('drawerTitle').textContent = titulo;
@@ -1474,14 +1475,12 @@
     } catch (e) {}
 
     valoresActuales = { ...actuales };
-
     const body = document.getElementById('drawerBody');
     body.innerHTML = '';
 
     config.groups.forEach(group => {
       const groupDiv = document.createElement('div');
       groupDiv.className = 'cfg-group';
-
       const title = document.createElement('div');
       title.className = 'cfg-group-title';
       title.textContent = group.title;
@@ -1490,7 +1489,6 @@
       group.vars.forEach(v => {
         const valor = actuales[v.key] || v.default;
         const hexOnly = valor.length === 7 ? valor : valor.substring(0, 7);
-
         const row = document.createElement('div');
         row.className = 'cfg-row';
         row.innerHTML = `
@@ -1500,7 +1498,6 @@
         `;
         groupDiv.appendChild(row);
       });
-
       body.appendChild(groupDiv);
     });
 
@@ -1517,16 +1514,13 @@
     Object.entries(config.presets).forEach(([name, vars]) => {
       const btn = document.createElement('button');
       btn.className = 'preset-btn';
-
       const swatch = document.createElement('span');
       swatch.className = 'preset-swatch';
       const colores = Object.values(vars).slice(0, 2);
       swatch.style.background = `linear-gradient(135deg, ${colores[0]}, ${colores[1]})`;
-
       btn.appendChild(swatch);
       btn.appendChild(document.createTextNode(name.charAt(0).toUpperCase() + name.slice(1)));
       btn.onclick = () => aplicarPresetLocal(name);
-
       presetGrid.appendChild(btn);
     });
 
@@ -1575,15 +1569,9 @@
         body: JSON.stringify(valoresActuales)
       });
       const data = await r.json();
-      if (data.success) {
-        mostrarToast('Colores guardados');
-        cerrarDrawer();
-      } else {
-        mostrarToast('Error al guardar');
-      }
-    } catch (e) {
-      mostrarToast('Error de red');
-    }
+      if (data.success) { mostrarToast('Colores guardados'); cerrarDrawer(); }
+      else mostrarToast('Error al guardar');
+    } catch (e) { mostrarToast('Error de red'); }
   }
 
   async function resetearConfig() {
@@ -1593,9 +1581,7 @@
       await fetch(`${window.SERVER_BASE}/api/themes/${overlayActual}`, { method: 'DELETE' });
       mostrarToast('Colores reseteados');
       cerrarDrawer();
-    } catch (e) {
-      mostrarToast('Error');
-    }
+    } catch (e) { mostrarToast('Error'); }
   }
 
   function aplicarPresetLocal(name) {
@@ -1603,19 +1589,19 @@
     const config = OVERLAY_CONFIGS[overlayActual];
     const preset = config.presets[name];
     if (!preset) return;
-
     valoresActuales = { ...valoresActuales, ...preset };
-
     Object.entries(preset).forEach(([key, val]) => {
       const col = document.querySelector(`#drawerBody input[data-var="${key}"]`);
       const txt = document.querySelector(`#drawerBody input[data-var-text="${key}"]`);
       if (col) col.value = val;
       if (txt) txt.value = val;
     });
-
     mostrarToast(`Preset "${name}" aplicado`);
   }
 
+  // ═══════════════════════════════════════════════════════════
+  //  DRAWER CRISTAL
+  // ═══════════════════════════════════════════════════════════
   async function abrirConfigCristal() {
     let temaActual = {};
     try {
@@ -1639,7 +1625,6 @@
     CRYSTAL_CONFIG.groups.forEach(group => {
       const groupDiv = document.createElement('div');
       groupDiv.className = 'cfg-group';
-
       const title = document.createElement('div');
       title.className = 'cfg-group-title';
       title.textContent = group.title;
@@ -1680,7 +1665,6 @@
         group.vars.forEach(v => {
           const valor = cristalValores[v.key] || v.default;
           const hexOnly = valor.length === 7 ? valor : valor.substring(0, 7);
-
           const row = document.createElement('div');
           row.className = 'cfg-row';
           row.innerHTML = `
@@ -1708,15 +1692,12 @@
     Object.entries(CRYSTAL_CONFIG.presets).forEach(([name, vars]) => {
       const btn = document.createElement('button');
       btn.className = 'preset-btn';
-
       const swatch = document.createElement('span');
       swatch.className = 'preset-swatch';
       swatch.style.background = `linear-gradient(135deg, ${vars['--crystal-stroke-1']}, ${vars['--crystal-stroke-2']})`;
-
       btn.appendChild(swatch);
       btn.appendChild(document.createTextNode(name.charAt(0).toUpperCase() + name.slice(1)));
       btn.onclick = () => aplicarPresetCristal(name);
-
       presetGrid.appendChild(btn);
     });
 
@@ -1777,25 +1758,16 @@
         body: JSON.stringify(cristalValores)
       });
       const data = await r.json();
-      if (data.success) {
-        mostrarToast('Meta actualizada');
-        cerrarConfigCristal();
-      } else {
-        mostrarToast('Error al guardar');
-      }
-    } catch (e) {
-      mostrarToast('Error de red');
-    }
+      if (data.success) { mostrarToast('Meta actualizada'); cerrarConfigCristal(); }
+      else mostrarToast('Error al guardar');
+    } catch (e) { mostrarToast('Error de red'); }
   }
 
   async function guardarMetaCristal() {
     const inp = document.querySelector('#crystalDrawerBody input[data-crystal-key="meta"]');
     if (!inp) return;
     const meta = parseInt(inp.value, 10);
-    if (!meta || meta < 1) {
-      mostrarToast('Meta inválida');
-      return;
-    }
+    if (!meta || meta < 1) { mostrarToast('Meta inválida'); return; }
     try {
       const r = await fetch(`${window.SERVER_BASE}/api/jar-state/meta`, {
         method: 'POST',
@@ -1806,12 +1778,8 @@
       if (data.success) {
         cristalMeta = meta;
         mostrarToast(`Meta actualizada: ${meta} 💎`);
-      } else {
-        mostrarToast('Error: ' + (data.error || 'desconocido'));
-      }
-    } catch (e) {
-      mostrarToast('Error de red');
-    }
+      } else mostrarToast('Error: ' + (data.error || 'desconocido'));
+    } catch (e) { mostrarToast('Error de red'); }
   }
 
   async function resetearTemaCristal() {
@@ -1820,9 +1788,7 @@
       await fetch(`${window.SERVER_BASE}/api/themes/crystal`, { method: 'DELETE' });
       mostrarToast('Colores reseteados');
       cerrarConfigCristal();
-    } catch (e) {
-      mostrarToast('Error');
-    }
+    } catch (e) { mostrarToast('Error'); }
   }
 
   async function resetearCristal() {
@@ -1832,29 +1798,697 @@
       const data = await r.json();
       if (data.success) mostrarToast('Meta reseteada');
       else mostrarToast('Error al resetear');
-    } catch (e) {
-      mostrarToast('Error de red');
-    }
+    } catch (e) { mostrarToast('Error de red'); }
   }
 
   function aplicarPresetCristal(name) {
     const preset = CRYSTAL_CONFIG.presets[name];
     if (!preset) return;
     Object.assign(cristalValores, preset);
-
     Object.entries(preset).forEach(([key, val]) => {
       const col = document.querySelector(`#crystalDrawerBody input[data-crystal-var="${key}"]`);
       const txt = document.querySelector(`#crystalDrawerBody input[data-crystal-text="${key}"]`);
       if (col) col.value = val.substring(0, 7);
       if (txt) txt.value = val.substring(0, 7);
     });
-
     mostrarToast(`Preset "${name}" aplicado`);
   }
 
-  function probar(url) {
-    window.open(url, '_blank');
+  // ═══════════════════════════════════════════════════════════
+  //  PRIDE FLAGS — Configuración
+  // ═══════════════════════════════════════════════════════════
+  let prideConfig = {
+    mode: 'rotate',
+    fixedId: 'pride',
+    rotateMs: 6000,
+    folder: 'HD 1080p',
+    showName: true,
+    showMeaning: true,
+    showColors: true,
+    soloBandera: false,
+    enabled: null
+  };
+  let prideExplain = {};
+
+  const PRIDE_ORDEN = [
+    'pride', 'progress-pride', 'intersex-progress-pride',
+    'trans-pride', 'non-binary-pride', 'genderfluid-pride',
+    'genderqueer-pride', 'agender-pride', 'bigender-pride',
+    'demigender-pride', 'intersex-pride',
+    'lesbian-pride', 'gay-mens-pride-trans-inclusive',
+    'bisexual-pride', 'pansexual-pride', 'polysexual-pride',
+    'asexual-pride', 'demisexual-pride',
+    'philadelphia-pride', 'gilbert-baker-pride', 'queer-pride'
+  ];
+
+  const PRIDE_FOLDERS = [
+    { id: 'HD 1080p',           label: 'HD 1080p (recomendado)' },
+    { id: '512px Icons',        label: '512px Icons' },
+    { id: '32px Full Palette',  label: '32px Full Palette' },
+    { id: '16px Full Palette',  label: '16px Full Palette' },
+    { id: '16px Pico 8 Palette',label: '16px Pico 8 Palette' }
+  ];
+
+  async function abrirConfigPride() {
+    try {
+      const r = await fetch(`${window.SERVER_BASE}/api/pride/config`);
+      const data = await r.json();
+      if (data && data.ok && data.config) prideConfig = { ...prideConfig, ...data.config };
+    } catch (e) {}
+
+    try {
+      const r = await fetch('/pride-explain.json');
+      prideExplain = await r.json();
+    } catch (e) {
+      mostrarToast('No se pudo cargar pride-explain.json');
+      return;
+    }
+
+    const body = document.getElementById('prideDrawerBody');
+    body.innerHTML = '';
+
+    // ─── MODO ───
+    const gMode = document.createElement('div');
+    gMode.className = 'cfg-group';
+    gMode.innerHTML = `<div class="cfg-group-title">Modo</div>`;
+    const modes = [
+      { v: 'rotate', l: 'Rotación automática',      d: 'Cambia de bandera cada X segundos' },
+      { v: 'fixed',  l: 'Fija (una sola bandera)',  d: 'Muestra siempre la misma' },
+      { v: 'chat',   l: 'Solo con !bandera (chat)', d: 'Aparece cuando alguien escribe !bandera' }
+    ];
+    modes.forEach(m => {
+      const row = document.createElement('label');
+      row.className = 'cfg-radio-row';
+      row.innerHTML = `
+        <input type="radio" name="prideMode" value="${m.v}" ${prideConfig.mode === m.v ? 'checked' : ''}>
+        <div>
+          <label>${m.l}</label>
+          <small>${m.d}</small>
+        </div>
+      `;
+      gMode.appendChild(row);
+    });
+    body.appendChild(gMode);
+
+    // ─── VELOCIDAD ───
+    const gSpeed = document.createElement('div');
+    gSpeed.className = 'cfg-group';
+    gSpeed.innerHTML = `<div class="cfg-group-title">Velocidad de rotación</div>`;
+    const speedRow = document.createElement('div');
+    speedRow.className = 'cfg-slider-row';
+    speedRow.innerHTML = `
+      <label>Segundos por bandera <span id="prideSpeedVal">${(prideConfig.rotateMs/1000).toFixed(0)}s</span></label>
+      <input type="range" id="prideSpeed" min="2" max="20" step="1" value="${prideConfig.rotateMs/1000}">
+    `;
+    gSpeed.appendChild(speedRow);
+    body.appendChild(gSpeed);
+
+    // ─── CALIDAD ───
+    const gFolder = document.createElement('div');
+    gFolder.className = 'cfg-group';
+    gFolder.innerHTML = `<div class="cfg-group-title">Calidad de imagen</div>`;
+    const selFolder = document.createElement('select');
+    selFolder.id = 'prideFolder';
+    PRIDE_FOLDERS.forEach(f => {
+      const opt = document.createElement('option');
+      opt.value = f.id;
+      opt.textContent = f.label;
+      if (prideConfig.folder === f.id) opt.selected = true;
+      selFolder.appendChild(opt);
+    });
+    const folderRow = document.createElement('div');
+    folderRow.className = 'cfg-input-row';
+    folderRow.appendChild(selFolder);
+    gFolder.appendChild(folderRow);
+    body.appendChild(gFolder);
+
+    // ─── OPCIONES ───
+    const gOpts = document.createElement('div');
+    gOpts.className = 'cfg-group';
+    gOpts.innerHTML = `<div class="cfg-group-title">Opciones</div>`;
+    const opts = [
+      { k: 'showName',    l: 'Mostrar nombre' },
+      { k: 'showMeaning', l: 'Mostrar significado' },
+      { k: 'showColors',  l: 'Mostrar colores y su explicación' },
+      { k: 'soloBandera', l: 'Solo bandera (ocultar todo el texto)' }
+    ];
+    opts.forEach(o => {
+      const row = document.createElement('label');
+      row.className = 'cfg-check-row';
+      row.innerHTML = `
+        <input type="checkbox" data-pride-opt="${o.k}" ${prideConfig[o.k] ? 'checked' : ''}>
+        <label>${o.l}</label>
+      `;
+      gOpts.appendChild(row);
+    });
+    body.appendChild(gOpts);
+
+    // ─── BANDERAS ───
+    const gFlags = document.createElement('div');
+    gFlags.className = 'cfg-group';
+    gFlags.innerHTML = `<div class="cfg-group-title">Banderas a mostrar</div>`;
+
+    const toolbar = document.createElement('div');
+    toolbar.className = 'flags-actions';
+    toolbar.innerHTML = `
+      <button onclick="prideToggleAll(true)">Todas</button>
+      <button onclick="prideToggleAll(false)">Ninguna</button>
+    `;
+    gFlags.appendChild(toolbar);
+
+    const grid = document.createElement('div');
+    grid.className = 'flags-grid';
+
+    const enabledSet = prideConfig.enabled
+      ? new Set(prideConfig.enabled)
+      : new Set(PRIDE_ORDEN);
+
+    PRIDE_ORDEN.forEach(id => {
+      const item = prideExplain[id];
+      if (!item) return;
+      const row = document.createElement('label');
+      row.className = 'flag-check';
+      row.innerHTML = `
+        <input type="checkbox" data-pride-flag="${id}" ${enabledSet.has(id) ? 'checked' : ''}>
+        <span title="${item.name}">${item.name}</span>
+      `;
+      grid.appendChild(row);
+    });
+    gFlags.appendChild(grid);
+    body.appendChild(gFlags);
+
+    // ─── BANDERA FIJA ───
+    const gFixed = document.createElement('div');
+    gFixed.className = 'cfg-group';
+    gFixed.innerHTML = `<div class="cfg-group-title">Bandera fija (modo "Fija")</div>`;
+    const selFixed = document.createElement('select');
+    selFixed.id = 'prideFixed';
+    PRIDE_ORDEN.forEach(id => {
+      const item = prideExplain[id];
+      if (!item) return;
+      const opt = document.createElement('option');
+      opt.value = id;
+      opt.textContent = item.name;
+      if (prideConfig.fixedId === id) opt.selected = true;
+      selFixed.appendChild(opt);
+    });
+    const fixedRow = document.createElement('div');
+    fixedRow.className = 'cfg-input-row';
+    fixedRow.appendChild(selFixed);
+    gFixed.appendChild(fixedRow);
+    body.appendChild(gFixed);
+
+    // ─── EVENTOS ───
+    body.querySelectorAll('input[name="prideMode"]').forEach(r => {
+      r.addEventListener('change', e => prideConfig.mode = e.target.value);
+    });
+    body.querySelector('#prideSpeed')?.addEventListener('input', e => {
+      prideConfig.rotateMs = parseInt(e.target.value, 10) * 1000;
+      document.getElementById('prideSpeedVal').textContent = e.target.value + 's';
+    });
+    body.querySelector('#prideFolder')?.addEventListener('change', e => prideConfig.folder = e.target.value);
+    body.querySelector('#prideFixed')?.addEventListener('change', e => prideConfig.fixedId = e.target.value);
+    body.querySelectorAll('input[data-pride-opt]').forEach(c => {
+      c.addEventListener('change', e => prideConfig[e.target.dataset.prideOpt] = e.target.checked);
+    });
+
+    document.getElementById('prideDrawerOverlay').classList.add('show');
+    document.getElementById('prideDrawer').classList.add('show');
   }
+
+  function prideToggleAll(state) {
+    document.querySelectorAll('#prideDrawerBody input[data-pride-flag]').forEach(c => c.checked = state);
+  }
+
+  function cerrarConfigPride() {
+    document.getElementById('prideDrawerOverlay').classList.remove('show');
+    document.getElementById('prideDrawer').classList.remove('show');
+  }
+
+  async function guardarConfigPride() {
+    const enabled = [];
+    document.querySelectorAll('#prideDrawerBody input[data-pride-flag]').forEach(c => {
+      if (c.checked) enabled.push(c.dataset.prideFlag);
+    });
+    prideConfig.enabled = enabled.length > 0 ? enabled : null;
+
+    try {
+      const r = await fetch(`${window.SERVER_BASE}/api/pride/config`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(prideConfig)
+      });
+      const data = await r.json();
+      if (data.ok) {
+        mostrarToast('Configuración Pride guardada');
+        cerrarConfigPride();
+      } else {
+        mostrarToast('Error al guardar');
+      }
+    } catch (e) {
+      mostrarToast('Error de red');
+    }
+  }
+
+  async function resetearConfigPride() {
+    if (!confirm('¿Resetear la configuración de banderas Pride?')) return;
+    try {
+      await fetch(`${window.SERVER_BASE}/api/pride/config`, { method: 'DELETE' });
+      mostrarToast('Configuración reseteada');
+      if (document.getElementById('prideDrawer').classList.contains('show')) {
+        cerrarConfigPride();
+      }
+    } catch (e) {
+      mostrarToast('Error');
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  HYPE TRAIN — Configuración
+  // ═══════════════════════════════════════════════════════════
+  let hypeConfig = {
+    theme: 'cyberpunk',
+    duration: 300,
+    base: 100,
+    factor: 1.4,
+    themeChangeEvery: 5,
+    milestones: [5, 10, 15, 20, 30, 50],
+    titles: [
+      { min: 1,  name: 'Pasajero' },
+      { min: 5,  name: 'Maquinista' },
+      { min: 10, name: 'Capitán' },
+      { min: 15, name: 'Comandante' },
+      { min: 20, name: 'Leyenda' }
+    ],
+    sounds: { enabled: true, volume: 0.4, activation: true, gift: true, levelUp: true, milestone: true, sprint: true, end: true, saved: true },
+    display: { showTop3: true, showUniqueGifters: true, showRate: true, showTitles: true },
+    timerRules: { resetOnLevelUp: true, bonusOnMilestone: 60, maxBonus: 300, savedThreshold: 15, showBonusText: true },
+    activation: { giftsRequired: 3, windowMs: 300000, enabled: true }
+  };
+
+  const HYPE_THEMES = [
+    { id: 'cyberpunk', name: 'Cyberpunk', desc: 'Magenta / cyan · líneas de escaneo', icon: '⚡' },
+    { id: 'cristal',   name: 'Cristal',   desc: 'Púrpura / rosa · blur y glow suave', icon: '💎' },
+    { id: 'minimal',   name: 'Minimal',   desc: 'Blanco / negro · limpio sin decoración', icon: '⬜' },
+    { id: 'tiktok',    name: 'TikTok',    desc: 'Rosa / cyan · redondeado y vivo',    icon: '🎵' }
+  ];
+
+  async function abrirConfigHype() {
+    try {
+      const r = await fetch(`${window.SERVER_BASE}/api/hype-train/config`);
+      const data = await r.json();
+      if (data && data.ok && data.config) hypeConfig = { ...hypeConfig, ...data.config };
+    } catch (e) {}
+
+    const body = document.getElementById('hypeDrawerBody');
+    body.innerHTML = '';
+
+    // ─── DISEÑO DEL TREN ───
+    const gTheme = document.createElement('div');
+    gTheme.className = 'cfg-group';
+    gTheme.innerHTML = `<div class="cfg-group-title">🎨 Diseño del tren</div>`;
+
+    const themeGrid = document.createElement('div');
+    themeGrid.className = 'theme-grid';
+
+    HYPE_THEMES.forEach(t => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'theme-option' + (hypeConfig.theme === t.id ? ' active' : '');
+      btn.dataset.theme = t.id;
+      btn.innerHTML = `
+        <div class="theme-preview ${t.id}"><span>${t.icon}</span></div>
+        <span class="theme-name">${t.name}</span>
+        <span class="theme-desc">${t.desc}</span>
+      `;
+      btn.onclick = () => {
+        hypeConfig.theme = t.id;
+        document.querySelectorAll('.theme-option').forEach(o => o.classList.remove('active'));
+        btn.classList.add('active');
+      };
+      themeGrid.appendChild(btn);
+    });
+    gTheme.appendChild(themeGrid);
+    body.appendChild(gTheme);
+
+    // ─── CURVA DE NIVELES ───
+    const gCurve = document.createElement('div');
+    gCurve.className = 'cfg-group';
+    gCurve.innerHTML = `<div class="cfg-group-title">📈 Curva de niveles</div>`;
+
+    const curveRow = document.createElement('div');
+    curveRow.className = 'cfg-input-row';
+    curveRow.innerHTML = `
+      <label>Duración del timer (segundos)</label>
+      <div><input type="number" id="hypeDuration" min="30" max="3600" step="30" value="${hypeConfig.duration}"></div>
+    `;
+    gCurve.appendChild(curveRow);
+
+    const baseRow = document.createElement('div');
+    baseRow.className = 'cfg-input-row';
+    baseRow.innerHTML = `
+      <label>Puntos base para nivel 1</label>
+      <div><input type="number" id="hypeBase" min="1" step="10" value="${hypeConfig.base}"></div>
+    `;
+    gCurve.appendChild(baseRow);
+
+    const factorRow = document.createElement('div');
+    factorRow.className = 'cfg-input-row';
+    factorRow.innerHTML = `
+      <label>Factor de crecimiento (1.4 = +40% por nivel)</label>
+      <div><input type="number" id="hypeFactor" min="1.01" max="5" step="0.05" value="${hypeConfig.factor}"></div>
+    `;
+    gCurve.appendChild(factorRow);
+
+    const themeEveryRow = document.createElement('div');
+    themeEveryRow.className = 'cfg-input-row';
+    themeEveryRow.innerHTML = `
+      <label>Cambiar tema cada N niveles</label>
+      <div><input type="number" id="hypeThemeEvery" min="1" max="20" step="1" value="${hypeConfig.themeChangeEvery}"></div>
+    `;
+    gCurve.appendChild(themeEveryRow);
+
+    body.appendChild(gCurve);
+
+    // ─── HITOS ───
+    const gMile = document.createElement('div');
+    gMile.className = 'cfg-group';
+    gMile.innerHTML = `<div class="cfg-group-title">🎯 Hitos (niveles con bonus y fanfarria)</div>`;
+
+    const chips = document.createElement('div');
+    chips.className = 'milestone-chips';
+    chips.id = 'hypeMilestoneChips';
+    (hypeConfig.milestones || []).forEach(m => {
+      const chip = document.createElement('span');
+      chip.className = 'milestone-chip';
+      chip.textContent = m;
+      chips.appendChild(chip);
+    });
+    gMile.appendChild(chips);
+
+    const mileRow = document.createElement('div');
+    mileRow.className = 'cfg-input-row';
+    mileRow.innerHTML = `
+      <label>Niveles separados por coma</label>
+      <div><input type="text" id="hypeMilestones" value="${(hypeConfig.milestones || []).join(', ')}" placeholder="5, 10, 15, 20, 30, 50"></div>
+    `;
+    gMile.appendChild(mileRow);
+    body.appendChild(gMile);
+
+    // ─── REGLAS DE TIMER ───
+    const gTimer = document.createElement('div');
+    gTimer.className = 'cfg-group';
+    gTimer.innerHTML = `<div class="cfg-group-title">⏱️ Reglas de timer</div>`;
+
+    const resetRow = document.createElement('label');
+    resetRow.className = 'cfg-check-row';
+    resetRow.innerHTML = `
+      <input type="checkbox" id="hypeResetOnLevelUp" ${hypeConfig.timerRules?.resetOnLevelUp !== false ? 'checked' : ''}>
+      <label>Resetear el timer al subir de nivel</label>
+    `;
+    gTimer.appendChild(resetRow);
+
+    const bonusRow = document.createElement('div');
+    bonusRow.className = 'cfg-input-row';
+    bonusRow.innerHTML = `
+      <label>Bonus de tiempo en hito (segundos)</label>
+      <div><input type="number" id="hypeBonus" min="0" max="600" step="10" value="${hypeConfig.timerRules?.bonusOnMilestone ?? 60}"></div>
+    `;
+    gTimer.appendChild(bonusRow);
+
+    const capRow = document.createElement('div');
+    capRow.className = 'cfg-input-row';
+    capRow.innerHTML = `
+      <label>Cap máximo de bonus (segundos)</label>
+      <div><input type="number" id="hypeMaxBonus" min="0" max="3600" step="30" value="${hypeConfig.timerRules?.maxBonus ?? 300}"></div>
+    `;
+    gTimer.appendChild(capRow);
+
+    const savedRow = document.createElement('div');
+    savedRow.className = 'cfg-input-row';
+    savedRow.innerHTML = `
+      <label>Umbral "¡SALVADO!" (segundos restantes)</label>
+      <div><input type="number" id="hypeSavedThreshold" min="1" max="120" step="1" value="${hypeConfig.timerRules?.savedThreshold ?? 15}"></div>
+    `;
+    gTimer.appendChild(savedRow);
+    body.appendChild(gTimer);
+
+    // ─── ACTIVACIÓN ───
+    const gAct = document.createElement('div');
+    gAct.className = 'cfg-group';
+    gAct.innerHTML = `<div class="cfg-group-title">🔥 Activación automática</div>`;
+
+    const actEnableRow = document.createElement('label');
+    actEnableRow.className = 'cfg-check-row';
+    actEnableRow.innerHTML = `
+      <input type="checkbox" id="hypeActEnabled" ${hypeConfig.activation?.enabled !== false ? 'checked' : ''}>
+      <label>Activar el tren automáticamente con regalos</label>
+    `;
+    gAct.appendChild(actEnableRow);
+
+    const actGiftsRow = document.createElement('div');
+    actGiftsRow.className = 'cfg-input-row';
+    actGiftsRow.innerHTML = `
+      <label>Regalos necesarios para arrancar</label>
+      <div><input type="number" id="hypeActGifts" min="1" max="50" step="1" value="${hypeConfig.activation?.giftsRequired ?? 3}"></div>
+    `;
+    gAct.appendChild(actGiftsRow);
+
+    const actWindowRow = document.createElement('div');
+    actWindowRow.className = 'cfg-input-row';
+    actWindowRow.innerHTML = `
+      <label>Ventana de tiempo (minutos)</label>
+      <div><input type="number" id="hypeActWindow" min="1" max="60" step="1" value="${Math.round((hypeConfig.activation?.windowMs ?? 300000) / 60000)}"></div>
+    `;
+    gAct.appendChild(actWindowRow);
+    body.appendChild(gAct);
+
+    // ─── SONIDOS ───
+    const gSound = document.createElement('div');
+    gSound.className = 'cfg-group';
+    gSound.innerHTML = `<div class="cfg-group-title">🔊 Sonidos</div>`;
+
+    const sndEnableRow = document.createElement('label');
+    sndEnableRow.className = 'cfg-check-row';
+    sndEnableRow.innerHTML = `
+      <input type="checkbox" id="hypeSndEnabled" ${hypeConfig.sounds?.enabled !== false ? 'checked' : ''}>
+      <label>Sonidos activados</label>
+    `;
+    gSound.appendChild(sndEnableRow);
+
+    const volRow = document.createElement('div');
+    volRow.className = 'cfg-slider-row';
+    volRow.innerHTML = `
+      <label>Volumen <span id="hypeVolVal">${Math.round((hypeConfig.sounds?.volume ?? 0.4) * 100)}%</span></label>
+      <input type="range" id="hypeSndVolume" min="0" max="1" step="0.05" value="${hypeConfig.sounds?.volume ?? 0.4}">
+    `;
+    gSound.appendChild(volRow);
+    body.appendChild(gSound);
+
+    // ─── VISUALIZACIÓN ───
+    const gDisp = document.createElement('div');
+    gDisp.className = 'cfg-group';
+    gDisp.innerHTML = `<div class="cfg-group-title">👁️ Mostrar en overlay</div>`;
+
+    const dispOpts = [
+      { k: 'showTop3',          l: 'Top 3 gifters' },
+      { k: 'showUniqueGifters', l: 'Gifters únicos' },
+      { k: 'showRate',          l: 'Ritmo (pts/min)' },
+      { k: 'showTitles',        l: 'Títulos por rango' }
+    ];
+    dispOpts.forEach(o => {
+      const row = document.createElement('label');
+      row.className = 'cfg-check-row';
+      row.innerHTML = `
+        <input type="checkbox" data-hype-disp="${o.k}" ${hypeConfig.display?.[o.k] !== false ? 'checked' : ''}>
+        <label>${o.l}</label>
+      `;
+      gDisp.appendChild(row);
+    });
+    body.appendChild(gDisp);
+
+    // ─── ACCIONES EN VIVO ───
+    const gLive = document.createElement('div');
+    gLive.className = 'cfg-group';
+    gLive.innerHTML = `<div class="cfg-group-title">⚡ Acciones en vivo</div>`;
+    const liveRow = document.createElement('div');
+    liveRow.className = 'hype-actions';
+    liveRow.innerHTML = `
+      <button type="button" class="start" onclick="hypeStart()"><i class="ri-play-fill"></i> Arrancar</button>
+      <button type="button" class="end" onclick="hypeEnd()"><i class="ri-stop-fill"></i> Terminar</button>
+      <button type="button" class="reset" onclick="hypeReset()"><i class="ri-refresh-line"></i> Reset</button>
+    `;
+    gLive.appendChild(liveRow);
+    body.appendChild(gLive);
+
+    document.getElementById('hypeDrawerOverlay').classList.add('show');
+    document.getElementById('hypeDrawer').classList.add('show');
+  }
+
+  function cerrarConfigHype() {
+    document.getElementById('hypeDrawerOverlay').classList.remove('show');
+    document.getElementById('hypeDrawer').classList.remove('show');
+  }
+
+  async function guardarConfigHype() {
+    // Leer valores del DOM
+    const duration = parseInt(document.getElementById('hypeDuration').value, 10);
+    const base = parseInt(document.getElementById('hypeBase').value, 10);
+    const factor = parseFloat(document.getElementById('hypeFactor').value);
+    const themeEvery = parseInt(document.getElementById('hypeThemeEvery').value, 10);
+    const milestonesRaw = document.getElementById('hypeMilestones').value;
+    const milestones = milestonesRaw
+      .split(',')
+      .map(s => parseInt(s.trim(), 10))
+      .filter(n => !isNaN(n) && n > 0);
+
+    const resetOnLevelUp = document.getElementById('hypeResetOnLevelUp').checked;
+    const bonus = parseInt(document.getElementById('hypeBonus').value, 10);
+    const maxBonus = parseInt(document.getElementById('hypeMaxBonus').value, 10);
+    const savedThreshold = parseInt(document.getElementById('hypeSavedThreshold').value, 10);
+
+    const actEnabled = document.getElementById('hypeActEnabled').checked;
+    const actGifts = parseInt(document.getElementById('hypeActGifts').value, 10);
+    const actWindowMin = parseInt(document.getElementById('hypeActWindow').value, 10);
+
+    const sndEnabled = document.getElementById('hypeSndEnabled').checked;
+    const sndVolume = parseFloat(document.getElementById('hypeSndVolume').value);
+
+    const display = { ...hypeConfig.display };
+    document.querySelectorAll('#hypeDrawerBody input[data-hype-disp]').forEach(c => {
+      display[c.dataset.hypeDisp] = c.checked;
+    });
+
+    const payload = {
+      ...hypeConfig,
+      theme: hypeConfig.theme,
+      duration: isNaN(duration) ? 300 : duration,
+      base: isNaN(base) ? 100 : base,
+      factor: isNaN(factor) ? 1.4 : factor,
+      themeChangeEvery: isNaN(themeEvery) ? 5 : themeEvery,
+      milestones: milestones.length ? milestones : [5, 10, 15, 20, 30, 50],
+      timerRules: {
+        ...hypeConfig.timerRules,
+        resetOnLevelUp,
+        bonusOnMilestone: isNaN(bonus) ? 60 : bonus,
+        maxBonus: isNaN(maxBonus) ? 300 : maxBonus,
+        savedThreshold: isNaN(savedThreshold) ? 15 : savedThreshold
+      },
+      activation: {
+        ...hypeConfig.activation,
+        enabled: actEnabled,
+        giftsRequired: isNaN(actGifts) ? 3 : actGifts,
+        windowMs: (isNaN(actWindowMin) ? 5 : actWindowMin) * 60000
+      },
+      sounds: { ...hypeConfig.sounds, enabled: sndEnabled, volume: isNaN(sndVolume) ? 0.4 : sndVolume },
+      display
+    };
+
+    try {
+      const r = await fetch(`${window.SERVER_BASE}/api/hype-train/config`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await r.json();
+      if (data.ok) {
+        hypeConfig = { ...hypeConfig, ...data.config };
+        mostrarToast('Hype Train guardado');
+        cerrarConfigHype();
+      } else {
+        mostrarToast('Error al guardar');
+      }
+    } catch (e) {
+      mostrarToast('Error de red');
+    }
+  }
+
+  async function resetHypeConfig() {
+    if (!confirm('¿Resetear la configuración del Hype Train a valores por defecto?')) return;
+    try {
+      const r = await fetch(`${window.SERVER_BASE}/api/hype-train/config`, { method: 'DELETE' });
+      const data = await r.json();
+      if (data.ok) {
+        hypeConfig = { ...data.config };
+        mostrarToast('Configuración reseteada');
+        cerrarConfigHype();
+      }
+    } catch (e) { mostrarToast('Error'); }
+  }
+
+  async function hypeStart() {
+    try {
+      const r = await fetch(`${window.SERVER_BASE}/api/hype-train/start`, { method: 'POST' });
+      const data = await r.json();
+      if (data.ok) mostrarToast('🚂 Tren arrancado');
+      else mostrarToast('Error al arrancar');
+    } catch (e) { mostrarToast('Error'); }
+  }
+
+  async function hypeEnd() {
+    try {
+      const r = await fetch(`${window.SERVER_BASE}/api/hype-train/end`, { method: 'POST' });
+      const data = await r.json();
+      if (data.ok) mostrarToast('🏁 Tren terminado');
+      else mostrarToast('Error al terminar');
+    } catch (e) { mostrarToast('Error'); }
+  }
+
+  async function hypeReset() {
+    if (!confirm('¿Resetear el estado del tren? Se perderán puntos y nivel.')) return;
+    try {
+      const r = await fetch(`${window.SERVER_BASE}/api/hype-train/reset`, { method: 'POST' });
+      const data = await r.json();
+      if (data.ok) mostrarToast('🔄 Tren reseteado');
+    } catch (e) { mostrarToast('Error'); }
+  }
+
+  // ─── Estado en vivo del tren ───
+  let hypeStatePollTimer = null;
+
+  async function actualizarHypeEstado() {
+    try {
+      const r = await fetch(`${window.SERVER_BASE}/api/hype-train/state`);
+      const data = await r.json();
+      if (!data.ok || !data.state) return;
+      const s = data.state;
+
+      const estadoEl = document.getElementById('hypeLiveEstado');
+      const nivelEl = document.getElementById('hypeLiveNivel');
+      const puntosEl = document.getElementById('hypeLivePuntos');
+      const card = document.getElementById('hypeCard');
+
+      if (!estadoEl || !nivelEl || !puntosEl) return;
+
+      if (s.active) {
+        estadoEl.textContent = s.timeLeft ? `🔴 ${formatearTiempo(s.timeLeft)}` : '🔴 Activo';
+        estadoEl.style.color = '#d67ba8';
+        card?.classList.add('live');
+      } else {
+        estadoEl.textContent = 'Inactivo';
+        estadoEl.style.color = '';
+        card?.classList.remove('live');
+      }
+      nivelEl.textContent = s.level || 0;
+      puntosEl.textContent = (s.points || 0).toLocaleString('es-ES');
+    } catch (e) {}
+  }
+
+  function formatearTiempo(seg) {
+    const m = Math.floor(seg / 60);
+    const s = seg % 60;
+    return `${m}:${String(s).padStart(2, '0')}`;
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    actualizarHypeEstado();
+    hypeStatePollTimer = setInterval(actualizarHypeEstado, 3000);
+  });
+
+  // ═══════════════════════════════════════════════════════════
+  //  UTILIDADES
+  // ═══════════════════════════════════════════════════════════
+  function probar(url) { window.open(url, '_blank'); }
 
   let toastTimer = null;
   function mostrarToast(texto) {
@@ -1873,6 +2507,8 @@
     if (e.key === 'Escape') {
       cerrarDrawer();
       cerrarConfigCristal();
+      cerrarConfigPride();
+      cerrarConfigHype();
     }
   });
 </script>
