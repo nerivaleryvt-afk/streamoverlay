@@ -1,0 +1,138 @@
+/* ============================================
+   STREAM TIMER — Estilos v4 (sin meta)
+   Color configurable por el usuario desde /config
+   ============================================ */
+
+:root {
+  /* Color de acento — el JS lo sobreescribe con TIMER_COLOR */
+  --accent:       #e8825a;
+  --accent-soft:  #e8825a33;
+  --accent-glow:  #e8825a66;
+
+  --surface:      #17161c;
+  --surface-2:    #1f1e26;
+  --line:         #2e2d38;
+  --text:         #e8e6ee;
+  --text-dim:     #9a97a8;
+  --text-faint:   #6b6878;
+  --ok:           #6dd48a;
+
+  --radius-pill:  999px;
+}
+
+/* Fondo transparente para OBS */
+html, body {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  font-family: 'Satoshi', system-ui, sans-serif;
+  color: var(--text);
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+}
+
+.timer-stage {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+/* ============================================
+   PASTILLA HORIZONTAL
+   ============================================ */
+.timer-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 18px;
+  background: var(--surface);
+  border: 2px solid var(--accent);
+  border-radius: var(--radius-pill);
+  box-shadow:
+    0 0 14px var(--accent-glow),
+    inset 0 0 12px var(--accent-soft);
+  transition: opacity 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
+}
+
+/* Número grande */
+.timer-display {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--accent);
+  letter-spacing: -0.5px;
+  font-variant-numeric: tabular-nums;
+  transition: color 300ms ease;
+  text-shadow: 0 0 8px var(--accent-glow);
+}
+
+/* Columna derecha */
+.timer-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  line-height: 1.1;
+}
+
+/* Estado: chip chiquito */
+.timer-status {
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  color: var(--text-faint);
+  text-transform: uppercase;
+  transition: color 220ms ease, border-color 220ms ease, background 220ms ease;
+}
+
+/* Chat sumó */
+.timer-added {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: var(--text-faint);
+  letter-spacing: 0.5px;
+}
+
+/* ============================================
+   ESTADOS
+   ============================================ */
+
+/* En vivo → chip verde */
+.timer-pill.is-live .timer-status {
+  color: var(--ok);
+  border-color: #6dd48a55;
+  background: #6dd48a18;
+}
+
+/* Pausado → todo apagado */
+.timer-pill.is-paused {
+  opacity: 0.5;
+  border-color: var(--line);
+  box-shadow: none;
+}
+
+.timer-pill.is-paused .timer-display {
+  color: var(--text-faint);
+  text-shadow: none;
+}
+
+/* Meta cumplida → todo gris */
+.timer-pill.is-done {
+  border-color: var(--text-faint);
+  box-shadow: none;
+}
+
+.timer-pill.is-done .timer-display {
+  color: var(--text-faint);
+  text-shadow: none;
+}

@@ -163,7 +163,6 @@
   let ITEMS = [];
   let idx = 0;
   let timer = null;
-  let currentChatItem = null;
   let chatTimer = null;
 
   const overlayEl = document.getElementById('overlay');
@@ -206,6 +205,7 @@
 
     if (ITEMS.length === 0) {
       console.warn('No hay banderas para mostrar');
+      hideCard();
       return;
     }
 
@@ -216,20 +216,26 @@
   //  RENDER
   // ============================================================
   function render(item) {
-    flagEl.src = folderPath() + encodeURIComponent(item.file);
-    flagEl.alt = item.name;
+    if (!item || !item.file) {
+      console.warn('render() sin item válido, ignorando');
+      return;
+    }
 
-    nameEl.textContent   = CONFIG.showName ? item.name : '';
+    flagEl.src = folderPath() + encodeURIComponent(item.file);
+    flagEl.alt = item.name || 'Bandera';
+
+    nameEl.textContent   = CONFIG.showName ? (item.name || '') : '';
     nameEl.style.display = CONFIG.showName ? '' : 'none';
 
-    meanEl.textContent   = CONFIG.showMeaning ? item.meaning : '';
+    meanEl.textContent   = CONFIG.showMeaning ? (item.meaning || '') : '';
     meanEl.style.display = CONFIG.showMeaning ? '' : 'none';
 
     colorsEl.innerHTML = '';
-    if (CONFIG.showColors && item.colors) {
+    if (CONFIG.showColors && Array.isArray(item.colors) && item.colors.length > 0) {
       item.colors.forEach(c => {
+        if (!c) return;
         const span = document.createElement('span');
-        span.innerHTML = `<i style="background:${c.hex}"></i>${c.label}${c.desc ? ' · ' + c.desc : ''}`;
+        span.innerHTML = `<i style="background:${c.hex || '#888'}"></i>${c.label || ''}${c.desc ? ' · ' + c.desc : ''}`;
         colorsEl.appendChild(span);
       });
       colorsEl.style.display = '';
@@ -245,12 +251,18 @@
   //  MODOS
   // ============================================================
   function aplicarModo() {
-    overlayEl.classList.toggle('solo-bandera', CONFIG.soloBandera);
+    overlayEl.classList.toggle('solo-bandera', !!CONFIG.soloBandera);
 
     if (timer) { clearInterval(timer); timer = null; }
 
+    if (!ITEMS || ITEMS.length === 0) {
+      hideCard();
+      return;
+    }
+
     if (CONFIG.mode === 'fixed') {
       const item = ITEMS.find(i => i.id === CONFIG.fixedId) || ITEMS[0];
+      if (!item) { hideCard(); return; }
       render(item);
       showCard();
       return;
@@ -269,6 +281,7 @@
     timer = setInterval(() => {
       hideCard();
       setTimeout(() => {
+        if (ITEMS.length === 0) return;
         idx = (idx + 1) % ITEMS.length;
         render(ITEMS[idx]);
         showCard();
@@ -282,16 +295,17 @@
   const socket = io();
 
   socket.on('pride:config-updated', (newCfg) => {
+    if (!newCfg || typeof newCfg !== 'object') return;
     Object.assign(CONFIG, newCfg);
     aplicarModo();
   });
 
-  socket.on('pride:show', ({ id, nombre }) => {
+  socket.on('pride:show', ({ id, nombre } = {}) => {
     let item = null;
     if (id && EXPLAIN[id]) item = { id, ...EXPLAIN[id] };
     else if (nombre) {
       const key = Object.keys(EXPLAIN).find(k =>
-        EXPLAIN[k].name.toLowerCase().includes(nombre.toLowerCase())
+        EXPLAIN[k] && EXPLAIN[k].name && EXPLAIN[k].name.toLowerCase().includes(String(nombre).toLowerCase())
       );
       if (key) item = { id: key, ...EXPLAIN[key] };
     }
@@ -311,7 +325,10 @@
         else {
           // fixed: vuelve a la fija
           const fija = ITEMS.find(i => i.id === CONFIG.fixedId) || ITEMS[0];
-          render(fija);
+          if (fija) {
+            render(fija);
+            showCard();
+          }
         }
       }, 8000);
     }, 400);
@@ -320,14 +337,13 @@
   // ============================================================
   //  INIT
   // ============================================================
-  cargar();
-
-  // Permite previsualización con query params: /pride?preview=1&mode=fixed&id=trans-pride
   const params = new URLSearchParams(location.search);
-  if (params.has('mode')) CONFIG.mode = params.get('mode');
-  if (params.has('id'))   CONFIG.fixedId = params.get('id');
-  if (params.has('folder')) CONFIG.folder = params.get('folder');
-  if (params.has('solo')) CONFIG.soloBandera = params.get('solo') === '1';
+  if (params.has('mode'))   CONFIG.mode        = params.get('mode');
+  if (params.has('id'))     CONFIG.fixedId     = params.get('id');
+  if (params.has('folder')) CONFIG.folder      = params.get('folder');
+  if (params.has('solo'))   CONFIG.soloBandera = params.get('solo') === '1';
+
+  cargar();
 </script>
 
 </body>

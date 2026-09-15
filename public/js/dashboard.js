@@ -873,12 +873,15 @@ async function loadTikTokView() {
 function openTikTokNative() { if (ipcRenderer) ipcRenderer.send('open-tiktok-window'); }
 
 socket.on('connect', () => {
-  document.getElementById('connectionStatus').innerHTML = '<i class="ri-wifi-line"></i> Conectado';
+  document.getElementById('connectionStatus').innerHTML =
+    '<span class="status-dot"></span><span class="status-text">Conectado</span>';
   loadChannels().then(() => loadStreamInfo());
   socket.emit('tiktok-get-stats');
 });
 socket.on('disconnect', () => {
-  document.getElementById('connectionStatus').innerHTML = '<i class="ri-wifi-off-line"></i> Desconectado';
+  document.getElementById('connectionStatus').innerHTML =
+    '<span class="status-dot" style="background:var(--danger);box-shadow:0 0 0 0 rgba(248,113,113,0.55);"></span>' +
+    '<span class="status-text" style="color:var(--danger);">Desconectado</span>';
 });
 
 socket.on('chat-message', (msg) => {
@@ -1127,12 +1130,12 @@ function addMessageToFeed(msg) {
   if (!msg || !msg.username) return;
   const feed = document.getElementById('liveChat');
   const entry = document.createElement('div');
-  entry.className = 'chat-message';
+  const platform = (msg.platform || 'twitch').toLowerCase();
+  entry.className = `chat-message platform-${platform}`;
   const avatarImg = document.createElement('img');
   avatarImg.className = 'avatar';
   avatarImg.src = msg.avatar || DEFAULT_AVATAR;
   avatarImg.onerror = function() { this.src = DEFAULT_AVATAR; };
-  const platform = (msg.platform || 'twitch').toLowerCase();
   let platformClass = 'platform-twitch';
   if (platform === 'tiktok') platformClass = 'platform-tiktok';
   else if (platform === 'kick') platformClass = 'platform-kick';

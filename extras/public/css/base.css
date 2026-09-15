@@ -1,0 +1,87 @@
+/* ═══════════════════════════════════════════════════════════════
+   base.css — Tokens, reset, tipografía, scrollbars
+   Compartido por: config, dashboard, panel, overlays
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Superficies ── */
+  --bg: #0f0e13;
+  --surface: #16151c;
+  --surface-2: #1c1b23;
+  --surface-3: #22212b;
+  --line: #26242e;
+  --line-strong: #35323f;
+
+  /* ── Acento ── */
+  --accent: #e8825a;
+  --accent-hover: #f0926a;
+  --accent-soft: rgba(232, 130, 90, 0.12);
+  --accent-border: rgba(232, 130, 90, 0.4);
+
+  /* ── Estados ── */
+  --ok: #6dd58c;
+  --ok-soft: rgba(109, 213, 140, 0.1);
+  --warn: #e8b54d;
+  --err: #e56969;
+  --info: #6da4e5;
+
+  /* ── Texto ── */
+  --text: #e8e6f0;
+  --text-2: #a8a5b5;
+  --text-3: #6f6c80;
+
+  /* ── Radios ── */
+  --r-xs: 4px;
+  --r-sm: 7px;
+  --r-md: 11px;
+  --r-lg: 16px;
+  --r-pill: 999px;
+
+  /* ── Tipografía ── */
+  --font-ui: 'Satoshi', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+}
+
+/* ── Reset ── */
+* { box-sizing: border-box; }
+
+/* ── Body ── */
+body {
+  font-family: var(--font-ui);
+  background: var(--bg);
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(232, 130, 90, 0.05), transparent 70%),
+    linear-gradient(rgba(255,255,255,0.012) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.012) 1px, transparent 1px);
+  background-size: 100% 100%, 36px 36px, 36px 36px;
+  background-attachment: fixed;
+  color: var(--text);
+  margin: 0;
+  padding: 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Selección ── */
+::selection {
+  background: var(--accent);
+  color: #0f0e13;
+}
+
+/* ── Scrollbars globales ── */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--accent) 0%, #d56a44 100%);
+  border-radius: var(--r-pill);
+  border: 2px solid var(--bg);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-hover);
+}

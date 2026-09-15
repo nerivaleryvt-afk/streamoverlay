@@ -624,6 +624,31 @@ function guardarJarState() {
 
 cargarJarState();
 
+// ================================================================
+// ⏱️ ESTADO PERSISTENTE DEL STREAM TIMER
+// ================================================================
+const TIMER_STATE_PATH = IS_PACKAGED
+    ? path.join(USER_DATA_DIR, 'timer-state.json')
+    : path.join(__dirname, 'timer-state.json');
+
+let timerState = {
+    // Cuándo termina el timer (timestamp en ms). 0 = sin meta todavía.
+    metaMs: 0,
+    // Cuánto sumó el chat en total (en segundos, para mostrar).
+    sumadoSec: 0,
+    // 'live' | 'paused' | 'done'
+    modo: 'paused',
+    // Duración base del stream en minutos (configurable desde /config).
+    duracionBaseMin: 240,
+    // Modo de cálculo: 'hora' (hora exacta) | 'duracion'
+    modoConfig: 'duracion',
+    // Si modoConfig es 'hora', acá va la hora objetivo (ej: "22:00").
+    horaObjetivo: '22:00',
+    updatedAt: null
+};
+
+let timerDirty = false;
+
 let jarDirty = false;
 setInterval(() => {
     if (jarDirty) {
@@ -631,6 +656,191 @@ setInterval(() => {
         jarDirty = false;
     }
 }, 10000);
+
+// ================================================================
+// ⏱️ STREAM TIMER — Funciones de persistencia
+// ================================================================
+function cargarTimerState() {
+    try {
+        if (fs.existsSync(TIMER_STATE_PATH)) {
+            const raw = fs.readFileSync(TIMER_STATE_PATH, 'utf8');
+            const parsed = JSON.parse(raw);
+            timerState = {
+                metaMs:            typeof parsed.metaMs === 'number' ? parsed.metaMs : 0,
+                sumadoSec:         typeof parsed.sumadoSec === 'number' ? parsed.sumadoSec : 0,
+                modo:              ['live', 'paused', 'done'].includes(parsed.modo) ? parsed.modo : 'paused',
+                duracionBaseMin:   typeof parsed.duracionBaseMin === 'number' && parsed.duracionBaseMin > 0 ? parsed.duracionBaseMin : 240,
+                modoConfig:        ['hora', 'duracion'].includes(parsed.modoConfig) ? parsed.modoConfig : 'duracion',
+                horaObjetivo:      typeof parsed.horaObjetivo === 'string' ? parsed.horaObjetivo : '22:00',
+                updatedAt:         parsed.updatedAt || null
+            };
+            console.log(`⏱️ Estado del timer cargado: meta=${timerState.metaMs}, modo=${timerState.modo}`);
+        } else {
+            console.log('⏱️ No hay estado previo del timer, empezando en pausa');
+        }
+    } catch (e) {
+        console.error('❌ Error cargando timer-state.json:', e.message);
+    }
+}
+
+function guardarTimerState() {
+    try {
+        timerState.updatedAt = new Date().toISOString();
+        fs.writeFileSync(TIMER_STATE_PATH, JSON.stringify(timerState, null, 2));
+    } catch (e) {
+        console.error('❌ Error guardando timer-state.json:', e.message);
+    }
+}
+
+// Guardado automático cada 10s si hay cambios
+setInterval(() => {
+    if (timerDirty) {
+        guardarTimerState();
+        timerDirty = false;
+    }
+}, 10000);
+
+// Cargar al arrancar
+cargarTimerState();
+
+// ────────────────────────────────────────────
+// ⏱️ TICK — baja el timer 1s y avisa a todos
+// ────────────────────────────────────────────
+setInterval(() => {
+    // Solo baja si está en vivo
+    if (timerState.modo !== 'live') return;
+
+    // ¿Cuánto falta ahora?
+    const restanteMs = timerState.metaMs - Date.now();
+
+    // ¿Llegamos a 0?
+    if (restanteMs <= 0) {
+        if (timerState.modo !== 'done') {
+            timerState.modo = 'done';
+            timerDirty = true;
+            console.log('⏱️ Timer llegó a 0 (meta cumplida)');
+        }
+    }
+
+    // Avisar a todos los clientes conectados (overlay)
+    io.emit('timer-update', {
+        ...timerState,
+        restanteMs: Math.max(0, restanteMs)
+    });
+}, 1000);
+
+// ────────────────────────────────────────────
+// ⏱️ Empuja la meta hacia adelante (suma segundos)
+// ────────────────────────────────────────────
+function timerPush(segundos) {
+    if (typeof segundos !== 'number' || segundos <= 0) return;
+    if (timerState.metaMs === 0) return; // sin meta todavía, no suma
+
+    timerState.metaMs += segundos * 1000;
+    timerState.sumadoSec += segundos;
+    timerState.modo = 'live'; // si estaba done, revive
+    timerDirty = true;
+
+    io.emit('timer-update', {
+        ...timerState,
+        restanteMs: Math.max(0, timerState.metaMs - Date.now())
+    });
+}
+
+
+// Endpoints básicos del timer
+app.get('/api/timer-state', (req, res) => {
+    res.json(timerState);
+});
+
+// ────────────────────────────────────────────
+// ⏱️ Fijar la meta y arrancar el timer
+// ────────────────────────────────────────────
+app.post('/api/timer-state/start', (req, res) => {
+    try {
+        const body = req.body || {};
+        const modoConfig = body.modoConfig || config.TIMER_MODO || 'duracion';
+        const duracionMin = Number(body.duracionMin) || config.TIMER_DURACION_MIN || 240;
+        const horaObjetivo = String(body.horaObjetivo || config.TIMER_HORA_OBJETIVO || '22:00');
+
+        let metaMs = 0;
+
+        if (modoConfig === 'hora') {
+            const m = horaObjetivo.match(/^(\d{1,2}):(\d{2})$/);
+            if (!m) return res.status(400).json({ ok: false, error: 'Hora inválida (usar HH:MM)' });
+            const hh = parseInt(m[1], 10);
+            const mm = parseInt(m[2], 10);
+            if (hh < 0 || hh > 23 || mm < 0 || mm > 59) {
+                return res.status(400).json({ ok: false, error: 'Hora fuera de rango' });
+            }
+            const target = new Date();
+            target.setHours(hh, mm, 0, 0);
+            if (target.getTime() <= Date.now()) {
+                target.setDate(target.getDate() + 1);
+            }
+            metaMs = target.getTime();
+        } else {
+            metaMs = Date.now() + duracionMin * 60 * 1000;
+        }
+
+        timerState.metaMs      = metaMs;
+        timerState.modo        = 'live';
+        timerState.modoConfig  = modoConfig;
+        timerState.duracionBaseMin = duracionMin;
+        timerState.horaObjetivo = horaObjetivo;
+        timerState.sumadoSec   = 0;
+        timerDirty = true;
+
+        guardarTimerState();
+        io.emit('timer-update', {
+            ...timerState,
+            restanteMs: Math.max(0, timerState.metaMs - Date.now())
+        });
+
+        console.log(`⏱️ Timer arrancado: modo=${modoConfig}, meta=${new Date(metaMs).toLocaleString()}`);
+
+        res.json({ ok: true, state: timerState });
+    } catch (e) {
+        console.error('❌ Error en /api/timer-state/start:', e.message);
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+// ────────────────────────────────────────────
+// ⏱️ Pausar / reanudar (sin perder la meta)
+// ────────────────────────────────────────────
+app.post('/api/timer-state/pause', (req, res) => {
+    timerState.modo = 'paused';
+    timerDirty = true;
+    guardarTimerState();
+    io.emit('timer-update', { ...timerState, restanteMs: Math.max(0, timerState.metaMs - Date.now()) });
+    res.json({ ok: true, state: timerState });
+});
+
+app.post('/api/timer-state/resume', (req, res) => {
+    if (timerState.metaMs === 0) {
+        return res.status(400).json({ ok: false, error: 'No hay meta fijada. Arrancá con /api/timer-state/start primero.' });
+    }
+    timerState.modo = 'live';
+    timerDirty = true;
+    guardarTimerState();
+    io.emit('timer-update', { ...timerState, restanteMs: Math.max(0, timerState.metaMs - Date.now()) });
+    res.json({ ok: true, state: timerState });
+});
+
+
+app.post('/api/timer-state/reset', (req, res) => {
+    timerState.metaMs = 0;
+    timerState.sumadoSec = 0;
+    timerState.modo = 'paused';
+    timerState.updatedAt = new Date().toISOString();
+    timerDirty = true;
+    guardarTimerState();
+    io.emit('timer-update', timerState);
+    console.log('⏱️ Timer reseteado');
+    res.json({ success: true, state: timerState });
+});
+
 
 app.get('/api/jar-state', (req, res) => {
     res.json(jarState);
@@ -787,7 +997,24 @@ function loadConfig() {
                                 if (typeof parsed.JAR_META !== 'number' || parsed.JAR_META < 1) {
             parsed.JAR_META = 500;
         }
-
+        if (typeof parsed.CRYSTAL_STYLE !== 'string' || !['jar', 'bar'].includes(parsed.CRYSTAL_STYLE)) {
+            parsed.CRYSTAL_STYLE = 'jar';
+        }
+		
+		// ⏱️ TIMER — defaults persistentes
+if (typeof parsed.TIMER_DURACION_MIN !== 'number' || parsed.TIMER_DURACION_MIN < 5) {
+    parsed.TIMER_DURACION_MIN = 240;
+}
+if (!['hora', 'duracion'].includes(parsed.TIMER_MODO)) {
+    parsed.TIMER_MODO = 'duracion';
+}
+if (typeof parsed.TIMER_HORA_OBJETIVO !== 'string' || !/^\d{2}:\d{2}$/.test(parsed.TIMER_HORA_OBJETIVO)) {
+    parsed.TIMER_HORA_OBJETIVO = '22:00';
+}
+if (typeof parsed.TIMER_COLOR !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(parsed.TIMER_COLOR)) {
+    parsed.TIMER_COLOR = '#e8825a';
+}
+		
         // 🏳️🌈 PRIDE — defaults persistentes
         if (!parsed.PRIDE || typeof parsed.PRIDE !== 'object') {
             parsed.PRIDE = { ...PRIDE_DEFAULTS };
@@ -1756,9 +1983,12 @@ const tiktokChat = new TikTokChat({
                     platform: 'tiktok'
                 });
             } catch (e) { console.error('❌ [HYPE] Error addGift tiktok:', e.message); }
+
+            // ⏱️ TIMER — regalo suma diamantesTotales × 3s
+            timerPush((data.diamantesTotales || 0) * 3);
         }
     },
-    onFollow: (data) => {
+      onFollow: (data) => {
         io.emit('tiktok-follow', data);
         io.emit('chat-message', {
             platform: 'tiktok', username: data.username,
@@ -1766,8 +1996,9 @@ const tiktokChat = new TikTokChat({
             channel: data.channel, avatar: data.avatar || TIKTOK_DEFAULT_AVATAR,
             color: '#fe2c55', type: 'follow', timestamp: data.timestamp
         });
+        timerPush(30); // ⏱️ TIMER — follow suma 30s
     },
-    onShare: (data) => {
+        onShare: (data) => {
         io.emit('tiktok-share', data);
         io.emit('chat-message', {
             platform: 'tiktok', username: data.username,
@@ -1775,6 +2006,7 @@ const tiktokChat = new TikTokChat({
             channel: data.channel, avatar: data.avatar || TIKTOK_DEFAULT_AVATAR,
             color: '#fe2c55', type: 'share', timestamp: data.timestamp
         });
+        timerPush(0.4); // ⏱️ TIMER — share suma 0.4s
     },
     onSubscribe: (data) => {
         io.emit('tiktok-sub', data);
@@ -1784,6 +2016,7 @@ const tiktokChat = new TikTokChat({
             channel: data.channel, avatar: data.avatar || TIKTOK_DEFAULT_AVATAR,
             color: '#fe2c55', type: 'sub', timestamp: data.timestamp
         });
+        timerPush(60); // ⏱️ TIMER — sub suma 60s
     },
     onMember: (data) => {
         io.emit('tiktok-member', data);
@@ -1796,7 +2029,10 @@ const tiktokChat = new TikTokChat({
     },
     onRoomUser: (data) => { io.emit('tiktok-viewers', data); },
     onSocial: (data) => { io.emit('tiktok-social', data); },
-    onStatus: (info) => { io.emit('tiktok-status', info); },
+    onStatus: (info) => {
+    io.emit('tiktok-status', info);
+    try { manejarEstadoTikTok(info); } catch (e) { console.error('⏱️ Error en manejarEstadoTikTok:', e.message); }
+},
     onStats: ({ usuario, stats }) => {
         io.emit('tiktok-stats', { usuario, stats });
         const todos = tiktokChat.getAllStats();
@@ -1936,7 +2172,12 @@ app.get('/get-config', (req, res) => {
         channels: getAllTwitchChannels(),
         CONTROL_URL: config.CONTROL_URL || 'https://livecenter.tiktok.com/live_monitor',
         TTS: config.TTS || {},
-        JAR_META: config.JAR_META || 500,
+         JAR_META: config.JAR_META || 500,
+        CRYSTAL_STYLE: config.CRYSTAL_STYLE || 'jar',
+		TIMER_DURACION_MIN: config.TIMER_DURACION_MIN || 240,
+TIMER_MODO: config.TIMER_MODO || 'duracion',
+TIMER_HORA_OBJETIVO: config.TIMER_HORA_OBJETIVO || '22:00',
+TIMER_COLOR: config.TIMER_COLOR || '#e8825a',
         PRIDE: getPrideConfig(),
         HYPE_TRAIN: getHypeTrainConfig(),
         aiCohost: {
@@ -2024,9 +2265,27 @@ app.post('/save-config', (req, res) => {
             newConfig.aiCohost = config.aiCohost || {};
         }
 
-        if (typeof newConfig.JAR_META !== 'number' || newConfig.JAR_META < 1) {
+         if (typeof newConfig.JAR_META !== 'number' || newConfig.JAR_META < 1) {
             newConfig.JAR_META = config.JAR_META || 500;
         }
+
+        if (typeof newConfig.CRYSTAL_STYLE !== 'string' || !['jar', 'bar'].includes(newConfig.CRYSTAL_STYLE)) {
+            newConfig.CRYSTAL_STYLE = config.CRYSTAL_STYLE || 'jar';
+        }
+		
+		// ⏱️ TIMER — saneamiento en save-config
+if (typeof newConfig.TIMER_DURACION_MIN !== 'number' || newConfig.TIMER_DURACION_MIN < 5) {
+    newConfig.TIMER_DURACION_MIN = config.TIMER_DURACION_MIN || 240;
+}
+if (!['hora', 'duracion'].includes(newConfig.TIMER_MODO)) {
+    newConfig.TIMER_MODO = config.TIMER_MODO || 'duracion';
+}
+if (typeof newConfig.TIMER_HORA_OBJETIVO !== 'string' || !/^\d{2}:\d{2}$/.test(newConfig.TIMER_HORA_OBJETIVO)) {
+    newConfig.TIMER_HORA_OBJETIVO = config.TIMER_HORA_OBJETIVO || '22:00';
+}
+if (typeof newConfig.TIMER_COLOR !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(newConfig.TIMER_COLOR)) {
+    newConfig.TIMER_COLOR = config.TIMER_COLOR || '#e8825a';
+}
 
         // 🏳️🌈 PRIDE — preservar si no viene en el body
         if (!newConfig.PRIDE || typeof newConfig.PRIDE !== 'object') {
@@ -2908,6 +3167,7 @@ async function shutdown(reason = 'unknown') {
 
     try { guardarJarState(); } catch (e) {}
     try { hypeTrain.destroy(); } catch (e) {}
+	try { guardarTimerState(); } catch (e) {}
 
     if (kickWs) { try { kickWs.close(); } catch {} try { kickWs.terminate(); } catch {} }
     if (kickReconnectTimer) clearTimeout(kickReconnectTimer);

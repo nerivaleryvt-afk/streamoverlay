@@ -1,0 +1,631 @@
+/* ═══════════════════════════════════════════════════════════════
+   crystal.css — Estilos del overlay de cristal (meta de donaciones)
+   Paleta TogiPanel · ámbar #e8825a
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Paleta TogiPanel */
+  --accent:        #e8825a;
+  --accent-soft:   #f0a184;
+  --bg:            #0f0e13;
+  --surface:       #17161c;
+  --surface-2:     #1e1c24;
+  --line:          rgba(255,255,255,0.08);
+  --line-strong:   rgba(255,255,255,0.16);
+  --text:          #eceae6;
+  --text-dim:      #8a8792;
+
+  /* Cristal (ámbar, sobrio) */
+  --crystal-fill-top:     rgba(232,130,90,0.18);
+  --crystal-fill-bottom:  rgba(232,130,90,0.06);
+  --crystal-stroke:       rgba(232,130,90,0.75);
+  --crystal-edge:         rgba(255,255,255,0.20);
+  --crystal-glow:         rgba(232,130,90,0.35);
+  --crystal-glow-size:    20px;
+
+  /* Partículas */
+  --particle-1:     #f0a184;
+  --particle-2:     #e8825a;
+  --particle-3:     #b8623f;
+  --particle-glow:  rgba(232,130,90,0.55);
+
+  /* Meta alcanzada (dorado sobrio) */
+  --gold-1:         #f5d97a;
+  --gold-2:         #d9a441;
+  --gold-3:         #a67a2a;
+  --gold-glow:      rgba(217,164,65,0.7);
+
+  /* Texto */
+  --text-primary:   #eceae6;
+  --text-secondary: #8a8792;
+  --meta-color:     #8a8792;
+  --label-color:    #8a8792;
+  --label-glow:     transparent;
+
+  /* Top donor */
+  --topdonor-bg:     #1e1c24;
+  --topdonor-border: rgba(255,255,255,0.10);
+  --topdonor-glow:   transparent;
+  --topdonor-coin-1: #f5d97a;
+  --topdonor-coin-2: #d9a441;
+  --topdonor-coin-text: #1a1207;
+
+  /* Progress */
+  --progress-bg:    rgba(255,255,255,0.05);
+  --progress-1:     #b8623f;
+  --progress-2:     #e8825a;
+  --progress-3:     #f0a184;
+  --progress-glow:  transparent;
+
+  --font-family: 'Satoshi', system-ui, -apple-system, sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: var(--font-family); }
+html, body {
+  background: transparent !important;
+  overflow: hidden;
+  width: 100vw;
+  height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+#stage {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+/* ── Chispas ambientales ── */
+.ambient {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.ambient-spark {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: var(--particle-2);
+  box-shadow: 0 0 6px var(--particle-glow);
+  opacity: 0;
+  animation: ambientRise 6s linear infinite;
+}
+@keyframes ambientRise {
+  0%   { transform: translateY(0) scale(1); opacity: 0; }
+  10%  { opacity: 0.8; }
+  90%  { opacity: 0.8; }
+  100% { transform: translateY(-400px) scale(0.3); opacity: 0; }
+}
+
+/* ── Cristal ── */
+.crystal-stage {
+  position: relative;
+  width: 340px;
+  height: 420px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.crystal {
+  position: relative;
+  width: 280px;
+  height: 330px;
+  animation: float 7s ease-in-out infinite;
+  filter: drop-shadow(0 0 var(--crystal-glow-size) var(--crystal-glow));
+  transition: filter 0.6s ease;
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50%      { transform: translateY(-16px) rotate(1.5deg); }
+}
+
+.crystal svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* ── Partículas dentro del cristal ── */
+.particles {
+  position: absolute;
+  left: 25px;
+  top: 13px;
+  width: 229px;
+  height: 305px;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 2;
+  clip-path: polygon(
+    50% 0%,
+    100% 21%,
+    100% 79%,
+    50% 100%,
+    0% 79%,
+    0% 21%
+  );
+  -webkit-clip-path: polygon(
+    50% 0%,
+    100% 21%,
+    100% 79%,
+    50% 100%,
+    0% 79%,
+    0% 21%
+  );
+}
+
+.particle {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%,
+    var(--particle-1),
+    var(--particle-2),
+    var(--particle-3));
+  box-shadow:
+    0 0 8px var(--particle-glow),
+    0 0 16px var(--particle-glow);
+  transition: background 0.5s ease, box-shadow 0.5s ease,
+              opacity 0.6s ease, transform 0.6s ease;
+  will-change: transform, opacity;
+}
+.particle.falling {
+  opacity: 0;
+}
+.particle.gold {
+  background: radial-gradient(circle at 30% 30%,
+    var(--gold-1),
+    var(--gold-2),
+    var(--gold-3));
+  box-shadow:
+    0 0 10px var(--gold-glow),
+    0 0 22px var(--gold-glow);
+}
+.particle.gift-icon {
+  width: 18px;
+  height: 18px;
+  background-color: transparent;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  box-shadow: none;
+  filter: drop-shadow(0 0 6px var(--crystal-glow));
+}
+
+.particle.melting {
+  opacity: 0 !important;
+  transform: scale(0.5) !important;
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+body.meta-reached .crystal {
+  filter: drop-shadow(0 0 40px rgba(217,164,65,0.55));
+}
+
+/* ── Info pegada al cristal ── */
+.info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-height: auto;
+  margin-top: -16px;
+  z-index: 3;
+}
+
+.label-row {
+  font-size: 0.68em;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--label-color);
+  opacity: 0.9;
+  text-align: center;
+  margin-bottom: 6px;
+}
+
+.top-donor-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  opacity: 0;
+  transform: translateY(-8px) scale(0.95);
+  transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.top-donor-wrap.show {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.top-donor {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--topdonor-bg);
+  border: 1px solid var(--topdonor-border);
+  border-radius: 999px;
+  padding: 6px 18px 6px 6px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+  position: relative;
+  overflow: hidden;
+}
+.top-donor .avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  background: #2a2a35;
+  object-fit: cover;
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.top-donor .avatar.is-default svg {
+  width: 60%;
+  height: 60%;
+  fill: var(--accent);
+  opacity: 0.75;
+}
+.top-donor .avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}
+.top-donor .name {
+  font-weight: 800;
+  font-size: 0.95em;
+  color: var(--text-primary);
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  letter-spacing: 0.3px;
+  position: relative;
+  z-index: 1;
+}
+
+.top-donor .gift-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px 3px 6px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 999px;
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+}
+.top-donor .gift-icon-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  font-size: 18px;
+  line-height: 1;
+}
+.top-donor .gift-icon-wrap img {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+.top-donor .gift-name {
+  font-size: 0.78em;
+  font-weight: 700;
+  color: var(--text-primary);
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  letter-spacing: 0.2px;
+}
+.top-donor .gift-streak {
+  font-size: 0.75em;
+  font-weight: 900;
+  color: var(--topdonor-coin-2);
+  background: rgba(217,164,65,0.12);
+  padding: 2px 7px;
+  border-radius: 999px;
+  letter-spacing: 0.3px;
+  font-family: 'JetBrains Mono', 'Menlo', 'Consolas', monospace;
+  border: 1px solid rgba(217,164,65,0.25);
+}
+
+.top-donor .coins {
+  background: linear-gradient(135deg, var(--topdonor-coin-1), var(--topdonor-coin-2));
+  color: var(--topdonor-coin-text);
+  padding: 5px 12px 5px 8px;
+  border-radius: 999px;
+  font-size: 0.82em;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.4);
+  letter-spacing: 0.3px;
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+}
+.top-donor .coins svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.meta-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.total {
+  font-size: 1.55em;
+  font-weight: 900;
+  color: var(--text-primary);
+  letter-spacing: 2px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-variant-numeric: tabular-nums;
+  font-family: 'JetBrains Mono', 'Menlo', 'Consolas', monospace;
+}
+.total .meta {
+  color: var(--meta-color);
+  font-size: 0.75em;
+  opacity: 0.65;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+/* ── Barra de progreso (frasco) ── */
+.progress-wrap {
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: -4px;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+.progress-wrap.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+.progress-bar {
+  position: relative;
+  width: 100%;
+  height: 10px;
+  background: var(--progress-bg);
+  border-radius: 999px;
+  overflow: hidden;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.4);
+}
+.progress-fill {
+  position: relative;
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg,
+    var(--progress-1),
+    var(--progress-2),
+    var(--progress-3));
+  border-radius: 999px;
+  transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  overflow: hidden;
+}
+.progress-text {
+  font-size: 0.72em;
+  font-weight: 800;
+  color: var(--meta-color);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  opacity: 0.85;
+  font-variant-numeric: tabular-nums;
+  font-family: 'JetBrains Mono', 'Menlo', 'Consolas', monospace;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ESTILO BARRA (horizontal)
+   Se activa cuando #stage tiene data-style="bar".
+   El frasco (cristal) se oculta automáticamente.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Cuando NO estamos en modo barra, la barra se oculta */
+#stage:not([data-style="bar"]) .bar-stage {
+  display: none;
+}
+
+/* Cuando SÍ estamos en modo barra, el frasco se oculta */
+#stage[data-style="bar"] .crystal-stage {
+  display: none;
+}
+
+/* Contenedor centrado */
+#stage[data-style="bar"] .bar-stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 24px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ESTILO BARRA — ocultar cosas del frasco que no aplican
+   ═══════════════════════════════════════════════════════════════ */
+
+#stage[data-style="bar"] .info,
+#stage[data-style="bar"] .progress-wrap {
+  display: none;
+}
+
+#stage[data-style="bar"] {
+  justify-content: center;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ESTILO BARRA — top donor arriba + meta abajo
+   ═══════════════════════════════════════════════════════════════ */
+
+#stage[data-style="bar"] .bar-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  max-width: 900px;
+}
+
+/* ─── TOP DONOR ─── */
+#stage[data-style="bar"] .bar-top-donor {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 16px 6px 6px;
+  background: var(--surface-2);
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  opacity: 0;
+  transform: translateY(4px);
+}
+#stage[data-style="bar"] .bar-top-donor.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+#stage[data-style="bar"] .bar-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  background: #2a2a35;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+#stage[data-style="bar"] .bar-avatar.is-default svg {
+  width: 60%;
+  height: 60%;
+  fill: var(--accent);
+  opacity: 0.75;
+}
+#stage[data-style="bar"] .bar-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}
+#stage[data-style="bar"] .bar-name {
+  font-weight: 800;
+  font-size: 0.95em;
+  color: var(--text-primary);
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#stage[data-style="bar"] .bar-coins {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--topdonor-coin-1), var(--topdonor-coin-2));
+  color: var(--topdonor-coin-text);
+  font-weight: 900;
+  font-size: 0.82em;
+  font-family: 'JetBrains Mono', 'Menlo', 'Consolas', monospace;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.4);
+}
+#stage[data-style="bar"] .bar-coins svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+
+/* ─── BARRA ─── */
+#stage[data-style="bar"] .bar-track {
+  width: 100%;
+  height: 36px;
+  background: var(--surface-2);
+  border: 1px solid var(--line-strong);
+  border-radius: 7px;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Marcas cada 25% */
+#stage[data-style="bar"] .bar-track::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right,
+      transparent calc(25% - 1px),
+      rgba(255,255,255,0.06) 25%,
+      transparent calc(25% + 1px)),
+    linear-gradient(to right,
+      transparent calc(50% - 1px),
+      rgba(255,255,255,0.10) 50%,
+      transparent calc(50% + 1px)),
+    linear-gradient(to right,
+      transparent calc(75% - 1px),
+      rgba(255,255,255,0.06) 75%,
+      transparent calc(75% + 1px));
+  z-index: 2;
+}
+
+#stage[data-style="bar"] .bar-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--accent), var(--accent-soft));
+  border-radius: 0 6px 6px 0;
+  transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  position: relative;
+  z-index: 1;
+}
+
+/* ─── META ABAJO ─── */
+#stage[data-style="bar"] .bar-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-family: 'JetBrains Mono', 'Menlo', 'Consolas', monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.95em;
+  color: var(--text-primary);
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+#stage[data-style="bar"] .bar-sep {
+  color: var(--text-dim);
+  font-weight: 700;
+  opacity: 0.6;
+}
+#stage[data-style="bar"] .bar-percent {
+  margin-left: 12px;
+  color: var(--accent);
+  font-weight: 900;
+}

@@ -5,10 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard de Lives</title>
   <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+  <link rel="preconnect" href="https://api.fontshare.com">
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600,700,900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="/js/server-url.js"></script>
   <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
-    <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
 </head>
 <body>
 
@@ -109,7 +112,10 @@
         <i class="ri-layout-right-line" id="toggleIcon"></i>
         <span id="toggleText">Ocultar Panel</span>
       </button>
-      <div class="status-badge" id="connectionStatus"><i class="ri-wifi-line"></i> Conectado</div>
+      <div class="status-badge" id="connectionStatus">
+        <span class="status-dot"></span>
+        <span class="status-text">Conectado</span>
+      </div>
     </div>
   </div>
 

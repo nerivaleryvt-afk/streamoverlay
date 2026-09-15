@@ -1,6 +1,6 @@
 // ============================================================
-// autostream.js — Panel de Auto-Stream TikTok (Fase 5 · v2)
-// Rediseño visual: glassmorphism, gradientes, micro-animaciones
+// autostream.js — Panel Auto-Stream TikTok (v3 · "Broadcast Console")
+// Rediseño: menos efectos, más claridad, flujo guiado 1-2-3
 // ============================================================
 
 (function () {
@@ -17,22 +17,19 @@
   // ============================================================
   async function copiarAlPortapapeles(texto) {
     if (!texto) return false;
-
     try {
       const electron = require('electron');
       if (electron && electron.clipboard && typeof electron.clipboard.writeText === 'function') {
         electron.clipboard.writeText(String(texto));
         return true;
       }
-    } catch (e) { /* no es Electron */ }
-
+    } catch (e) {}
     try {
       if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
         await navigator.clipboard.writeText(String(texto));
         return true;
       }
-    } catch (e) { /* fallback */ }
-
+    } catch (e) {}
     try {
       const ta = document.createElement('textarea');
       ta.value = String(texto);
@@ -46,439 +43,563 @@
       const ok = document.execCommand('copy');
       document.body.removeChild(ta);
       return ok;
-    } catch (e) {
-      return false;
-    }
+    } catch (e) { return false; }
   }
 
   // ============================================================
-  // INYECTAR CSS (rediseñado)
+  // 🎨 CSS — Diseño "Broadcast Console"
+  // Acento: ámbar quemado (#e8825a). Superficies sólidas.
+  // Sin gradientes decorativos, sin glassmorphism.
   // ============================================================
   function injectStyles() {
     if (document.getElementById('autostream-styles')) return;
     const style = document.createElement('style');
     style.id = 'autostream-styles';
     style.textContent = `
-      /* =========================================================
-         AUTO-STREAM PANEL · v2
-         ========================================================= */
+      /* Tokens locales del panel (no tocan los globales) */
       #autostream-panel {
+        --as-accent: #e8825a;
+        --as-accent-dim: #b8603c;
+        --as-accent-soft: rgba(232, 130, 90, 0.12);
+        --as-accent-border: rgba(232, 130, 90, 0.4);
+        --as-surface: #16151c;
+        --as-surface-2: #1c1b23;
+        --as-surface-3: #22212b;
+        --as-line: #2a2933;
+        --as-line-strong: #3a3846;
+        --as-text: #e8e6f0;
+        --as-text-2: #a8a5b5;
+        --as-text-3: #6f6c80;
+        --as-ok: #6dd58c;
+        --as-warn: #e8b54d;
+        --as-err: #e56969;
+
         position: relative;
-        background:
-          radial-gradient(1200px 400px at 0% 0%, rgba(214,123,168,0.06), transparent 60%),
-          radial-gradient(1200px 400px at 100% 100%, rgba(77,124,199,0.06), transparent 60%),
-          var(--bg-card);
-        border: 1px solid var(--border);
-        border-radius: 14px;
-        padding: 22px 24px 24px;
+        background: var(--as-surface);
+        border: 1px solid var(--as-line);
+        border-radius: 12px;
+        padding: 20px 22px 22px;
         margin-bottom: 22px;
         display: none;
         overflow: hidden;
-        animation: asFadeIn 0.25s ease;
-      }
-      #autostream-panel::before {
-        content: '';
-        position: absolute;
-        inset: 0 0 auto 0;
-        height: 1px;
-        background: linear-gradient(90deg, transparent, rgba(214,123,168,0.45), rgba(77,124,199,0.45), transparent);
-        opacity: 0.7;
+        font-family: 'Satoshi', system-ui, sans-serif;
       }
       #autostream-panel.open { display: block; }
 
-      @keyframes asFadeIn {
-        from { opacity: 0; transform: translateY(-4px); }
-        to   { opacity: 1; transform: translateY(0); }
-      }
-
-      /* Header del panel */
-      #autostream-panel .as-head {
-        display: flex; align-items: center; gap: 12px;
-        margin-bottom: 20px;
-        padding-bottom: 16px;
-        border-bottom: 1px solid var(--border);
-      }
-      #autostream-panel .as-head-icon {
-        width: 38px; height: 38px; border-radius: 10px;
-        display: flex; align-items: center; justify-content: center;
-        background: linear-gradient(135deg, rgba(214,123,168,0.18), rgba(77,124,199,0.18));
-        border: 1px solid rgba(214,123,168,0.25);
-        color: var(--secondary); font-size: 19px;
-        box-shadow: 0 4px 14px rgba(214,123,168,0.12);
-        flex-shrink: 0;
-      }
-      #autostream-panel .as-head-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-      #autostream-panel .as-head-title {
-        font-size: 15px; font-weight: 600; color: #f1f2f4;
-        letter-spacing: -0.01em;
-        display: flex; align-items: center; gap: 8px;
-      }
-      #autostream-panel .as-head-sub {
-        font-size: 11.5px; color: var(--text-muted);
-      }
-      #autostream-panel .as-head-badge {
-        margin-left: auto;
-        font-size: 10.5px; font-weight: 600;
-        padding: 3px 10px; border-radius: 100px;
-        background: rgba(79,168,122,0.1);
-        color: var(--success);
-        border: 1px solid rgba(79,168,122,0.25);
-        display: inline-flex; align-items: center; gap: 5px;
-        text-transform: uppercase; letter-spacing: 0.06em;
-      }
-      #autostream-panel .as-head-badge.idle {
-        background: rgba(145,152,164,0.08);
-        color: var(--text-dim);
-        border-color: rgba(145,152,164,0.2);
-      }
-      #autostream-panel .as-head-badge.waiting {
-        background: rgba(214,168,74,0.1);
-        color: var(--warning);
-        border-color: rgba(214,168,74,0.25);
-      }
-      #autostream-panel .as-head-badge.error {
-        background: rgba(194,106,106,0.1);
-        color: var(--danger);
-        border-color: rgba(194,106,106,0.25);
-      }
-
-      /* Grid principal */
-      .as-grid {
-        display: grid; grid-template-columns: 1fr 1fr; gap: 22px;
-      }
-      @media (max-width: 900px) { .as-grid { grid-template-columns: 1fr; } }
-
-      .as-col { display: flex; flex-direction: column; gap: 14px; }
-
-      /* Etiquetas de sección */
-      .as-label {
-        font-size: 10.5px; color: var(--text-muted);
-        text-transform: uppercase; letter-spacing: 0.08em;
-        font-weight: 700; margin-bottom: 6px;
-        display: flex; align-items: center; gap: 6px;
-      }
-      .as-label i { font-size: 13px; color: var(--text-dim); }
-
-      /* Tarjetas internas */
-      .as-card {
-        background: rgba(15,17,21,0.6);
-        border: 1px solid var(--border);
-        border-radius: 10px;
-        padding: 12px 14px;
-        transition: border-color 0.15s;
-      }
-      .as-card:hover { border-color: var(--border-strong); }
-
-      /* Estado */
-      .as-status {
-        display: flex; align-items: center; gap: 12px;
-        padding: 13px 15px; border-radius: 10px;
-        background: rgba(15,17,21,0.6);
-        border: 1px solid var(--border);
-        font-size: 13px;
-        position: relative;
-        overflow: hidden;
-      }
-      .as-status::before {
+      /* Borde superior como "tira de estado" del panel */
+      #autostream-panel::before {
         content: '';
         position: absolute;
-        left: 0; top: 0; bottom: 0;
-        width: 3px;
-        background: var(--border-strong);
-        transition: background 0.2s;
+        top: 0; left: 0; right: 0;
+        height: 2px;
+        background: var(--as-line);
+        transition: background 0.3s;
       }
-      .as-status[data-state="waiting"]::before   { background: var(--warning); }
-      .as-status[data-state="streaming"]::before { background: var(--success); }
-      .as-status[data-state="error"]::before     { background: var(--danger); }
+      #autostream-panel[data-status="streaming"]::before { background: var(--as-accent); }
+      #autostream-panel[data-status="waiting"]::before   { background: var(--as-warn); }
+      #autostream-panel[data-status="error"]::before     { background: var(--as-err); }
 
-      .as-status-dot {
-        width: 10px; height: 10px; border-radius: 50%;
-        background: #6b7280; flex-shrink: 0;
-        transition: background 0.2s;
+      /* ─── HEADER ─── */
+      #autostream-panel .as-head {
+        display: flex; align-items: center; gap: 14px;
+        margin-bottom: 22px;
+        padding-bottom: 18px;
+        border-bottom: 1px solid var(--as-line);
       }
-      .as-status-dot.waiting   { background: var(--warning); animation: asPulse 1.6s infinite; }
-      .as-status-dot.streaming { background: var(--success); animation: asPulse 1.6s infinite; }
-      .as-status-dot.error     { background: var(--danger); }
-      @keyframes asPulse {
-        0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(79,168,122,0.4); }
-        50%      { opacity: 0.6; box-shadow: 0 0 0 6px rgba(79,168,122,0); }
+      #autostream-panel .as-head-icon {
+        width: 40px; height: 40px; border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        background: var(--as-surface-3);
+        border: 1px solid var(--as-line-strong);
+        color: var(--as-accent); font-size: 20px;
+        flex-shrink: 0;
+        transition: all 0.3s;
       }
-      .as-status-label { color: var(--text-dim); font-size: 12px; }
-      .as-status-value {
-        color: var(--text); font-weight: 600; margin-left: auto;
+      #autostream-panel[data-status="streaming"] .as-head-icon {
+        background: var(--as-accent-soft);
+        border-color: var(--as-accent-border);
+        box-shadow: 0 0 0 4px rgba(232, 130, 90, 0.06);
+      }
+      #autostream-panel .as-head-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+      #autostream-panel .as-head-title {
+        font-size: 15px; font-weight: 700; color: var(--as-text);
+        letter-spacing: -0.015em;
+      }
+      #autostream-panel .as-head-sub {
+        font-size: 11.5px; color: var(--as-text-3);
+        font-family: 'JetBrains Mono', monospace;
+      }
+      #autostream-panel .as-head-badge {
+        font-size: 10.5px; font-weight: 700;
+        padding: 5px 11px; border-radius: 6px;
+        background: var(--as-surface-3);
+        color: var(--as-text-2);
+        border: 1px solid var(--as-line-strong);
+        display: inline-flex; align-items: center; gap: 6px;
+        text-transform: uppercase; letter-spacing: 0.08em;
+        font-family: 'JetBrains Mono', monospace;
+        transition: all 0.25s;
+        flex-shrink: 0;
+      }
+      #autostream-panel .as-head-badge .badge-dot {
+        width: 6px; height: 6px; border-radius: 50%;
+        background: currentColor;
+      }
+      #autostream-panel .as-head-badge.waiting {
+        color: var(--as-warn);
+        border-color: rgba(232, 181, 77, 0.35);
+      }
+      #autostream-panel .as-head-badge.streaming {
+        color: var(--as-accent);
+        border-color: var(--as-accent-border);
+        background: var(--as-accent-soft);
+      }
+      #autostream-panel .as-head-badge.streaming .badge-dot {
+        animation: asDotPulse 1.8s ease-in-out infinite;
+      }
+      #autostream-panel .as-head-badge.error {
+        color: var(--as-err);
+        border-color: rgba(229, 105, 105, 0.35);
+      }
+      @keyframes asDotPulse {
+        0%, 100% { opacity: 1; }
+        50%      { opacity: 0.35; }
+      }
+
+      /* ─── GRID ─── */
+      .as-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 20px;
+      }
+      @media (max-width: 900px) { .as-grid { grid-template-columns: 1fr; } }
+      .as-col { display: flex; flex-direction: column; gap: 14px; }
+
+      /* ─── PASOS GUIADOS (1-2-3) ─── */
+      .as-step {
+        background: var(--as-surface-2);
+        border: 1px solid var(--as-line);
+        border-radius: 10px;
+        padding: 14px 16px 16px;
+        transition: all 0.2s;
+        position: relative;
+      }
+      .as-step.done {
+        border-color: var(--as-line-strong);
+      }
+      .as-step.done .as-step-num {
+        background: var(--as-accent);
+        color: #0f0e13;
+        border-color: var(--as-accent);
+      }
+      .as-step.done .as-step-num::before {
+        content: '✓';
+        font-size: 12px;
+        font-weight: 900;
+      }
+      .as-step.done .as-step-num > span { display: none; }
+
+      .as-step-head {
+        display: flex; align-items: center; gap: 10px;
+        margin-bottom: 12px;
+      }
+      .as-step-num {
+        width: 22px; height: 22px; border-radius: 50%;
+        background: var(--as-surface-3);
+        border: 1px solid var(--as-line-strong);
+        color: var(--as-text-3);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 11px; font-weight: 800;
+        font-family: 'JetBrains Mono', monospace;
+        flex-shrink: 0;
+        transition: all 0.25s;
+      }
+      .as-step-title {
+        font-size: 12px; font-weight: 700;
+        color: var(--as-text);
+        text-transform: uppercase; letter-spacing: 0.06em;
+      }
+      .as-step-hint {
+        font-size: 11px; color: var(--as-text-3);
+        margin-left: auto;
+        font-family: 'JetBrains Mono', monospace;
+      }
+
+      /* ─── INPUTS ─── */
+      #autostream-panel input[type="text"],
+      #autostream-panel select {
+        width: 100%;
+        background: var(--as-surface);
+        border: 1px solid var(--as-line);
+        border-radius: 7px;
+        padding: 10px 12px;
+        color: var(--as-text);
         font-size: 12.5px;
+        font-family: inherit;
+        outline: none;
+        transition: border-color 0.15s, box-shadow 0.15s;
       }
+      #autostream-panel input[type="text"]:focus,
+      #autostream-panel select:focus {
+        border-color: var(--as-accent);
+        box-shadow: 0 0 0 3px rgba(232, 130, 90, 0.1);
+      }
+      #autostream-panel input::placeholder { color: var(--as-text-3); }
+      #autostream-panel select option { background: var(--as-surface-2); color: var(--as-text); }
 
-      /* Botones */
+      /* ─── BOTONES ─── */
       .as-btn {
         display: inline-flex; align-items: center; justify-content: center;
-        gap: 7px; padding: 11px 16px; border-radius: 8px;
+        gap: 8px; padding: 12px 16px;
+        border-radius: 8px;
         font-weight: 600; font-size: 12.5px; cursor: pointer;
-        font-family: inherit; transition: all 0.18s cubic-bezier(0.4,0,0.2,1);
+        font-family: inherit;
+        transition: all 0.15s;
         border: 1px solid transparent;
-        position: relative; overflow: hidden;
-        letter-spacing: 0.01em;
+        letter-spacing: -0.005em;
       }
-      .as-btn:disabled { opacity: 0.45; cursor: not-allowed; }
-      .as-btn i { font-size: 14px; }
+      .as-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+      .as-btn i { font-size: 15px; }
 
+      /* Primario: acento sólido (no gradiente) */
       .as-btn-primary {
-        background: linear-gradient(135deg, rgba(214,123,168,0.18), rgba(214,123,168,0.08));
-        color: #f0c8dc;
-        border-color: rgba(214,123,168,0.35);
-        box-shadow: 0 2px 10px rgba(214,123,168,0.08);
+        background: var(--as-accent);
+        color: #0f0e13;
+        border-color: var(--as-accent);
+        font-weight: 700;
       }
       .as-btn-primary:hover:not(:disabled) {
-        background: linear-gradient(135deg, rgba(214,123,168,0.28), rgba(214,123,168,0.14));
-        border-color: rgba(214,123,168,0.55);
-        box-shadow: 0 4px 18px rgba(214,123,168,0.18);
-        transform: translateY(-1px);
+        background: #f0926a;
+        border-color: #f0926a;
       }
-      .as-btn-primary:active:not(:disabled) { transform: translateY(0); }
+      .as-btn-primary:active:not(:disabled) {
+        transform: translateY(1px);
+      }
 
+      /* Peligro: outline, no relleno (más sobrio) */
       .as-btn-danger {
-        background: linear-gradient(135deg, rgba(194,106,106,0.14), rgba(194,106,106,0.06));
-        color: #e8b0b0;
-        border-color: rgba(194,106,106,0.3);
+        background: transparent;
+        color: var(--as-err);
+        border-color: rgba(229, 105, 105, 0.3);
       }
       .as-btn-danger:hover:not(:disabled) {
-        background: linear-gradient(135deg, rgba(194,106,106,0.24), rgba(194,106,106,0.12));
-        border-color: rgba(194,106,106,0.5);
-        box-shadow: 0 4px 18px rgba(194,106,106,0.15);
-        transform: translateY(-1px);
+        background: rgba(229, 105, 105, 0.08);
+        border-color: rgba(229, 105, 105, 0.55);
       }
 
+      /* Warning: outline */
       .as-btn-warning {
-        background: linear-gradient(135deg, rgba(214,168,74,0.12), rgba(214,168,74,0.05));
-        color: #e6cc8a;
-        border-color: rgba(214,168,74,0.28);
+        background: transparent;
+        color: var(--as-warn);
+        border-color: rgba(232, 181, 77, 0.3);
       }
       .as-btn-warning:hover:not(:disabled) {
-        background: linear-gradient(135deg, rgba(214,168,74,0.22), rgba(214,168,74,0.1));
-        border-color: rgba(214,168,74,0.45);
-        box-shadow: 0 4px 18px rgba(214,168,74,0.12);
-        transform: translateY(-1px);
+        background: rgba(232, 181, 77, 0.08);
+        border-color: rgba(232, 181, 77, 0.55);
       }
 
       .as-row-actions {
         display: grid; grid-template-columns: 2fr 1fr; gap: 8px;
       }
 
-      /* Inputs / selects */
-      #autostream-panel input[type="text"],
-      #autostream-panel select {
-        width: 100%;
-        background: rgba(15,17,21,0.8);
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        padding: 10px 12px;
-        color: var(--text);
-        font-size: 12.5px;
-        font-family: inherit;
-        outline: none;
-        transition: all 0.15s;
-      }
-      #autostream-panel input[type="text"]:focus,
-      #autostream-panel select:focus {
-        border-color: var(--secondary);
-        box-shadow: 0 0 0 3px rgba(214,123,168,0.12);
-        background: rgba(20,22,27,0.9);
-      }
-      #autostream-panel input::placeholder { color: var(--text-muted); }
-
-      /* Caja OBS */
-      .as-obs-box {
-        background: rgba(15,17,21,0.6);
-        border: 1px solid var(--border);
+      /* ─── PANEL OBS (colapsable) ─── */
+      .as-obs-panel {
+        background: var(--as-surface-2);
+        border: 1px solid var(--as-line);
         border-radius: 10px;
-        padding: 14px 15px;
+        overflow: hidden;
+        transition: all 0.2s;
+      }
+      .as-obs-panel summary {
+        list-style: none;
+        padding: 12px 16px;
+        cursor: pointer;
+        display: flex; align-items: center; gap: 10px;
+        font-size: 12px; font-weight: 700;
+        color: var(--as-text);
+        text-transform: uppercase; letter-spacing: 0.06em;
+        user-select: none;
+        transition: background 0.15s;
+      }
+      .as-obs-panel summary::-webkit-details-marker { display: none; }
+      .as-obs-panel summary:hover { background: var(--as-surface-3); }
+      .as-obs-panel summary > i:first-child {
+        color: var(--as-accent); font-size: 15px;
+      }
+      .as-obs-panel summary .caret {
+        margin-left: auto; font-size: 14px;
+        transition: transform 0.2s;
+        color: var(--as-text-3);
+      }
+      .as-obs-panel[open] summary .caret { transform: rotate(180deg); }
+      .as-obs-body {
+        padding: 4px 16px 16px;
         display: flex; flex-direction: column; gap: 12px;
       }
+
+      /* ─── FILAS OBS ─── */
       .as-obs-row { display: flex; flex-direction: column; gap: 5px; }
       .as-obs-key {
-        font-size: 10.5px; color: var(--text-muted);
-        text-transform: uppercase; letter-spacing: 0.07em; font-weight: 700;
-        display: flex; align-items: center; gap: 5px;
+        font-size: 10px; color: var(--as-text-3);
+        text-transform: uppercase; letter-spacing: 0.08em;
+        font-weight: 700;
+        font-family: 'JetBrains Mono', monospace;
       }
       .as-obs-val {
-        font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
-        font-size: 12px; color: var(--text);
-        background: rgba(10,11,14,0.85);
-        border: 1px solid var(--border);
-        padding: 7px 10px; border-radius: 6px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 11.5px; color: var(--as-text);
+        background: var(--as-surface);
+        border: 1px solid var(--as-line);
+        padding: 9px 11px;
+        border-radius: 6px;
         display: flex; align-items: center; justify-content: space-between;
         gap: 8px;
-        transition: border-color 0.15s;
       }
-      .as-obs-val:hover { border-color: var(--border-strong); }
-      .as-obs-val span {
+      .as-obs-val > span {
         overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
         flex: 1;
+        color: var(--as-text-2);
       }
       .as-copy-btn {
-        background: rgba(77,124,199,0.08);
-        border: 1px solid rgba(77,124,199,0.2);
-        color: var(--primary-soft);
-        border-radius: 5px; padding: 3px 9px;
-        font-size: 10.5px; cursor: pointer; flex-shrink: 0;
-        font-family: inherit; font-weight: 600;
+        background: transparent;
+        border: 1px solid var(--as-line-strong);
+        color: var(--as-text-3);
+        border-radius: 5px;
+        padding: 3px 8px;
+        font-size: 10px; cursor: pointer;
+        flex-shrink: 0;
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 700;
         transition: all 0.15s;
         display: inline-flex; align-items: center; gap: 4px;
+        letter-spacing: 0.03em;
       }
       .as-copy-btn:hover {
-        background: rgba(77,124,199,0.16);
-        border-color: rgba(77,124,199,0.4);
-        color: #b8cdf0;
+        color: var(--as-accent);
+        border-color: var(--as-accent-border);
       }
-      .as-copy-btn:active { transform: scale(0.95); }
+      .as-copy-btn:active { transform: scale(0.96); }
 
-      /* QR */
-      .as-qr-wrap {
+      /* ─── QR ─── */
+      .as-qr-row {
         display: flex; align-items: center; gap: 14px;
-        margin-top: 6px;
-        padding: 12px;
-        background: rgba(10,11,14,0.5);
-        border: 1px dashed var(--border-strong);
+        padding: 14px;
+        background: var(--as-surface);
+        border: 1px solid var(--as-line);
         border-radius: 10px;
       }
       .as-qr-frame {
-        position: relative;
-        background: #fff;
-        border-radius: 8px;
-        padding: 8px;
+        background: #ffffff;
+        border-radius: 6px;
+        padding: 6px;
         flex-shrink: 0;
-        box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+        line-height: 0;
       }
-      .as-qr-frame::after {
-        content: '';
-        position: absolute;
-        inset: -3px;
-        border-radius: 10px;
-        background: linear-gradient(135deg, rgba(214,123,168,0.4), rgba(77,124,199,0.4));
-        z-index: -1;
-        opacity: 0.7;
-      }
-      .as-qr-wrap canvas { display: block; }
+      .as-qr-frame canvas { display: block; }
       .as-qr-hint {
-        font-size: 11.5px; color: var(--text-muted); line-height: 1.6;
+        font-size: 11.5px; color: var(--as-text-2);
+        line-height: 1.6;
       }
-      .as-qr-hint b { color: var(--text-dim); font-weight: 600; }
+      .as-qr-hint b {
+        color: var(--as-text);
+        font-weight: 700;
+        display: block;
+        margin-bottom: 4px;
+      }
+      .as-qr-hint code {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 10.5px;
+        color: var(--as-accent);
+        background: var(--as-accent-soft);
+        padding: 1px 5px;
+        border-radius: 3px;
+      }
 
-      /* Hint informativo */
-      .as-hint {
-        background: linear-gradient(135deg, rgba(90,138,214,0.08), rgba(90,138,214,0.03));
-        border: 1px solid rgba(90,138,214,0.2);
-        border-radius: 10px; padding: 12px 14px;
-        font-size: 12px; color: var(--text-dim); line-height: 1.55;
-        display: flex; gap: 10px; align-items: flex-start;
+      /* ─── STATUS BOX ─── */
+      .as-status-box {
+        display: flex; align-items: center; gap: 12px;
+        padding: 12px 14px;
+        border-radius: 9px;
+        background: var(--as-surface-2);
+        border: 1px solid var(--as-line);
+        font-size: 12.5px;
       }
-      .as-hint i {
-        color: var(--info); font-size: 16px; flex-shrink: 0; margin-top: 1px;
+      .as-status-box .status-dot {
+        width: 8px; height: 8px; border-radius: 50%;
+        background: var(--as-text-3);
+        flex-shrink: 0;
+        transition: background 0.2s;
       }
-      .as-hint b { color: var(--text); font-weight: 600; }
+      .as-status-box[data-state="waiting"] .status-dot  { background: var(--as-warn); animation: asDotPulse 1.4s infinite; }
+      .as-status-box[data-state="streaming"] .status-dot { background: var(--as-accent); animation: asDotPulse 1.4s infinite; }
+      .as-status-box[data-state="error"] .status-dot     { background: var(--as-err); }
+      .as-status-box .status-label {
+        color: var(--as-text-3); font-size: 11px;
+        text-transform: uppercase; letter-spacing: 0.08em;
+        font-weight: 700;
+        font-family: 'JetBrains Mono', monospace;
+      }
+      .as-status-box .status-value {
+        margin-left: auto;
+        color: var(--as-text); font-weight: 700;
+        font-size: 12px;
+      }
+      .as-status-box[data-state="streaming"] .status-value { color: var(--as-accent); }
 
-      /* Error */
+      /* ─── ERROR ─── */
       .as-error {
-        background: linear-gradient(135deg, rgba(194,106,106,0.1), rgba(194,106,106,0.04));
-        border: 1px solid rgba(194,106,106,0.28);
-        border-radius: 10px; padding: 11px 13px;
-        font-size: 12px; color: #e8b0b0;
+        background: rgba(229, 105, 105, 0.06);
+        border: 1px solid rgba(229, 105, 105, 0.3);
+        border-radius: 9px;
+        padding: 11px 13px;
+        font-size: 12px; color: #f0b8b8;
         display: none; gap: 10px; align-items: flex-start;
-        animation: asFadeIn 0.2s ease;
       }
       .as-error.show { display: flex; }
-      .as-error i { font-size: 16px; flex-shrink: 0; margin-top: 1px; color: var(--danger); }
+      .as-error i { font-size: 15px; flex-shrink: 0; margin-top: 1px; color: var(--as-err); }
 
-      /* Meta info */
+      /* ─── META ─── */
       .as-meta {
-        font-size: 11px; color: var(--text-muted);
-        display: flex; gap: 14px; flex-wrap: wrap;
-        padding: 8px 2px;
+        font-size: 11px; color: var(--as-text-3);
+        display: flex; gap: 16px; flex-wrap: wrap;
+        padding: 6px 2px;
+        font-family: 'JetBrains Mono', monospace;
       }
-      .as-meta b { color: var(--text-dim); font-weight: 600; }
+      .as-meta b { color: var(--as-text-2); font-weight: 600; }
 
-      /* Botón refrescar */
+      /* ─── HINT (info card) ─── */
+      .as-hint {
+        background: var(--as-surface-2);
+        border: 1px solid var(--as-line);
+        border-left: 3px solid var(--as-accent);
+        border-radius: 8px;
+        padding: 12px 14px;
+        font-size: 11.5px;
+        color: var(--as-text-2);
+        line-height: 1.6;
+      }
+      .as-hint b { color: var(--as-text); font-weight: 700; }
+
+      /* ─── REFRESH BTN ─── */
       .as-refresh-btn {
-        background: transparent; border: 1px solid var(--border);
-        color: var(--text-dim); padding: 4px 9px; border-radius: 6px;
-        font-size: 11px; cursor: pointer; font-family: inherit;
+        background: transparent;
+        border: 1px solid var(--as-line);
+        color: var(--as-text-3);
+        padding: 4px 9px; border-radius: 5px;
+        font-size: 10.5px; cursor: pointer;
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 700;
         display: inline-flex; align-items: center; gap: 5px;
         transition: all 0.15s;
+        letter-spacing: 0.03em;
       }
       .as-refresh-btn:hover {
-        color: var(--primary-soft);
-        border-color: rgba(77,124,199,0.4);
-        background: rgba(77,124,199,0.06);
+        color: var(--as-accent);
+        border-color: var(--as-accent-border);
       }
-      .as-refresh-btn i { font-size: 12px; }
       .as-refresh-btn.spinning i { animation: asSpin 0.8s linear infinite; }
       @keyframes asSpin { to { transform: rotate(360deg); } }
 
-      #autostream-panel select option { background: #14161b; color: var(--text); }
+      /* Proxy status pill */
+      .as-proxy-pill {
+        display: inline-flex; align-items: center; gap: 6px;
+        font-size: 10.5px;
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 700;
+        color: var(--as-text-2);
+        padding: 2px 8px;
+        border-radius: 4px;
+        background: var(--as-surface);
+        border: 1px solid var(--as-line);
+      }
+      .as-proxy-pill::before {
+        content: '';
+        width: 5px; height: 5px; border-radius: 50%;
+        background: var(--as-text-3);
+      }
+      .as-proxy-pill.ok::before { background: var(--as-ok); }
+      .as-proxy-pill.err::before { background: var(--as-err); }
     `;
     document.head.appendChild(style);
   }
 
   // ============================================================
-  // CONSTRUIR HTML DEL PANEL
+  // 🏗️ CONSTRUIR HTML DEL PANEL (nueva estructura 1-2-3)
   // ============================================================
   function buildPanel() {
     if (document.getElementById('autostream-panel')) return;
 
     const panel = document.createElement('div');
     panel.id = 'autostream-panel';
+    panel.setAttribute('data-status', 'idle');
     panel.innerHTML = `
       <div class="as-head">
         <div class="as-head-icon"><i class="ri-live-fill"></i></div>
         <div class="as-head-text">
           <div class="as-head-title">Auto-Stream TikTok</div>
-          <div class="as-head-sub">Retransmisión automática vía Streamlabs + proxy RTMP</div>
+          <div class="as-head-sub">streamlabs → proxy rtmp local</div>
         </div>
         <div class="as-head-badge idle" id="as-head-badge">
-          <i class="ri-circle-fill" style="font-size:8px;"></i> <span>Detenido</span>
+          <span class="badge-dot"></span>
+          <span>detenido</span>
         </div>
       </div>
 
       <div class="as-grid">
+        <!-- ══════════ COLUMNA IZQUIERDA: FLUJO ══════════ -->
         <div class="as-col">
-          <div class="as-card">
-            <div class="as-label">
-              <i class="ri-user-3-line"></i> Cuenta de TikTok
-              <button class="as-refresh-btn" id="as-refresh" style="margin-left:auto;">
-                <i class="ri-refresh-line"></i> Refrescar
+
+          <!-- PASO 1 -->
+          <div class="as-step" id="as-step-1">
+            <div class="as-step-head">
+              <div class="as-step-num"><span>1</span></div>
+              <div class="as-step-title">Elegir cuenta</div>
+              <button class="as-refresh-btn" id="as-refresh">
+                <i class="ri-refresh-line"></i> REFRESCAR
               </button>
             </div>
             <select id="as-account"></select>
           </div>
 
-          <div class="as-card">
-            <div class="as-label"><i class="ri-edit-line"></i> Título del directo</div>
-            <input type="text" id="as-title" placeholder="Mi stream de hoy..." value="TogiPanel Stream">
+          <!-- PASO 2 -->
+          <div class="as-step" id="as-step-2">
+            <div class="as-step-head">
+              <div class="as-step-num"><span>2</span></div>
+              <div class="as-step-title">Título del directo</div>
+            </div>
+            <input type="text" id="as-title" placeholder="Ej: Charlando con la comunidad" value="TogiPanel Stream">
           </div>
 
-          <div class="as-row-actions">
-            <button class="as-btn as-btn-primary" id="as-start">
-              <i class="ri-play-fill"></i> Iniciar Auto-Stream
-            </button>
-            <button class="as-btn as-btn-danger" id="as-stop" disabled>
-              <i class="ri-stop-fill"></i> Detener
-            </button>
+          <!-- PASO 3 -->
+          <div class="as-step" id="as-step-3">
+            <div class="as-step-head">
+              <div class="as-step-num"><span>3</span></div>
+              <div class="as-step-title">Iniciar transmisión</div>
+            </div>
+            <div class="as-row-actions">
+              <button class="as-btn as-btn-primary" id="as-start">
+                <i class="ri-play-fill"></i> INICIAR
+              </button>
+              <button class="as-btn as-btn-danger" id="as-stop" disabled>
+                <i class="ri-stop-fill"></i> Detener
+              </button>
+            </div>
           </div>
 
           <button class="as-btn as-btn-warning" id="as-renew" disabled>
-            <i class="ri-refresh-line"></i> Forzar renovación de clave
+            <i class="ri-refresh-line"></i> Renovar clave ahora
           </button>
 
-          <div class="as-status" id="as-status-box" data-state="idle">
-            <div class="as-status-dot" id="as-dot"></div>
-            <span class="as-status-label">Estado</span>
-            <span class="as-status-value" id="as-status">Detenido</span>
+          <div class="as-status-box" id="as-status-box" data-state="idle">
+            <span class="status-dot"></span>
+            <span class="status-label">estado</span>
+            <span class="status-value" id="as-status">Detenido</span>
           </div>
 
           <div class="as-meta" id="as-meta" style="display:none;">
             <span><i class="ri-user-line"></i> <b id="as-username">—</b></span>
-            <span><i class="ri-time-line"></i> Última: <b id="as-last-renew">—</b></span>
-            <span><i class="ri-timer-line"></i> Próxima: <b id="as-next-renew">—</b></span>
+            <span>renov. <b id="as-last-renew">—</b></span>
+            <span>próx. <b id="as-next-renew">—</b></span>
           </div>
 
           <div class="as-error" id="as-error">
@@ -487,78 +608,86 @@
           </div>
         </div>
 
+        <!-- ══════════ COLUMNA DERECHA: CONFIG OBS ══════════ -->
         <div class="as-col">
-          <div class="as-card">
-            <div class="as-label"><i class="ri-settings-3-line"></i> Configuración de OBS (esta PC)</div>
-            <div class="as-obs-box" style="margin-top:6px;">
+
+          <!-- OBS panel colapsable: esta PC -->
+          <details class="as-obs-panel" open>
+            <summary>
+              <i class="ri-computer-line"></i>
+              <span>Configurar OBS · esta PC</span>
+              <i class="ri-arrow-down-s-line caret"></i>
+            </summary>
+            <div class="as-obs-body">
               <div class="as-obs-row">
-                <span class="as-obs-key"><i class="ri-server-line"></i> Servidor</span>
+                <span class="as-obs-key">Servidor RTMP</span>
                 <div class="as-obs-val">
-                  <span id="as-obs-server">rtmp://localhost:1935/live</span>
+                  <span>rtmp://localhost:1935/live</span>
                   <button class="as-copy-btn" data-copy="rtmp://localhost:1935/live">
-                    <i class="ri-file-copy-line"></i> Copiar
+                    <i class="ri-file-copy-line"></i> copiar
                   </button>
                 </div>
               </div>
               <div class="as-obs-row">
-                <span class="as-obs-key"><i class="ri-key-2-line"></i> Clave de retransmisión</span>
+                <span class="as-obs-key">Clave de retransmisión</span>
                 <div class="as-obs-val">
-                  <span id="as-obs-key-local">togipanel</span>
+                  <span>togipanel</span>
                   <button class="as-copy-btn" data-copy="togipanel">
-                    <i class="ri-file-copy-line"></i> Copiar
+                    <i class="ri-file-copy-line"></i> copiar
                   </button>
                 </div>
               </div>
             </div>
-          </div>
+          </details>
 
-          <div class="as-card">
-            <div class="as-label"><i class="ri-computer-line"></i> Otra PC en tu red (streaming)</div>
-            <div class="as-obs-box" style="margin-top:6px;">
+          <!-- OBS panel colapsable: otra PC -->
+          <details class="as-obs-panel">
+            <summary>
+              <i class="ri-router-line"></i>
+              <span>Configurar OBS · otra PC</span>
+              <i class="ri-arrow-down-s-line caret"></i>
+            </summary>
+            <div class="as-obs-body">
               <div class="as-obs-row">
-                <span class="as-obs-key"><i class="ri-server-line"></i> Servidor (RTMP)</span>
+                <span class="as-obs-key">Servidor RTMP (LAN)</span>
                 <div class="as-obs-val">
                   <span id="as-lan-url">rtmp://…:1935/live</span>
                   <button class="as-copy-btn" id="as-copy-lan-url" data-copy="">
-                    <i class="ri-file-copy-line"></i> Copiar
+                    <i class="ri-file-copy-line"></i> copiar
                   </button>
                 </div>
               </div>
               <div class="as-obs-row">
-                <span class="as-obs-key"><i class="ri-key-2-line"></i> Clave de retransmisión</span>
+                <span class="as-obs-key">Clave de retransmisión</span>
                 <div class="as-obs-val">
                   <span id="as-lan-key">togipanel</span>
                   <button class="as-copy-btn" id="as-copy-lan-key" data-copy="togipanel">
-                    <i class="ri-file-copy-line"></i> Copiar
+                    <i class="ri-file-copy-line"></i> copiar
                   </button>
                 </div>
               </div>
 
-              <div class="as-qr-wrap">
+              <div class="as-qr-row">
                 <div class="as-qr-frame">
-                  <canvas id="as-qr" width="120" height="120"></canvas>
+                  <canvas id="as-qr" width="110" height="110"></canvas>
                 </div>
                 <div class="as-qr-hint">
-                  <b>Escanea desde el móvil</b><br>
+                  <b>Escanea desde el móvil</b>
                   o copia la URL a OBS en la PC 2.
                 </div>
               </div>
 
               <div class="as-meta">
-                <span><i class="ri-signal-tower-line"></i> Estado del proxy: <b id="as-proxy-status">—</b></span>
+                <span>proxy <span class="as-proxy-pill" id="as-proxy-pill">—</span></span>
               </div>
             </div>
-          </div>
+          </details>
 
+          <!-- Info importante -->
           <div class="as-hint">
-            <i class="ri-information-line"></i>
-            <div>
-              <b>Importante:</b> para que Auto-Stream funcione necesitas tener
-              <b>Streamlabs Desktop instalado</b> y haber iniciado sesión al menos
-              una vez con tus cuentas de TikTok. <b>No hace falta tenerlo abierto
-              mientras emites.</b> Si una cuenta aparece como "inválida", abre
-              Streamlabs Desktop y vuelve a loguearte.
-            </div>
+            <b>Requisito:</b> Streamlabs Desktop instalado y al menos una cuenta
+            de TikTok logueada. No hace falta tenerlo abierto mientras emites.
+            Si una cuenta aparece inválida, vuelve a loguearte en Streamlabs.
           </div>
         </div>
       </div>
@@ -580,6 +709,11 @@
     document.getElementById('as-stop').addEventListener('click', stopStream);
     document.getElementById('as-renew').addEventListener('click', renewStream);
 
+    // Detectar cambios en cuenta/título para actualizar pasos
+    document.getElementById('as-account').addEventListener('change', updateSteps);
+    document.getElementById('as-title').addEventListener('input', updateSteps);
+
+    // Copy buttons
     panel.addEventListener('click', async (e) => {
       const btn = e.target.closest('.as-copy-btn');
       if (!btn) return;
@@ -588,20 +722,45 @@
       const ok = await copiarAlPortapapeles(txt);
       const originalHTML = btn.innerHTML;
       btn.innerHTML = ok
-        ? '<i class="ri-check-line"></i> ¡Copiado!'
-        : '<i class="ri-close-line"></i> Error';
-      btn.style.color = ok ? 'var(--success)' : 'var(--danger)';
-      btn.style.borderColor = ok ? 'rgba(79,168,122,0.4)' : 'rgba(194,106,106,0.4)';
+        ? '<i class="ri-check-line"></i> ok'
+        : '<i class="ri-close-line"></i> error';
+      btn.style.color = ok ? 'var(--as-ok)' : 'var(--as-err)';
+      btn.style.borderColor = ok ? 'rgba(109,213,140,0.4)' : 'rgba(229,105,105,0.4)';
       setTimeout(() => {
         btn.innerHTML = originalHTML;
         btn.style.color = '';
         btn.style.borderColor = '';
       }, 1400);
     });
+
+    // Actualizar pasos al inicio
+    updateSteps();
   }
 
   // ============================================================
-  // CARGAR CUENTAS (con nombre real de usuario)
+  // ✅ ACTUALIZAR ESTADO VISUAL DE LOS PASOS 1-2-3
+  // ============================================================
+  function updateSteps() {
+    const acc = document.getElementById('as-account');
+    const title = document.getElementById('as-title');
+    const step1 = document.getElementById('as-step-1');
+    const step2 = document.getElementById('as-step-2');
+    const step3 = document.getElementById('as-step-3');
+    if (!acc || !title || !step1 || !step2 || !step3) return;
+
+    const hasAccount = !!selectedToken && acc.value !== '';
+    const hasTitle = title.value.trim().length > 0;
+
+    step1.classList.toggle('done', hasAccount);
+    step2.classList.toggle('done', hasTitle);
+
+    // El paso 3 solo se marca como "done" cuando está emitiendo
+    const status = document.getElementById('as-status-box')?.getAttribute('data-state');
+    step3.classList.toggle('done', status === 'streaming');
+  }
+
+  // ============================================================
+  // 📥 CARGAR CUENTAS
   // ============================================================
   async function loadAccounts() {
     const select = document.getElementById('as-account');
@@ -623,6 +782,7 @@
       if (valid.length === 0) {
         select.innerHTML = '<option value="">Sin cuentas válidas</option>';
         showError('No hay cuentas válidas. Abre Streamlabs Desktop y loguéate con al menos una cuenta de TikTok.');
+        updateSteps();
         return;
       }
 
@@ -632,30 +792,24 @@
       valid.forEach((a, i) => {
         const opt = document.createElement('option');
         opt.value = a.apiToken;
-
-        // 🎯 NOMBRE REAL DEL USUARIO
-        // Prioridad: nickname > username > displayName > fallback
         const realName = a.nickname || a.username || a.displayName || a.name || `Cuenta ${i + 1}`;
         const handle = a.username && a.username !== realName ? ` (@${a.username})` : '';
-
         opt.textContent = `${realName}${handle}`;
         select.appendChild(opt);
       });
 
       selectedToken = valid[0].apiToken;
-
-      select.addEventListener('change', () => {
-        selectedToken = select.value;
-      });
+      updateSteps();
 
     } catch (e) {
       select.innerHTML = '<option value="">Error de red</option>';
       showError('No se pudo conectar al servidor: ' + e.message);
+      updateSteps();
     }
   }
 
   // ============================================================
-  // INICIAR / DETENER / RENOVAR
+  // ▶️ INICIAR / DETENER / RENOVAR
   // ============================================================
   async function startStream() {
     const title = document.getElementById('as-title').value.trim() || 'TogiPanel Stream';
@@ -704,21 +858,16 @@
   }
 
   // ============================================================
-  // POLLING
+  // 🔄 POLLING
   // ============================================================
   function startPolling() {
     stopPolling();
     actualizarEstado();
     statusInterval = setInterval(actualizarEstado, 3000);
   }
-
   function stopPolling() {
-    if (statusInterval) {
-      clearInterval(statusInterval);
-      statusInterval = null;
-    }
+    if (statusInterval) { clearInterval(statusInterval); statusInterval = null; }
   }
-
   async function actualizarEstado() {
     try {
       const r = await fetch(window.SERVER_BASE + '/api/tiktok/proxy/status');
@@ -728,56 +877,54 @@
   }
 
   // ============================================================
-  // ACTUALIZAR UI
+  // 🎨 ACTUALIZAR UI SEGÚN ESTADO
   // ============================================================
   function updateUI(state) {
     const status = state.status || 'idle';
     lastState = status;
 
-    const dot = document.getElementById('as-dot');
-    const statusEl = document.getElementById('as-status');
     const statusBox = document.getElementById('as-status-box');
+    const statusEl = document.getElementById('as-status');
     const headBadge = document.getElementById('as-head-badge');
     const btnStart = document.getElementById('as-start');
     const btnStop = document.getElementById('as-stop');
     const btnRenew = document.getElementById('as-renew');
     const meta = document.getElementById('as-meta');
+    const panel = document.getElementById('autostream-panel');
 
-    dot.className = 'as-status-dot ' + (status === 'idle' ? '' : status);
     if (statusBox) statusBox.setAttribute('data-state', status);
+    if (panel) panel.setAttribute('data-status', status);
 
     const textos = {
       idle: 'Detenido',
-      waiting: 'Esperando a OBS...',
+      waiting: 'Esperando OBS...',
       streaming: 'Emitiendo',
       error: 'Error'
     };
-    statusEl.textContent = textos[status] || status;
+    if (statusEl) statusEl.textContent = textos[status] || status;
 
     if (headBadge) {
-      headBadge.className = 'as-head-badge ' + (status === 'idle' ? 'idle' : status);
-      const icon = status === 'idle' ? 'ri-circle-fill'
-                 : status === 'waiting' ? 'ri-time-line'
-                 : status === 'streaming' ? 'ri-live-fill'
-                 : 'ri-error-warning-fill';
-      headBadge.innerHTML = `<i class="${icon}" style="font-size:${status === 'idle' ? '8px' : '11px'};"></i> <span>${textos[status] || status}</span>`;
+      headBadge.className = 'as-head-badge ' + status;
+      headBadge.innerHTML = `<span class="badge-dot"></span><span>${(textos[status] || status).toLowerCase()}</span>`;
     }
 
-    btnStart.disabled = (status !== 'idle' && status !== 'error');
-    btnStop.disabled = (status === 'idle');
-    btnRenew.disabled = (status !== 'streaming');
+    if (btnStart) btnStart.disabled = (status !== 'idle' && status !== 'error');
+    if (btnStop) btnStop.disabled = (status === 'idle');
+    if (btnRenew) btnRenew.disabled = (status !== 'streaming');
 
-    if (status === 'streaming' && state.username) {
-      meta.style.display = 'flex';
-      document.getElementById('as-username').textContent = state.username;
-      document.getElementById('as-last-renew').textContent = state.lastRenewal
-        ? new Date(state.lastRenewal).toLocaleTimeString('es-ES')
-        : '—';
-      document.getElementById('as-next-renew').textContent = state.nextRenewal
-        ? new Date(state.nextRenewal).toLocaleTimeString('es-ES')
-        : '—';
-    } else {
-      meta.style.display = 'none';
+    if (meta) {
+      if (status === 'streaming' && state.username) {
+        meta.style.display = 'flex';
+        document.getElementById('as-username').textContent = state.username;
+        document.getElementById('as-last-renew').textContent = state.lastRenewal
+          ? new Date(state.lastRenewal).toLocaleTimeString('es-ES')
+          : '—';
+        document.getElementById('as-next-renew').textContent = state.nextRenewal
+          ? new Date(state.nextRenewal).toLocaleTimeString('es-ES')
+          : '—';
+      } else {
+        meta.style.display = 'none';
+      }
     }
 
     if (status === 'error' && state.error) {
@@ -786,12 +933,10 @@
       hideError();
     }
 
-    if (status === 'streaming' && !statusInterval) {
-      startPolling();
-    }
-    if (status === 'idle' && statusInterval) {
-      stopPolling();
-    }
+    if (status === 'streaming' && !statusInterval) startPolling();
+    if (status === 'idle' && statusInterval) stopPolling();
+
+    updateSteps();
   }
 
   function setBusy(busy) {
@@ -799,9 +944,7 @@
       const el = document.getElementById(id);
       if (el) el.disabled = busy;
     });
-    if (!busy) {
-      actualizarEstado();
-    }
+    if (!busy) actualizarEstado();
   }
 
   function showError(msg) {
@@ -812,14 +955,13 @@
       box.classList.add('show');
     }
   }
-
   function hideError() {
     const box = document.getElementById('as-error');
     if (box) box.classList.remove('show');
   }
 
   // ============================================================
-  // 🎥 INFO DE OBS (IP LAN + URL + QR)
+  // 🎥 INFO OBS (LAN URL + KEY + QR)
   // ============================================================
   async function loadObsInfo() {
     try {
@@ -829,23 +971,29 @@
 
       const urlEl   = document.getElementById('as-lan-url');
       const keyEl   = document.getElementById('as-lan-key');
-      const stEl    = document.getElementById('as-proxy-status');
+      const pill    = document.getElementById('as-proxy-pill');
       const copyUrl = document.getElementById('as-copy-lan-url');
       const copyKey = document.getElementById('as-copy-lan-key');
 
-      if (urlEl)   urlEl.textContent = data.lanUrl;
-      if (keyEl)   keyEl.textContent = data.key;
-      if (stEl)    stEl.textContent  = data.statusLabel || data.status || '—';
+      if (urlEl) urlEl.textContent = data.lanUrl;
+      if (keyEl) keyEl.textContent = data.key;
+      if (pill) {
+        pill.textContent = data.statusLabel || data.status || '—';
+        pill.className = 'as-proxy-pill' + (
+          data.status === 'online'  ? ' ok'  :
+          data.status === 'offline' ? ' err' : ''
+        );
+      }
       if (copyUrl) copyUrl.setAttribute('data-copy', data.lanUrl);
       if (copyKey) copyKey.setAttribute('data-copy', data.key);
 
       const canvas = document.getElementById('as-qr');
       if (canvas && window.QRCode && typeof window.QRCode.toCanvas === 'function') {
         try {
-          await window.QRCode.toCanvas(canvas, data.lanUrl, { width: 120, margin: 1 });
-        } catch (e) { /* QR falló, silencioso */ }
+          await window.QRCode.toCanvas(canvas, data.lanUrl, { width: 110, margin: 1 });
+        } catch (e) {}
       }
-    } catch (e) { /* silencioso */ }
+    } catch (e) {}
   }
 
   function startObsPolling() {
@@ -853,13 +1001,12 @@
     loadObsInfo();
     obsInterval = setInterval(loadObsInfo, 10000);
   }
-
   function stopObsPolling() {
     if (obsInterval) { clearInterval(obsInterval); obsInterval = null; }
   }
 
   // ============================================================
-  // TOGGLE DEL PANEL
+  // 🎛️ TOGGLE DEL PANEL
   // ============================================================
   function togglePanel() {
     const panel = document.getElementById('autostream-panel');
@@ -875,7 +1022,7 @@
   }
 
   // ============================================================
-  // INICIALIZAR
+  // 🚀 INIT
   // ============================================================
   function init() {
     injectStyles();
@@ -912,7 +1059,6 @@
     }
   }
 
-  // Esperar a que el DOM tenga las piezas clave
   function waitForDom() {
     const headerRight = document.querySelector('.header-right');
     const mainContent = document.querySelector('main.main-content');
