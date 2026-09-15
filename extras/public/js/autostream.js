@@ -709,8 +709,13 @@
     document.getElementById('as-stop').addEventListener('click', stopStream);
     document.getElementById('as-renew').addEventListener('click', renewStream);
 
-    // Detectar cambios en cuenta/título para actualizar pasos
-    document.getElementById('as-account').addEventListener('change', updateSteps);
+    // ── CAMBIO CLAVE: al cambiar de cuenta en el desplegable,
+    //    actualizamos `selectedToken` con el valor elegido.
+    document.getElementById('as-account').addEventListener('change', (e) => {
+      selectedToken = e.target.value;
+      updateSteps();
+    });
+
     document.getElementById('as-title').addEventListener('input', updateSteps);
 
     // Copy buttons
@@ -798,7 +803,9 @@
         select.appendChild(opt);
       });
 
+      // Seleccionar la primera cuenta por defecto
       selectedToken = valid[0].apiToken;
+      select.value = selectedToken;
       updateSteps();
 
     } catch (e) {
