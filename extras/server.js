@@ -239,6 +239,8 @@ app.get('/api/tiktok/stream-stop', async (req, res) => {
 app.post('/api/tiktok/proxy/start', async (req, res) => {
     try {
         const { token, title } = req.body || {};
+        console.log('📥 [/api/tiktok/proxy/start] token recibido:', token ? token.slice(0, 30) + '...' : '(vacío)');
+        console.log('📥 [/api/tiktok/proxy/start] title recibido:', title);
         if (!token) return res.status(400).json({ ok: false, error: 'Falta token' });
         const result = await tiktokProxy.start(token, title);
         res.json(result);

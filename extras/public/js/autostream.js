@@ -781,12 +781,16 @@
         return;
       }
 
-      const valid = data.accounts.filter(a => a.canBeLive && !a.invalid);
-      accounts = valid;
+      // Mostrar TODAS las cuentas detectadas, marcando las inválidas
+      const todas = Array.isArray(data.accounts) ? data.accounts : [];
+      const validas = todas.filter(a => a.canBeLive && !a.invalid);
+      const invalidas = todas.filter(a => !a.canBeLive || a.invalid);
 
-      if (valid.length === 0) {
-        select.innerHTML = '<option value="">Sin cuentas válidas</option>';
-        showError('No hay cuentas válidas. Abre Streamlabs Desktop y loguéate con al menos una cuenta de TikTok.');
+      accounts = todas;   // guardamos todas
+
+      if (todas.length === 0) {
+        select.innerHTML = '<option value="">Sin cuentas detectadas</option>';
+        showError('No hay cuentas. Abre Streamlabs Desktop y loguéate con al menos una cuenta de TikTok.');
         updateSteps();
         return;
       }
@@ -794,7 +798,8 @@
       hideError();
       select.innerHTML = '';
 
-      valid.forEach((a, i) => {
+      // 1) Las que pueden emitir (elegibles)
+      validas.forEach((a, i) => {
         const opt = document.createElement('option');
         opt.value = a.apiToken;
         const realName = a.nickname || a.username || a.displayName || a.name || `Cuenta ${i + 1}`;
@@ -803,9 +808,28 @@
         select.appendChild(opt);
       });
 
-      // Seleccionar la primera cuenta por defecto
-      selectedToken = valid[0].apiToken;
-      select.value = selectedToken;
+      // 2) Las que NO pueden emitir (marcadas, deshabilitadas)
+      invalidas.forEach((a, i) => {
+        const opt = document.createElement('option');
+        opt.value = '';   // ← vacío para inválidas
+        opt.disabled = true;
+        const realName = a.nickname || a.username || a.displayName || a.name || `Cuenta ${i + 1}`;
+        const motivo = a.error
+          ? ` — ${a.error}`
+          : (a.invalid ? ' — token inválido' : ' — no puede emitir');
+        opt.textContent = `⚠️ ${realName}${motivo}`;
+        select.appendChild(opt);
+      });
+
+      // 3) Seleccionar la primera VÁLIDA automáticamente
+      if (validas.length > 0) {
+        selectedToken = validas[0].apiToken;
+        select.value = selectedToken;
+      } else {
+        selectedToken = null;
+        showError('Ninguna cuenta puede emitir. Revisa Streamlabs Desktop.');
+      }
+
       updateSteps();
 
     } catch (e) {
@@ -820,7 +844,18 @@
   // ============================================================
   async function startStream() {
     const title = document.getElementById('as-title').value.trim() || 'TogiPanel Stream';
-    if (!selectedToken) return showError('Selecciona una cuenta');
+
+    // 🔥 FIX: leer el token DIRECTAMENTE del <select> al pulsar INICIAR
+    const sel = document.getElementById('as-account');
+    const tokenDelSelect = sel ? sel.value : '';
+
+    console.log('=== INICIAR STREAM ===');
+    console.log('tokenDelSelect:', tokenDelSelect ? tokenDelSelect.slice(0, 20) + '...' : '(vacío)');
+    console.log('Opción elegida:', sel && sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].textContent : '(ninguna)');
+
+    if (!tokenDelSelect) {
+      return showError('Selecciona una cuenta en el desplegable');
+    }
 
     setBusy(true);
     hideError();
@@ -829,7 +864,7 @@
       const r = await fetch(window.SERVER_BASE + '/api/tiktok/proxy/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: selectedToken, title })
+        body: JSON.stringify({ token: tokenDelSelect, title })
       });
       const data = await r.json();
       if (!data.ok) {

