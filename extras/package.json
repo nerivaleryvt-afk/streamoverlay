@@ -1,6 +1,6 @@
 {
   "name": "togi-extras",
-  "version": "1.3.5",
+  "version": "1.3.6",
   "private": true,
   "description": "Dependencias del servidor TogiPanel",
   "dependencies": {
