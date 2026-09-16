@@ -1,7 +1,8 @@
 /* ════════════════════════════════════════════════════════════
    CONFIG
    ════════════════════════════════════════════════════════════ */
-const TOKEN = new URLSearchParams(location.search).get('t') || '';
+const _urlParams = new URLSearchParams(location.search);
+const TOKEN = _urlParams.get('t') || '';
 const API = (p) => `/api/deck${p}?t=${TOKEN}`;
 const socket = io();
 
@@ -12,6 +13,10 @@ let FILTER = 'all';
 let OBS_CONNECTED = false;
 let CURRENT_VIEW = 'deck';
 let DECK_ENABLED = true;
+
+/* handles de runtime */
+let SOCKETS_STARTED = false;
+let STATS_POLL_TIMER = null;
 
 const YT = {
   superchats: 0,
@@ -173,7 +178,22 @@ const OVERLAYS = [
    INIT
    ════════════════════════════════════════════════════════════ */
 async function init(){
-  if(!TOKEN){ toast('Falta token en la URL', 'err'); return; }
+  if(!TOKEN){
+    try {
+      const r = await fetch('/api/deck-token');
+      if(r.ok){
+        const data = await r.json();
+        if(data && data.token){
+          const url = new URL(location.href);
+          url.searchParams.set('t', data.token);
+          location.replace(url.toString());
+          return;
+        }
+      }
+    } catch(e){}
+    toast('No se pudo obtener token del servidor', 'err');
+    return;
+  }
   loadPrefs();
   applyPrefs();
   await loadConfig();
@@ -183,10 +203,7 @@ async function init(){
   await loadGlobalConfig();
   renderAll();
   bindUI();
-  connectSockets();
-  startStatsPolling();
-  startAitumPolling();
-  loadStreamInfo();
+  if(DECK_ENABLED) startRuntime();
 }
 
 async function loadConfig(){
@@ -384,6 +401,25 @@ function applyDeckEnabled(){
   try { localStorage.setItem('deck:enabled', DECK_ENABLED ? '1' : '0'); } catch(e){}
 }
 
+function startRuntime(){
+  if(!SOCKETS_STARTED){
+    connectSockets();
+    SOCKETS_STARTED = true;
+  }
+  startStatsPolling();
+  startAitumPolling();
+  loadStreamInfo();
+}
+
+function stopRuntime(){
+  if(STATS_POLL_TIMER){ clearInterval(STATS_POLL_TIMER); STATS_POLL_TIMER = null; }
+  if(AITUM.pollTimer){ clearInterval(AITUM.pollTimer); AITUM.pollTimer = null; }
+  if(SOCKETS_STARTED){
+    socket.removeAllListeners();
+    SOCKETS_STARTED = false;
+  }
+}
+
 async function setDeckEnabled(enabled){
   try {
     const r = await fetch(API('/enabled'), {
@@ -395,7 +431,13 @@ async function setDeckEnabled(enabled){
     const data = await r.json();
     DECK_ENABLED = !!data.enabled;
     applyDeckEnabled();
-    toast(DECK_ENABLED ? 'Deck activado' : 'Deck desactivado', 'ok');
+    if(DECK_ENABLED){
+      startRuntime();
+      toast('Deck activado', 'ok');
+    } else {
+      stopRuntime();
+      toast('Deck desactivado', 'ok');
+    }
   } catch(e){
     toast('Error cambiando estado', 'err');
     console.error(e);
@@ -1042,7 +1084,8 @@ function toast(msg, type=''){
 }
 
 function startStatsPolling(){
-  setInterval(()=>{
+  if(STATS_POLL_TIMER) clearInterval(STATS_POLL_TIMER);
+  STATS_POLL_TIMER = setInterval(()=>{
     fetch(API('/stats'))
       .then(r=>r.json())
       .then(s=>{ STATS = s; renderLive(); renderStatsView(); })
@@ -1054,8 +1097,12 @@ function connectSockets(){
   socket.on('deck:stats-update', s=>{ STATS = s; renderLive(); renderStatsView(); });
   socket.on('deck:obs-status', s=>{ OBS_CONNECTED = !!s.connected; renderObsStatus(); });
   socket.on('deck:enabled-updated', d=>{
-    DECK_ENABLED = !!(d && d.enabled);
+    const newEnabled = !!(d && d.enabled);
+    if(newEnabled === DECK_ENABLED) return;
+    DECK_ENABLED = newEnabled;
     applyDeckEnabled();
+    if(DECK_ENABLED) startRuntime();
+    else stopRuntime();
   });
   socket.on('deck:categories-updated', c=>{ STATE.categories = c; renderAll(); });
   socket.on('deck:buttons-updated', b=>{ STATE.buttons = b; renderAll(); });
@@ -1804,12 +1851,10 @@ function bindUI(){
       toast(`Cuenta: ${username}`, 'ok');
     };
   }
-    const aitumRefresh = document.getElementById('aitumRefreshBtn');
+  const aitumRefresh = document.getElementById('aitumRefreshBtn');
   if(aitumRefresh) aitumRefresh.onclick = ()=>loadAitumState();
 
-  /* ════════════════════════════════════════════════════════════
-     🆕 VOLVER AL PANEL
-     ════════════════════════════════════════════════════════════ */
+  /* VOLVER AL PANEL */
   const goBack = () => {
     const anyModalOpen = document.querySelector('.modal-back.show');
     if (anyModalOpen) {

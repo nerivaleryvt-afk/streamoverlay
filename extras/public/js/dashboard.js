@@ -53,19 +53,52 @@ function getFlagByLang(lang) {
   return flags[lang] || '🌐';
 }
 
+/* ════════════════════════════════════════════════════════════
+   DETECCIÓN DE IDIOMA MEJORADA
+   ════════════════════════════════════════════════════════════ */
 function detectLanguage(text) {
-  if (!text || /^[\d\s.,!?¿¡]+$/.test(text)) return 'en';
-  if (/[\u3040-\u30FF]/.test(text)) return 'ja';
-  if (/[\u4E00-\u9FFF]/.test(text)) return 'zh-CN';
-  if (/[\uAC00-\uD7AF]/.test(text)) return 'ko';
-  if (/[\u0600-\u06FF]/.test(text)) return 'ar';
-  if (/[\u0400-\u04FF]/.test(text)) return 'ru';
-  if (/[ăâđêôơư]/i.test(text)) return 'vi';
-  if (/[\u0E00-\u0E7F]/.test(text)) return 'th';
-  const spanishWords = ['el','la','los','las','un','una','es','son','está','están','y','o','pero','porque','qué','cómo','dónde','quién','con','sin','para','por','de','del','al','a','en','se','su','mis','tus','sus','hola','gracias','muy','bien','mal','todo','nada','este','esta'];
-  const words = text.toLowerCase().split(/\s+/).filter(Boolean);
+  if (!text) return 'en';
+  const clean = String(text).trim();
+  if (clean.length === 0) return 'en';
+
+  // Solo números / símbolos / puntuación → no traducir
+  if (/^[\d\s.,!?¿¡@#$%^&*()_\-+=\[\]{};:'"<>/\\|`~]+$/.test(clean)) return 'es';
+
+  // Solo emojis → no traducir
+  try {
+    if (/^[\p{Emoji}\p{Emoji_Component}\s]+$/u.test(clean)) return 'es';
+  } catch (e) {}
+
+  // Menos de 3 palabras → no traducir (gg, hola, jaja)
+  const words = clean.toLowerCase().split(/\s+/).filter(Boolean);
+  if (words.length < 3) return 'es';
+
+  // Alfabetos no latinos
+  if (/[\u3040-\u30FF]/.test(clean)) return 'ja';
+  if (/[\u4E00-\u9FFF]/.test(clean)) return 'zh-CN';
+  if (/[\uAC00-\uD7AF]/.test(clean)) return 'ko';
+  if (/[\u0600-\u06FF]/.test(clean)) return 'ar';
+  if (/[\u0400-\u04FF]/.test(clean)) return 'ru';
+  if (/[ăâđêôơư]/i.test(clean)) return 'vi';
+  if (/[\u0E00-\u0E7F]/.test(clean)) return 'th';
+
+  // Caracteres típicos español → español
+  if (/[ñáéíóúü¿¡]/i.test(clean)) return 'es';
+
+  // Diccionario español
+  const spanishWords = [
+    'el','la','los','las','un','una','unos','unas','es','son','está','están','estoy','estás','estamos',
+    'y','o','pero','porque','qué','cómo','dónde','quién','cuándo','cuál',
+    'con','sin','para','por','de','del','al','a','en','se','su','sus','mi','mis','tu','tus',
+    'hola','gracias','muy','bien','mal','todo','toda','nada','este','esta','esto','ese','esa','eso',
+    'sí','no','ya','aquí','ahí','allí','tengo','tienes','tiene','puedo','puedes','puede',
+    'quiero','quieres','quiere','voy','vas','vamos','van','hacer','hago','haces','hace',
+    'más','menos','también','tampoco','solo','sólo','cuando','donde','como','que','si',
+    'me','te','le','nos','les','lo','os','nosotros','vosotros','ellos','ellas'
+  ];
   const spanishHits = words.filter(w => spanishWords.includes(w)).length;
-  if (spanishHits >= 1 && spanishHits / words.length >= 0.2) return 'es';
+  if (spanishHits >= 1 && (spanishHits / words.length) >= 0.25) return 'es';
+
   return 'en';
 }
 
@@ -156,7 +189,6 @@ function isDuplicateMessage(msg) {
   if (last && (now - last) < 8000) return true;
   recentMessages.set(key, now);
 
-  // Limpieza periódica: si el Map crece mucho, quitamos los antiguos
   if (recentMessages.size > 500) {
     const cutoff = now - 8000;
     for (const [k, t] of recentMessages) {
@@ -213,7 +245,6 @@ function applyLayout() {
   document.getElementById('toggleIcon').className = rightCollapsed ? 'ri-layout-left-line' : 'ri-layout-right-line';
   document.getElementById('toggleText').textContent = rightCollapsed ? 'Mostrar Panel' : 'Ocultar Panel';
 
-  // YouTube
   const ytSection = document.getElementById('section-stats-youtube');
   if (ytSection) ytSection.classList.toggle('hidden', youtubeCollapsed);
   const ytText = document.getElementById('toggleYouTubeText');
@@ -296,12 +327,10 @@ function renderTikTokDropdown() {
     </button>
   `;
 
-  // Enganchar eventos a cada item
   dd.querySelectorAll('.tk-item').forEach(item => {
     const id = item.getAttribute('data-view-id');
 
     item.addEventListener('click', (ev) => {
-      // Ignorar clic si estamos editando
       if (ev.target.classList.contains('editing')) return;
       if (ev.target.closest('.editing')) return;
       switchTikTokView(id);
@@ -365,7 +394,6 @@ function switchTikTokView(id) {
   }).catch(() => {});
 }
 
-// ─── Renombrar vista (nombre) ───
 function startRenameView(ev, id, el) {
   ev.stopPropagation();
   const original = el.textContent.trim();
@@ -414,7 +442,6 @@ function startRenameView(ev, id, el) {
   el.addEventListener('blur', save, { once: true });
 }
 
-// ─── Editar @username real ───
 function startRenameUsername(ev, id, el) {
   ev.stopPropagation();
   const originalRaw = el.textContent.trim();
@@ -880,7 +907,7 @@ socket.on('connect', () => {
 });
 socket.on('disconnect', () => {
   document.getElementById('connectionStatus').innerHTML =
-    '<span class="status-dot" style="background:var(--danger);box-shadow:0 0 0 0 rgba(248,113,113,0.55);"></span>' +
+    '<span class="status-dot" style="background:var(--danger);"></span>' +
     '<span class="status-text" style="color:var(--danger);">Desconectado</span>';
 });
 
@@ -920,7 +947,6 @@ socket.on('tiktok-viewers', (data) => {
   if (typeof count === 'number') document.getElementById('tkViewers').textContent = count;
 });
 
-// 🔥 Sincronización de vistas entre pestañas
 socket.on('tiktok:view-renamed', ({ id, name }) => {
   const v = TIKTOK_VIEWS.find(x => x.id === id);
   if (v) { v.name = name; renderTikTokDropdown(); }
@@ -1028,6 +1054,9 @@ function renderTablasYouTube() {
   renderTabla('topChattersTable', chattersArr, 'count', '💬');
 }
 
+/* ════════════════════════════════════════════════════════════
+   TABLAS CON ICONOS REMIXICON (sin emojis)
+   ════════════════════════════════════════════════════════════ */
 function renderTabla(tbodyId, datos, campoValor, emoji) {
   const tbody = document.getElementById(tbodyId);
   if (!tbody) return;
@@ -1035,9 +1064,17 @@ function renderTabla(tbodyId, datos, campoValor, emoji) {
     tbody.innerHTML = '<tr><td colspan="3" class="empty">Sin datos todavía</td></tr>';
     return;
   }
+  const iconMap = {
+    '💎': 'ri-vip-diamond-fill',
+    '❤️': 'ri-heart-3-fill',
+    '🔗': 'ri-share-forward-fill',
+    '⭐': 'ri-star-fill',
+    '💬': 'ri-chat-3-fill'
+  };
+  const iconClass = iconMap[emoji] || 'ri-bar-chart-line';
   tbody.innerHTML = datos.map((d, i) => {
     const rankClass = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : '';
-    return `<tr class="${rankClass}"><td class="rank">#${i + 1}</td><td class="uname" title="${escapeHtml(d.username)}">${escapeHtml(d.username)}</td><td class="val">${emoji} ${Number(d[campoValor] || 0).toLocaleString('es-ES')}</td></tr>`;
+    return `<tr class="${rankClass}"><td class="rank">#${i + 1}</td><td class="uname" title="${escapeHtml(d.username)}">${escapeHtml(d.username)}</td><td class="val"><i class="${iconClass}"></i>${Number(d[campoValor] || 0).toLocaleString('es-ES')}</td></tr>`;
   }).join('');
 }
 
@@ -1050,7 +1087,7 @@ function renderTablaAmount(tbodyId, datos) {
   }
   tbody.innerHTML = datos.map((d, i) => {
     const rankClass = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : '';
-    return `<tr class="${rankClass}"><td class="rank">#${i + 1}</td><td class="uname" title="${escapeHtml(d.username)}">${escapeHtml(d.username)}</td><td class="val">💎 $${Number(d.amount || 0).toFixed(2)}</td></tr>`;
+    return `<tr class="${rankClass}"><td class="rank">#${i + 1}</td><td class="uname" title="${escapeHtml(d.username)}">${escapeHtml(d.username)}</td><td class="val"><i class="ri-money-dollar-circle-fill"></i>$${Number(d.amount || 0).toFixed(2)}</td></tr>`;
   }).join('');
 }
 
@@ -1126,20 +1163,73 @@ function resolvePrediction(index) {
   socket.emit('resolve-twitch-prediction', { predictionId: currentPrediction.id, winningOutcomeId: winningId });
 }
 
+/* ════════════════════════════════════════════════════════════
+   ADD MESSAGE TO FEED — Joins mini-pill + timestamp + auto-clean
+   ════════════════════════════════════════════════════════════ */
 function addMessageToFeed(msg) {
   if (!msg || !msg.username) return;
   const feed = document.getElementById('liveChat');
-  const entry = document.createElement('div');
+  if (!feed) return;
+
   const platform = (msg.platform || 'twitch').toLowerCase();
+  const rawText = String(msg.message || '');
+  const isJoin = /\bse unió\b/i.test(rawText) || /\bjoined\b/i.test(rawText);
+
+  const emptyMsg = feed.querySelector('.chat-empty');
+  if (emptyMsg) emptyMsg.remove();
+
+  // ─── Mensaje "se unió" (mini-pill verde) ───
+  if (isJoin) {
+    const entry = document.createElement('div');
+    entry.className = `chat-message join-message platform-${platform}`;
+    entry.dataset.timestamp = Date.now();
+
+    const avatarImg = document.createElement('img');
+    avatarImg.className = 'avatar';
+    avatarImg.src = msg.avatar || DEFAULT_AVATAR;
+    avatarImg.onerror = function () { this.src = DEFAULT_AVATAR; };
+
+    const contentDiv = document.createElement('div');
+    contentDiv.style.flex = '1';
+    contentDiv.style.minWidth = '0';
+    contentDiv.style.display = 'flex';
+    contentDiv.style.alignItems = 'center';
+
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mm = String(now.getMinutes()).padStart(2, '0');
+
+    contentDiv.innerHTML = `
+      <span class="username">${escapeHtml(msg.username)}</span>
+      <span class="join-text">se unió</span>
+      <span class="join-time">${hh}:${mm}</span>
+    `;
+
+    entry.appendChild(avatarImg);
+    entry.appendChild(contentDiv);
+    feed.prepend(entry);
+
+    while (feed.children.length > 60) feed.lastChild.remove();
+    stats.messages++;
+    updateStats();
+    return;
+  }
+
+  // ─── Mensaje normal ───
+  const entry = document.createElement('div');
   entry.className = `chat-message platform-${platform}`;
+  entry.dataset.timestamp = Date.now();
+
   const avatarImg = document.createElement('img');
   avatarImg.className = 'avatar';
   avatarImg.src = msg.avatar || DEFAULT_AVATAR;
-  avatarImg.onerror = function() { this.src = DEFAULT_AVATAR; };
+  avatarImg.onerror = function () { this.src = DEFAULT_AVATAR; };
+
   let platformClass = 'platform-twitch';
   if (platform === 'tiktok') platformClass = 'platform-tiktok';
   else if (platform === 'kick') platformClass = 'platform-kick';
   else if (platform === 'youtube') platformClass = 'platform-youtube';
+
   const contentDiv = document.createElement('div');
   contentDiv.style.flex = '1';
   contentDiv.style.minWidth = '0';
@@ -1150,6 +1240,7 @@ function addMessageToFeed(msg) {
     </div>
     <div class="message">...</div>
   `;
+
   const modActions = document.createElement('div');
   modActions.className = 'mod-actions';
   modActions.innerHTML = `
@@ -1166,15 +1257,19 @@ function addMessageToFeed(msg) {
       else if (action === 'warn') quickWarn(username);
     });
   });
+
   entry.appendChild(avatarImg);
   entry.appendChild(contentDiv);
   entry.appendChild(modActions);
   feed.prepend(entry);
-  if (feed.children.length > 50) feed.lastChild.remove();
+
+  if (feed.children.length > 60) feed.lastChild.remove();
+
   stats.messages++;
   updateStats();
+
   const messageEl = contentDiv.querySelector('.message');
-  translateText(msg.message).then(result => {
+  translateText(rawText).then(result => {
     let finalText = result.translated;
     if (censorshipEnabled) finalText = applyGenderReplacements(finalText);
     if (result.translated_ok && result.sourceLang !== 'es') {
@@ -1184,9 +1279,32 @@ function addMessageToFeed(msg) {
       messageEl.innerHTML = escapeHtml(finalText);
     }
   }).catch(() => {
-    messageEl.innerHTML = escapeHtml(msg.message);
+    messageEl.innerHTML = escapeHtml(rawText);
   });
 }
+
+/* ════════════════════════════════════════════════════════════
+   AUTO-LIMPIEZA DE MENSAJES (>5 min)
+   ════════════════════════════════════════════════════════════ */
+const MENSAJE_MAX_EDAD_MS = 5 * 60 * 1000;
+const LIMPIEZA_INTERVALO_MS = 30 * 1000;
+
+function limpiarMensajesAntiguos() {
+  const feed = document.getElementById('liveChat');
+  if (!feed) return;
+  const cutoff = Date.now() - MENSAJE_MAX_EDAD_MS;
+  const hijos = Array.from(feed.children);
+  for (const hijo of hijos) {
+    if (!hijo.dataset || !hijo.dataset.timestamp) continue;
+    const ts = parseInt(hijo.dataset.timestamp, 10);
+    if (ts && ts < cutoff) hijo.remove();
+  }
+  if (feed.children.length === 0) {
+    feed.innerHTML = '<div class="chat-empty">Sin mensajes recientes</div>';
+  }
+}
+
+setInterval(limpiarMensajesAntiguos, LIMPIEZA_INTERVALO_MS);
 
 function updateStats() {
   document.getElementById('totalMessages').textContent = stats.messages;

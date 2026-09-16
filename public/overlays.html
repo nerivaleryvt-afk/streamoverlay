@@ -70,10 +70,15 @@
         <span>Pride</span>
         <span class="nav-count">1</span>
       </button>
-      <button class="nav-item" data-filter="hype" onclick="filtrar('hype', this)">
+            <button class="nav-item" data-filter="hype" onclick="filtrar('hype', this)">
         <i class="ri-train-line"></i>
         <span>Hype Train</span>
         <span class="nav-count">2</span>
+      </button>
+      <button class="nav-item" data-filter="custom" onclick="filtrar('custom', this)">
+        <i class="ri-magic-line"></i>
+        <span>Personalizado</span>
+        <span class="nav-count">1</span>
       </button>
     </nav>
 
@@ -184,6 +189,55 @@
           </button>
         </div>
       </div>
+
+      <!-- 1b. OVERLAY CHAT PERSONALIZADO (StreamElements) -->
+      <div class="overlay-card" data-category="custom" data-path="/overlay-custom" data-key="custom-chat" data-w="380" data-h="640">
+        <div class="card-top">
+          <div class="card-icon"><i class="ri-magic-line"></i></div>
+          <div class="card-title">
+            <h3>Overlay Chat Personalizado</h3>
+            <p>Sube un widget ZIP de StreamElements</p>
+          </div>
+          <div class="card-header-actions">
+            <button class="icon-btn fav-btn" onclick="toggleFavorito('custom-chat', this)" title="Favorito">
+              <i class="ri-star-line"></i>
+            </button>
+            <button class="icon-btn copy" onclick="copiarUrl('/overlay-custom')" title="Copiar URL">
+              <i class="ri-file-copy-line"></i>
+            </button>
+            <button class="icon-btn" onclick="probar('/overlay-custom')" title="Abrir">
+              <i class="ri-external-link-line"></i>
+            </button>
+            <button class="icon-btn danger" onclick="borrarCustomOverlay()" title="Eliminar">
+              <i class="ri-delete-bin-line"></i>
+            </button>
+          </div>
+        </div>
+        <div class="card-badges">
+          <span class="badge v">9:16</span>
+          <span class="badge custom" id="customOverlayStatus">sin widget</span>
+        </div>
+        <div class="preview-box" data-w="380" data-h="640" onclick="probar('/overlay-custom')">
+          <div class="preview-empty-hint">Sube un ZIP para previsualizar</div>
+          <div class="preview-frame">
+            <iframe data-src="/overlay-custom?preview=1" loading="lazy"></iframe>
+          </div>
+          <div class="preview-footer">
+            <span class="url-text">/overlay-custom</span>
+            <span class="open-hint"><i class="ri-external-link-line"></i> Abrir</span>
+          </div>
+        </div>
+        <div class="card-actions">
+          <input type="file" id="customOverlayFile" accept=".zip,application/zip" style="display:none" onchange="subirCustomOverlay(this.files[0]); this.value='';">
+          <button class="action-btn primary" onclick="document.getElementById('customOverlayFile').click()">
+            <i class="ri-upload-2-line"></i> Subir ZIP
+          </button>
+          <button class="action-btn secondary" onclick="copiarUrl('/overlay-custom')">
+            <i class="ri-file-copy-line"></i> Copiar URL
+          </button>
+        </div>
+      </div>
+
 
       <!-- 2. META DE DONACIONES -->
       <div class="overlay-card" data-category="crystal" data-path="/crystal" data-key="crystal" data-w="500" data-h="680">
