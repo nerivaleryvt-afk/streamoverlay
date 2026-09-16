@@ -85,7 +85,7 @@ let mainWindow = null;
 let updaterInitialized = false;
 let updaterInterval = null;
 
-let isQuitting = false;   // ← reemplaza app.isQuitting
+let isQuitting = false;
 
 const restartCounters = {};
 const processScripts = {};
@@ -101,7 +101,7 @@ function log(tag, msg, isError = false) {
 }
 
 // ================================================================
-// 📝 SETUP.JSON (con caché en memoria)
+// 📝 SETUP.JSON
 // ================================================================
 let cachedSetup = null;
 
@@ -127,7 +127,7 @@ function writeSetup(payload) {
             configuredAt: new Date().toISOString()
         };
         fs.writeFileSync(setupPath, JSON.stringify(data, null, 2), 'utf8');
-        cachedSetup = data;  // actualizar caché
+        cachedSetup = data;
         console.log('✅ setup.json guardado:', data);
         return { success: true, data };
     } catch (e) {
@@ -191,7 +191,7 @@ function startProcess(name, scriptPath, cwd) {
     const proc = spawn(process.execPath, [scriptPath], {
         cwd: cwd || path.dirname(scriptPath),
         env: envVars,
-        stdio: ['ignore', 'pipe', 'pipe'],
+        stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
         windowsHide: true,
         shell: false
     });
@@ -204,7 +204,6 @@ function startProcess(name, scriptPath, cwd) {
     proc.on('error', (err) => log(name, err.message, true));
 
     proc.on('exit', (code) => {
-        // Limpiar la referencia del array (evita acumulación)
         childProcesses = childProcesses.filter(p => p !== proc);
         console.log(`[${name}] Proceso terminado con código ${code}`);
         if (appLogs.length >= 500) appLogs.shift();
@@ -213,7 +212,6 @@ function startProcess(name, scriptPath, cwd) {
         if (isQuitting) return;
         if (code === 0) return;
 
-        // Si vivió > 30s, consideramos que arrancó bien → reseteamos contador
         const livedMs = Date.now() - startedAt;
         if (livedMs > 30_000) restartCounters[name] = 0;
 
@@ -224,7 +222,7 @@ function startProcess(name, scriptPath, cwd) {
             return;
         }
 
-        const delay = Math.min(30_000, 1000 * 2 ** restartCounters[name]); // 2,4,8,16,30s
+        const delay = Math.min(30_000, 1000 * 2 ** restartCounters[name]);
         console.log(`[${name}] Reintentando en ${delay / 1000}s (intento ${restartCounters[name]}/5)`);
 
         setTimeout(() => {
@@ -252,7 +250,7 @@ function closeAllProcesses() {
 }
 
 // ================================================================
-// 🌐 SESIÓN TIKTOK (singleton — evita apilar handlers)
+// 🌐 SESIÓN TIKTOK
 // ================================================================
 let tiktokSessionReady = false;
 
@@ -291,7 +289,7 @@ function getTikTokSession() {
 }
 
 // ================================================================
-// 🔑 CAPTURA DE COOKIES DE TIKTOK (Fase 1)
+// 🔑 CAPTURA DE COOKIES DE TIKTOK
 // ================================================================
 const COOKIE_SECRET = 'togipanel-tiktok-v1';
 const TIKTOK_COOKIES_FILE = path.join(userDataDir, 'tiktok-cookies.enc');
@@ -530,7 +528,6 @@ function openTikTokLoginWindow() {
     loginWin.loadURL('https://livecenter.tiktok.com/login');
 
     loginWin.webContents.on('did-navigate', async (event, url) => {
-        // Detección más estricta: rutas internas conocidas y sin /login
         const loginOk = /\/(live_monitor|dashboard|live|studio)/.test(url) && !url.includes('/login');
 
         if (loginOk) {
@@ -585,7 +582,6 @@ function startTikTokMonitorWindow() {
             (function() {
                 const SERVER_BASE = ${JSON.stringify(serverBase)};
 
-                // Post con timeout para no dejar promesas colgadas
                 function post(path, body) {
                     const ctrl = new AbortController();
                     const t = setTimeout(() => ctrl.abort(), 3000);
@@ -650,13 +646,11 @@ function startTikTokMonitorWindow() {
                     return true;
                 }
 
-                // Observa el body una sola vez para re-enganchar si TikTok reemplaza el contenedor
                 const bodyObserver = new MutationObserver(() => {
                     if (findChatContainer()) attachObserver();
                 });
                 bodyObserver.observe(document.body, { childList: true, subtree: true });
 
-                // Intento inicial
                 setTimeout(attachObserver, 3000);
             })();
         `;
@@ -699,7 +693,7 @@ ipcMain.handle('setup:reset', async () => {
             fs.unlinkSync(setupPath);
             console.log('🗑️ setup.json borrado');
         }
-        cachedSetup = null; // ← limpiar caché
+        cachedSetup = null;
         setTimeout(() => {
             try { app.relaunch(); } catch (e) {}
             app.quit();
@@ -779,7 +773,7 @@ ipcMain.on('tiktok-chat-captured', async (event, data) => {
 });
 
 // ================================================================
-// 🍪 IPC DE COOKIES TIKTOK (Fase 1)
+// 🍪 IPC DE COOKIES TIKTOK
 // ================================================================
 ipcMain.handle('tiktok:capturar-cookies', async () => {
     return await capturarYGuardarCookies();
@@ -855,7 +849,6 @@ app.whenReady().then(() => {
 
     buildScriptMap();
 
-    // Preparar la partición persist:tiktok-session desde el inicio
     getTikTokSession();
 
     console.log(`🚀 Arrancando en modo: ${mode || 'PRIMERA VEZ (sin setup.json)'}`);

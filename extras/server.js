@@ -128,6 +128,8 @@ console.log(`📁 Sirviendo archivos estáticos desde: ${publicDir}`);
 app.use(cors());
 app.use(express.json());
 app.use(express.static(publicDir));
+// 🎨 Overlay chat personalizado (StreamElements)
+require('./custom-overlay')(app);
 
 // 🔊 PATCH 2 — Servir MP3 generados por TTS
 app.use('/tts-audio', express.static(ttsEngine.TTS_DIR, {
@@ -135,6 +137,61 @@ app.use('/tts-audio', express.static(ttsEngine.TTS_DIR, {
 }));
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
+
+// ================================================================
+// 🏷️ BADGE DE PLATAFORMA (SVG servido como URL)
+// GET /api/platform-badge/:platform.svg
+// ================================================================
+app.get('/api/platform-badge/:platform.svg', (req, res) => {
+    const p = String(req.params.platform || '').toLowerCase();
+    const map = {
+        twitch:  { l: 'TWITCH',  c: '#a78bfa', bg: '#2a1f4d' },
+        tiktok:  { l: 'TIKTOK',  c: '#fe2c55', bg: '#4d1a28' },
+        kick:    { l: 'KICK',    c: '#53fc18', bg: '#1a3d10' },
+        youtube: { l: 'YOUTUBE', c: '#ff5252', bg: '#4d1a1a' }
+    };
+    const i = map[p] || map.twitch;
+    const w = i.l.length * 6 + 10;
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="14" viewBox="0 0 ${w} 14"><rect width="${w}" height="14" rx="3" fill="${i.bg}" stroke="${i.c}" stroke-width="0.8"/><text x="${w/2}" y="10" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="8" font-weight="700" fill="${i.c}" letter-spacing="0.4">${i.l}</text></svg>`;
+    res.setHeader('Content-Type', 'image/svg+xml');
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    res.send(svg);
+});
+
+// 🧪 TEST — simular eventos para probar overlays (Fase 4)
+app.post('/api/test/event', (req, res) => {
+    try {
+        const b = req.body || {};
+        const payload = {
+            platform: b.platform || 'twitch',
+            channel:  b.channel  || 'test',
+            username: b.username || 'Tester',
+            message:  b.message  || '',
+            avatar:   b.avatar   || null,
+            color:    b.color    || '#a970ff',
+            timestamp: Date.now(),
+            role:     b.role     || null,
+            type:     b.type     || 'chat'
+        };
+        if (b.type === 'cheer')        payload.bits = b.bits || 100;
+        if (b.type === 'resub')        payload.months = b.months || 6;
+        if (b.type === 'subgift')      payload.giftSender = b.username; payload.recipient = b.recipient || 'Alguien';
+        if (b.type === 'submysterygift') payload.amount = b.amount || 5;
+                if (b.type === 'gift') {
+            payload.giftName = b.giftName || 'Rosa';
+            payload.giftTotalDiamonds = b.amount || 100;
+            payload.giftImage = b.giftImage || null;
+            payload.giftRepeat = b.repeat || 1;
+        }
+        if (b.type === 'delete')       payload.targetMsgId = b.targetMsgId || 'fake-id';
+
+        io.emit('chat-message', payload);
+        console.log('🧪 [TEST]', payload);
+        res.json({ ok: true, payload });
+    } catch (e) {
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
 
 // ================================================================
 // 🎬 TIKTOK STREAM KEY vía STREAMLABS
@@ -531,6 +588,158 @@ app.get('/api/twitch/stream-info', async (req, res) => {
         });
     } catch (error) {
         res.json({ ok: false, error: error.response?.data?.message || error.message });
+    }
+});
+
+// ================================================================
+// 🎭 TWITCH: EMOTES NATIVOS (Fase 5)
+// GET /api/twitch/emotes?channel=NOMBRE
+// ================================================================
+app.get('/api/twitch/emotes', async (req, res) => {
+    try {
+        const channel = String(req.query.channel || '').trim() || getAllTwitchChannels()[0] || '';
+        if (!channel) return res.json({ ok: false, error: 'No hay canal configurado' });
+
+        const account = getAccountForChannel(channel) || getTwitchAccounts().find(a => a.clientId && a.oauthToken);
+        if (!account || !account.clientId || !account.oauthToken) {
+            return res.json({ ok: false, error: 'Canal sin cuenta Twitch con credenciales' });
+        }
+
+        const headers = {
+            'Client-ID': account.clientId,
+            'Authorization': `Bearer ${account.oauthToken.replace('oauth:', '')}`
+        };
+
+        const globales = [];
+        const canalEmotes = [];
+
+        // Globales
+        try {
+            const r = await axios.get('https://api.twitch.tv/helix/chat/emotes/global', { headers });
+            for (const e of (r.data.data || [])) {
+                globales.push({
+                    name: e.name, id: e.id,
+                    url_1x: e.images?.url_1x || null,
+                    url_2x: e.images?.url_2x || null,
+                    url_4x: e.images?.url_4x || null
+                });
+            }
+        } catch (err) {
+            console.error('❌ [TWITCH-EMOTES] Global:', err.response?.status, err.response?.data?.message || err.message);
+        }
+
+        // Del canal
+        try {
+            const ru = await axios.get(`https://api.twitch.tv/helix/users?login=${encodeURIComponent(channel)}`, { headers });
+            const bId = ru.data.data?.[0]?.id;
+            if (bId) {
+                const rc = await axios.get(`https://api.twitch.tv/helix/chat/emotes?broadcaster_id=${bId}`, { headers });
+                for (const e of (rc.data.data || [])) {
+                    canalEmotes.push({
+                        name: e.name, id: e.id,
+                        url_1x: e.images?.url_1x || null,
+                        url_2x: e.images?.url_2x || null,
+                        url_4x: e.images?.url_4x || null
+                    });
+                }
+            }
+        } catch (err) {
+            console.error('❌ [TWITCH-EMOTES] Canal:', err.response?.status, err.response?.data?.message || err.message);
+        }
+
+        console.log(`🎭 [TWITCH-EMOTES] Canal=${channel} global=${globales.length} canal=${canalEmotes.length}`);
+        res.json({ ok: true, channel, global: globales, channelEmotes: canalEmotes });
+    } catch (e) {
+        console.error('❌ [TWITCH-EMOTES] Error:', e.message);
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+// ================================================================
+// 🎭 EMOTES DE CANAL: 7TV + FFZ (Fase 5b)
+// GET /api/emotes-canales?channel=NOMBRE
+// ================================================================
+app.get('/api/emotes-canales', async (req, res) => {
+    try {
+        const channel = String(req.query.channel || '').trim() || getAllTwitchChannels()[0] || '';
+        if (!channel) return res.json({ ok: false, error: 'No hay canal configurado' });
+
+        const account = getAccountForChannel(channel) || getTwitchAccounts().find(a => a.clientId && a.oauthToken);
+        if (!account || !account.clientId || !account.oauthToken) {
+            return res.json({ ok: false, error: 'Canal sin cuenta Twitch' });
+        }
+
+        const headers = {
+            'Client-ID': account.clientId,
+            'Authorization': `Bearer ${account.oauthToken.replace('oauth:', '')}`
+        };
+
+        let twitchUserId = null;
+        try {
+            const ru = await axios.get(`https://api.twitch.tv/helix/users?login=${encodeURIComponent(channel)}`, { headers });
+            twitchUserId = ru.data.data?.[0]?.id || null;
+        } catch (e) {
+            console.error('❌ [EMOTES-CANAL] Twitch user:', e.message);
+        }
+
+        const sevenTv = [];
+        const ffz = [];
+
+        // 7TV del canal
+        if (twitchUserId) {
+            try {
+                const r7 = await axios.get(`https://7tv.io/v3/users/twitch/${twitchUserId}`);
+                const set = r7.data?.emote_set;
+                if (set && Array.isArray(set.emotes)) {
+                    for (const e of set.emotes) {
+                        const host = e.data?.host;
+                        if (!host || !host.url) continue;
+                        const base = 'https:' + host.url;
+                        const files = Array.isArray(host.files) ? host.files : [];
+                        const pick = (n) => {
+                            const f = files.find(x => x.name === n);
+                            return f ? `${base}/${f.name}` : null;
+                        };
+                        sevenTv.push({
+                            name: e.name,
+                            id: e.id,
+                            url_1x: pick('1x.webp') || pick('1x.png') || pick('1x.gif'),
+                            url_2x: pick('2x.webp') || pick('2x.png') || pick('2x.gif'),
+                            url_4x: pick('4x.webp') || pick('4x.png') || pick('4x.gif'),
+                            animated: !!pick('1x.gif') || !!pick('2x.gif') || !!pick('4x.gif')
+                        });
+                    }
+                }
+            } catch (e) {
+                console.error('❌ [EMOTES-CANAL] 7TV:', e.response?.status || e.message);
+            }
+        }
+
+        // FFZ del canal
+        try {
+            const rF = await axios.get(`https://api.frankerfacez.com/v1/room/${encodeURIComponent(channel)}`);
+            const sets = rF.data?.sets || {};
+            for (const sid in sets) {
+                for (const e of (sets[sid].emoticons || [])) {
+                    if (!e.name || !e.urls) continue;
+                    ffz.push({
+                        name: e.name,
+                        id: String(e.id),
+                        url_1x: e.urls['1'] || null,
+                        url_2x: e.urls['2'] || e.urls['1'] || null,
+                        url_4x: e.urls['4'] || e.urls['2'] || e.urls['1'] || null
+                    });
+                }
+            }
+        } catch (e) {
+            console.error('❌ [EMOTES-CANAL] FFZ:', e.response?.status || e.message);
+        }
+
+        console.log(`🎭 [EMOTES-CANAL] ${channel} → 7TV=${sevenTv.length} FFZ=${ffz.length}`);
+        res.json({ ok: true, channel, sevenTv, ffz });
+    } catch (e) {
+        console.error('❌ [EMOTES-CANAL] Error:', e.message);
+        res.status(500).json({ ok: false, error: e.message });
     }
 });
 
@@ -1754,8 +1963,61 @@ function isDuplicateMessage(msg) {
     const now = Date.now();
     const last = recentMessages.get(key);
     if (last && (now - last) < 8000) return true;
-    recentMessages.set(key, now);
+            recentMessages.set(key, now);
     return false;
+}
+// ================================================================
+// 🏅 FASE 3 — Inferir rol del usuario para badges
+// ================================================================
+function inferRole(platform, raw) {
+    if (!raw) return null;
+
+    if (platform === 'twitch') {
+        const b = raw.badges || {};
+        if (b.broadcaster) return 'broadcaster';
+        if (b.moderator)   return 'moderator';
+        if (b.vip)         return 'vip';
+        if (b.subscriber || b.founder) return 'subscriber';
+        return null;
+    }
+
+    if (platform === 'tiktok') {
+        const r = raw.raw || raw.user || raw;
+        if (r.isOwner || r.isBroadcaster || r.isHost) return 'broadcaster';
+        if (r.isModerator || r.isMod)                 return 'moderator';
+        if (r.isSubscriber || r.isSubscribe)          return 'subscriber';
+        if (r.isVip)                                  return 'vip';
+        const arr = Array.isArray(r.badges) ? r.badges : [];
+        for (const bd of arr) {
+            const t = String(bd.type || bd.name || bd).toLowerCase();
+            if (t.includes('moderator')) return 'moderator';
+            if (t.includes('subscriber')) return 'subscriber';
+        }
+        return null;
+    }
+
+    if (platform === 'kick') {
+        const list = (raw.identity && raw.identity.badges) || raw.badges || [];
+        const norm = (Array.isArray(list) ? list : Object.keys(list))
+            .map(x => String(x.type || x).toLowerCase());
+        if (norm.some(x => x === 'broadcaster'))    return 'broadcaster';
+        if (norm.some(x => x === 'moderator'))      return 'moderator';
+        if (norm.some(x => x === 'vip'))            return 'vip';
+        if (norm.some(x => x.includes('subscriber') || x.includes('founder'))) return 'subscriber';
+        return null;
+    }
+
+    if (platform === 'youtube') {
+        const list = (raw.author && raw.author.badges) || raw.badges || [];
+        const norm = (Array.isArray(list) ? list : Object.keys(list))
+            .map(x => String(x.name || x).toLowerCase());
+        if (norm.some(x => x.includes('owner')))     return 'broadcaster';
+        if (norm.some(x => x.includes('moderator'))) return 'moderator';
+        if (norm.some(x => x.includes('member')))    return 'subscriber';
+        return null;
+    }
+
+    return null;
 }
 
 // 🧹 Limpieza periódica de recentMessages para evitar fuga de memoria
@@ -1917,7 +2179,8 @@ const tiktokChat = new TikTokChat({
         const msgData = {
             platform: 'tiktok', username: msg.username, message: msg.message,
             channel: msg.channel, avatar: msg.avatar || TIKTOK_DEFAULT_AVATAR,
-            color: '#fe2c55', timestamp: msg.timestamp
+                        color: '#fe2c55', timestamp: msg.timestamp,
+            role: inferRole('tiktok', msg)
         };
         if (isDuplicateMessage(msgData)) return;
         io.emit('chat-message', msgData);
@@ -1973,7 +2236,8 @@ const tiktokChat = new TikTokChat({
                 giftImage: giftImageFinal,
                 giftImageSource: giftImageSource,
                 giftIcon: data.giftIcon || null,
-                extendedGiftInfo: data.extendedGiftInfo || null
+                                extendedGiftInfo: data.extendedGiftInfo || null,
+                role: inferRole('tiktok', data)
             });
 
             // 🚂 HYPE TRAIN
@@ -1996,7 +2260,8 @@ const tiktokChat = new TikTokChat({
             platform: 'tiktok', username: data.username,
             message: `👤 ${data.username} te empezó a seguir`,
             channel: data.channel, avatar: data.avatar || TIKTOK_DEFAULT_AVATAR,
-            color: '#fe2c55', type: 'follow', timestamp: data.timestamp
+                        color: '#fe2c55', type: 'follow', timestamp: data.timestamp,
+            role: inferRole('tiktok', data)
         });
         timerPush(30); // ⏱️ TIMER — follow suma 30s
     },
@@ -2006,7 +2271,8 @@ const tiktokChat = new TikTokChat({
             platform: 'tiktok', username: data.username,
             message: `🔗 ${data.username} compartió tu directo`,
             channel: data.channel, avatar: data.avatar || TIKTOK_DEFAULT_AVATAR,
-            color: '#fe2c55', type: 'share', timestamp: data.timestamp
+                        color: '#fe2c55', type: 'share', timestamp: data.timestamp,
+            role: inferRole('tiktok', data)
         });
         timerPush(0.4); // ⏱️ TIMER — share suma 0.4s
     },
@@ -2016,7 +2282,8 @@ const tiktokChat = new TikTokChat({
             platform: 'tiktok', username: data.username,
             message: `⭐ ${data.username} se suscribió`,
             channel: data.channel, avatar: data.avatar || TIKTOK_DEFAULT_AVATAR,
-            color: '#fe2c55', type: 'sub', timestamp: data.timestamp
+                        color: '#fe2c55', type: 'sub', timestamp: data.timestamp,
+            role: 'subscriber'
         });
         timerPush(60); // ⏱️ TIMER — sub suma 60s
     },
@@ -2026,7 +2293,8 @@ const tiktokChat = new TikTokChat({
             platform: 'tiktok', username: data.username,
             message: data.message || `🌹 ${data.username} se unió al directo`,
             channel: data.channel, avatar: data.avatar || TIKTOK_DEFAULT_AVATAR,
-            color: '#fe2c55', type: 'member', timestamp: data.timestamp
+             color: '#fe2c55', type: 'member', timestamp: data.timestamp,
+            role: inferRole('tiktok', data)
         });
     },
     onRoomUser: (data) => { io.emit('tiktok-viewers', data); },
@@ -2075,7 +2343,8 @@ const youtubeChat = new YouTubeChat({
         const msgData = {
             platform: 'youtube', username: msg.username, message: msg.message,
             channel: msg.channel, avatar: msg.avatar || YOUTUBE_DEFAULT_AVATAR,
-            color: '#ff0000', timestamp: msg.timestamp
+                        color: '#ff0000', timestamp: msg.timestamp,
+            role: inferRole('youtube', msg)
         };
         if (isDuplicateMessage(msgData)) return;
         io.emit('chat-message', msgData);
@@ -2099,8 +2368,9 @@ const youtubeChat = new YouTubeChat({
             timestamp: data.timestamp,
             giftName: data.giftName,
             giftAmount: data.amount,
-            giftTier: data.tier,
-            extendedGiftInfo: data
+                        giftTier: data.tier,
+            extendedGiftInfo: data,
+            role: inferRole('youtube', data)
         });
 
         // 🚂 HYPE TRAIN
@@ -2121,9 +2391,10 @@ const youtubeChat = new YouTubeChat({
             message: `⭐ ${data.message || data.username + ' se unió como miembro'}`,
             channel: data.channel,
             avatar: data.avatar || YOUTUBE_DEFAULT_AVATAR,
-            color: '#ff0000',
+                        color: '#ff0000',
             type: 'member',
-            timestamp: data.timestamp
+            timestamp: data.timestamp,
+            role: 'subscriber'
         });
     }
 });
@@ -2769,9 +3040,11 @@ async function connectTwitchChannel(channelName, account) {
             const canal = channel.replace('#', '');
             console.log(`📩 [TWITCH ${canal}] ${username}: ${message}`);
             const avatar = tags['user-id'] ? await getUserAvatar(tags['user-id'], canal) : null;
-            const msgData = {
+                        const msgData = {
                 platform: 'twitch', channel: canal, username, message,
-                avatar: avatar || null, color: tags.color || '#bf94ff', timestamp: Date.now()
+                                avatar: avatar || null, color: tags.color || '#bf94ff', timestamp: Date.now(),
+                role: inferRole('twitch', tags),
+                msgId: tags.id || null
             };
             if (isDuplicateMessage(msgData)) return;
             io.emit('chat-message', msgData);
@@ -2797,7 +3070,8 @@ async function connectTwitchChannel(channelName, account) {
             const msgData = {
                 platform: 'twitch', channel: canal, username,
                 message: `🎉 Cheer de ${bits} bits: ${message || '¡Gracias!'}`,
-                avatar: avatar || null, type: 'cheer', bits, color: '#ffcc00', timestamp: Date.now()
+                                avatar: avatar || null, type: 'cheer', bits, color: '#ffcc00', timestamp: Date.now(),
+                role: inferRole('twitch', tags)
             };
             if (isDuplicateMessage(msgData)) return;
             io.emit('chat-message', msgData);
@@ -2818,8 +3092,9 @@ async function connectTwitchChannel(channelName, account) {
             const avatar = userstate['user-id'] ? await getUserAvatar(userstate['user-id'], canal) : null;
             const msgData = {
                 platform: 'twitch', channel: canal, username,
-                message: '🌟 ¡Gracias por suscribirte! 🌟',
-                avatar: avatar || null, type: 'sub', timestamp: Date.now()
+                                message: '🌟 ¡Gracias por suscribirte! 🌟',
+                avatar: avatar || null, type: 'sub', timestamp: Date.now(),
+                role: 'subscriber'
             };
             if (isDuplicateMessage(msgData)) return;
             io.emit('chat-message', msgData);
@@ -2830,22 +3105,68 @@ async function connectTwitchChannel(channelName, account) {
             const avatar = userstate['user-id'] ? await getUserAvatar(userstate['user-id'], canal) : null;
             const msgData = {
                 platform: 'twitch', channel: canal, username,
-                message: `🌟 ¡Gracias por resuscribirte (${months} meses)! 🌟`,
-                avatar: avatar || null, type: 'sub', months, timestamp: Date.now()
+                                                                message: `🌟 ¡Gracias por resuscribirte (${months} meses)! 🌟`,
+                avatar: avatar || null, type: 'resub', months, timestamp: Date.now(),
+                role: 'subscriber'
             };
             if (isDuplicateMessage(msgData)) return;
             io.emit('chat-message', msgData);
         });
 
-        client.on('raided', async (channel, username, viewers) => {
+                client.on('raided', async (channel, username, viewers) => {
             const canal = channel.replace('#', '');
             const msgData = {
                 platform: 'twitch', channel: canal, username,
-                message: `🎮 ¡${viewers} personas se unieron al raid! 🎮`,
-                type: 'raid', viewers, timestamp: Date.now()
+                                message: `🎮 ¡${viewers} personas se unieron al raid! 🎮`,
+                type: 'raid', viewers, timestamp: Date.now(),
+                role: null
             };
             if (isDuplicateMessage(msgData)) return;
             io.emit('chat-message', msgData);
+        });
+
+        client.on('subgift', async (channel, username, streakMonths, recipient, methods, userstate) => {
+            const canal = channel.replace('#', '');
+            const avatar = userstate['user-id'] ? await getUserAvatar(userstate['user-id'], canal) : null;
+            const msgData = {
+                platform: 'twitch', channel: canal, username,
+                message: `🎁 Regaló una suscripción a ${recipient}`,
+                avatar: avatar || null, type: 'subgift', months: 1,
+                giftSender: username, recipient,
+                timestamp: Date.now(), role: null
+            };
+            if (isDuplicateMessage(msgData)) return;
+            io.emit('chat-message', msgData);
+        });
+
+        client.on('submysterygift', async (channel, username, numbOfSubs, methods, userstate) => {
+            const canal = channel.replace('#', '');
+            const avatar = userstate['user-id'] ? await getUserAvatar(userstate['user-id'], canal) : null;
+            const msgData = {
+                platform: 'twitch', channel: canal, username,
+                message: `🎁 Regaló ${numbOfSubs} suscripciones a la comunidad`,
+                avatar: avatar || null, type: 'submysterygift',
+                amount: numbOfSubs, giftSender: username,
+                timestamp: Date.now(), role: null
+            };
+            if (isDuplicateMessage(msgData)) return;
+            io.emit('chat-message', msgData);
+        });
+
+        client.on('messagedeleted', async (channel, username, deletedMessage, userstate) => {
+            const canal = channel.replace('#', '');
+            const targetMsgId = userstate['target-msg-id'] || null;
+            if (!targetMsgId) return;
+            io.emit('chat-message', {
+                platform: 'twitch', channel: canal,
+                username,
+                message: '',
+                type: 'delete',
+                targetMsgId,
+                targetUser: username,
+                timestamp: Date.now(),
+                role: null
+            });
         });
 
         await client.connect();
@@ -2980,7 +3301,8 @@ async function connectKick() {
                         platform: 'kick', channel: kickUser,
                         username: kickUsername,
                         message: payload.content,
-                        avatar: payload.sender.profile_pic || KICK_DEFAULT_AVATAR
+                        avatar: payload.sender.profile_pic || KICK_DEFAULT_AVATAR,
+                        role: inferRole('kick', payload.sender)
                     });
 
                     tryEnqueueTTS({
@@ -3000,8 +3322,12 @@ async function connectKick() {
                     broadcastMessage({
                         platform: 'kick', channel: kickUser,
                         username: payload.sender.username,
-                        message: `🎁 Envió ${payload.gift?.name || 'un regalo'}`,
-                        avatar: payload.sender.profile_pic || KICK_DEFAULT_AVATAR
+                                                                        message: `🎁 Envió ${payload.gift?.name || 'un regalo'}`,
+                        avatar: payload.sender.profile_pic || KICK_DEFAULT_AVATAR,
+                        role: inferRole('kick', payload.sender),
+                        type: 'gift',
+                        giftName: payload.gift?.name || 'Regalo',
+                        giftAmount: Number(payload.gift?.amount) || 1
                     });
 
                     // 🚂 HYPE TRAIN

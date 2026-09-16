@@ -1364,3 +1364,65 @@ document.addEventListener('keydown', (e) => {
     document.getElementById('searchInput')?.focus();
   }
 });
+
+// ═══════════════════════════════════════════════════════════════
+//  OVERLAY CHAT PERSONALIZADO (StreamElements)
+// ═══════════════════════════════════════════════════════════════
+
+async function cargarInfoCustomOverlay() {
+  const badge = document.getElementById('customOverlayStatus');
+  if (!badge) return;
+  try {
+    const r = await fetch(`${window.SERVER_BASE}/api/custom-overlay/info`);
+    const data = await r.json();
+    if (data.exists) {
+      const fecha = data.date ? new Date(data.date).toLocaleDateString('es-ES') : '';
+      badge.textContent = 'activo' + (fecha ? ' · ' + fecha : '');
+    } else {
+      badge.textContent = 'sin widget';
+    }
+  } catch (e) {}
+}
+
+function recargarPreviewCustomOverlay() {
+  const iframe = document.querySelector('iframe[src*="/overlay-custom"]');
+  if (iframe) iframe.src = '/overlay-custom?preview=1&t=' + Date.now();
+}
+
+async function subirCustomOverlay(file) {
+  if (!file) return;
+  if (!/\.zip$/i.test(file.name)) { mostrarToast('El archivo debe ser .zip'); return; }
+  try {
+    mostrarToast('Subiendo...');
+    const r = await fetch(`${window.SERVER_BASE}/api/custom-overlay/upload`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/zip' },
+      body: file
+    });
+    const data = await r.json();
+    if (data.ok) {
+      mostrarToast(`Widget subido (${data.written.length} archivos)`);
+      await cargarInfoCustomOverlay();
+      recargarPreviewCustomOverlay();
+    } else {
+      mostrarToast('Error: ' + (data.error || 'desconocido'));
+    }
+  } catch (e) {
+    mostrarToast('Error de red al subir');
+  }
+}
+
+async function borrarCustomOverlay() {
+  if (!confirm('¿Eliminar el overlay personalizado actual?')) return;
+  try {
+    const r = await fetch(`${window.SERVER_BASE}/api/custom-overlay`, { method: 'DELETE' });
+    const data = await r.json();
+    if (data.ok) {
+      mostrarToast('Overlay eliminado');
+      await cargarInfoCustomOverlay();
+      recargarPreviewCustomOverlay();
+    }
+  } catch (e) { mostrarToast('Error al eliminar'); }
+}
+
+document.addEventListener('DOMContentLoaded', cargarInfoCustomOverlay);

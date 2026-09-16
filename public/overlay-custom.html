@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>TogiPanel · Overlay Chat Personalizado</title>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script>
+    if (!window.jQuery) {
+      document.write('<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"><\/script>');
+    }
+  </script>
+  <link rel="stylesheet" href="/overlay-custom/css">
+  <style>
+    html, body { margin: 0; padding: 0; background: transparent; overflow: hidden; height: 100%; }
+  </style>
+</head>
+<body>
+  <div id="togi-widget-root"></div>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/overlay-shim.js"></script>
+  <script>
+    (function () {
+      fetch('/overlay-custom/html')
+        .then(r => r.text())
+        .then(html => {
+          document.getElementById('togi-widget-root').innerHTML = html;
+          return fetch('/overlay-custom/js').then(r => r.text());
+        })
+        .then(js => {
+          const s = document.createElement('script');
+          s.textContent = js;
+          document.body.appendChild(s);
+          setTimeout(() => window.__TOGI_SHIM__.fireWidgetLoad(), 250);
+        })
+        .catch(e => console.error('[overlay-custom]', e));
+    })();
+  </script>
+</body>
+</html>

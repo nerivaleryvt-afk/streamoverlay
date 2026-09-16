@@ -11,53 +11,52 @@
   <script src="/js/server-url.js"></script>
   <style>
     /* ═══════════════════════════════════════════════════
-       TOKENS
+       TOKENS & BASE
        ═══════════════════════════════════════════════════ */
     :root {
-      --bg: #0f0e13;
-      --surface: #16151c;
-      --surface-2: #1c1b23;
-      --surface-3: #22212b;
-      --line: #26242e;
-      --line-strong: #35323f;
+      --bg: #08070c;
+      --surface: #121118;
+      --surface-hover: #181720;
+      --surface-2: #191822;
+      --line: rgba(255, 255, 255, 0.06);
+      --line-strong: rgba(255, 255, 255, 0.12);
 
       --accent: #e8825a;
       --accent-hover: #f0926a;
       --accent-soft: rgba(232, 130, 90, 0.12);
-      --accent-border: rgba(232, 130, 90, 0.4);
+      --accent-border: rgba(232, 130, 90, 0.35);
 
-      --ok: #6dd58c;
-      --ok-soft: rgba(109, 213, 140, 0.1);
-      --warn: #e8b54d;
-      --err: #e56969;
-      --info: #6da4e5;
+      --ok: #4ede80;
+      --ok-soft: rgba(78, 222, 128, 0.08);
+      --warn: #fbbf24;
+      --err: #f87171;
+      --info: #38bdf8;
 
-      --text: #e8e6f0;
-      --text-2: #a8a5b5;
-      --text-3: #6f6c80;
+      --text: #f0edf9;
+      --text-2: #9a96a8;
+      --text-3: #5d5a6b;
 
       --r-xs: 4px;
-      --r-sm: 7px;
-      --r-md: 11px;
-      --r-lg: 16px;
+      --r-sm: 8px;
+      --r-md: 12px;
+      --r-lg: 18px;
       --r-pill: 999px;
 
-      --font-ui: 'Satoshi', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+      --font-ui: 'Satoshi', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
-
     html, body { height: 100%; }
 
     body {
       font-family: var(--font-ui);
       background: var(--bg);
       background-image:
-        radial-gradient(ellipse 80% 50% at 50% 0%, rgba(232, 130, 90, 0.05), transparent 70%),
-        linear-gradient(rgba(255,255,255,0.012) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.012) 1px, transparent 1px);
-      background-size: 100% 100%, 36px 36px, 36px 36px;
+        radial-gradient(circle at 10% 0%, rgba(232, 130, 90, 0.06), transparent 400px),
+        linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+      background-size: 100% 100%, 48px 48px, 48px 48px;
       background-attachment: fixed;
       color: var(--text);
       display: flex;
@@ -68,74 +67,69 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    ::selection { background: var(--accent); color: #0f0e13; }
+    ::selection { background: var(--accent); color: #08070c; }
 
     /* ═══════════════════════════════════════════════════
        SIDEBAR
        ═══════════════════════════════════════════════════ */
     .sidebar {
       width: 220px;
-      background: #0b0a10;
-      border-right: 1px solid #1e1c26;
+      background: #050408;
+      border-right: 1px solid var(--line);
       display: flex;
       flex-direction: column;
-      padding: 20px 12px;
+      padding: 24px 14px;
       flex-shrink: 0;
     }
 
     .sidebar-logo {
       display: flex;
       align-items: center;
-      gap: 11px;
-      padding: 0 10px 20px;
-      border-bottom: 1px solid #1e1c26;
-      margin-bottom: 20px;
+      gap: 12px;
+      padding: 0 8px 20px;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 24px;
     }
     .logo-mark {
-      width: 36px; height: 36px;
-      border-radius: 11px;
-      background: linear-gradient(135deg, var(--accent) 0%, #d56a44 100%);
+      width: 34px; height: 34px;
+      border-radius: var(--r-sm);
+      background: var(--accent);
       display: flex; align-items: center; justify-content: center;
-      color: #0f0e13; font-size: 18px;
+      color: #08070c; font-size: 18px;
+      font-weight: 900;
       flex-shrink: 0;
-      transform: rotate(-3deg);
-      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s;
-      box-shadow: 0 4px 14px rgba(232, 130, 90, 0.25);
-    }
-    .sidebar-logo:hover .logo-mark {
-      transform: rotate(0deg) scale(1.05);
-      box-shadow: 0 6px 20px rgba(232, 130, 90, 0.45);
+      box-shadow: 0 0 20px rgba(232, 130, 90, 0.3);
     }
     .logo-text {
-      font-size: 14px;
-      font-weight: 700;
+      font-size: 15px;
+      font-weight: 900;
       color: var(--text);
-      letter-spacing: -0.02em;
+      letter-spacing: -0.03em;
     }
 
     .sidebar-section-title {
       font-size: 10px;
       color: var(--text-3);
       text-transform: uppercase;
-      letter-spacing: 0.12em;
-      font-weight: 700;
+      letter-spacing: 0.18em;
+      font-weight: 800;
       padding: 0 10px;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
     }
 
     .sidebar-item {
       display: flex;
       align-items: center;
-      gap: 11px;
-      padding: 9px 11px;
+      gap: 12px;
+      padding: 10px 12px;
       border-radius: var(--r-sm);
       color: var(--text-2);
       font-size: 13px;
       font-weight: 500;
       cursor: pointer;
-      transition: all 0.18s;
+      transition: all 0.15s ease;
       text-decoration: none;
-      margin-bottom: 2px;
+      margin-bottom: 4px;
       position: relative;
       user-select: none;
     }
@@ -144,789 +138,361 @@
       color: var(--text);
     }
     .sidebar-item.active {
-      background: linear-gradient(90deg, rgba(232, 130, 90, 0.1), transparent 100%);
+      background: var(--surface);
       color: var(--text);
-      font-weight: 600;
+      font-weight: 700;
     }
     .sidebar-item.active::before {
       content: '';
       position: absolute;
-      left: 0; top: 50%;
-      transform: translateY(-50%);
-      width: 2px; height: 60%;
+      left: 0; top: 20%; bottom: 20%;
+      width: 3px;
       background: var(--accent);
-      border-radius: 0 2px 2px 0;
-      box-shadow: 0 0 10px var(--accent);
+      border-radius: 0 4px 4px 0;
+      box-shadow: 2px 0 10px var(--accent);
     }
     .sidebar-item i {
-      font-size: 16px;
-      flex-shrink: 0;
-      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.18s;
+      font-size: 17px;
+      color: var(--text-3);
+      transition: color 0.15s;
     }
-    .sidebar-item:hover i { transform: scale(1.15); }
-    .sidebar-item.active i { color: var(--accent); }
+    .sidebar-item:hover i, .sidebar-item.active i { color: var(--accent); }
 
     .sidebar-spacer { flex: 1; }
 
     /* ═══════════════════════════════════════════════════
-       MAIN
+       MAIN CONTENT
        ═══════════════════════════════════════════════════ */
     .main-content {
       flex: 1;
-      padding: 26px 32px 40px;
+      padding: 32px 40px 48px;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
     }
-    .main-content::-webkit-scrollbar { width: 10px; }
+    .main-content::-webkit-scrollbar { width: 8px; }
     .main-content::-webkit-scrollbar-track { background: transparent; }
     .main-content::-webkit-scrollbar-thumb {
-      background: linear-gradient(180deg, var(--accent) 0%, #d56a44 100%);
+      background: rgba(255, 255, 255, 0.15);
       border-radius: var(--r-pill);
-      border: 2px solid var(--bg);
     }
+    .main-content::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
-    /* ═══════════════════════════════════════════════════
-       HEADER
-       ═══════════════════════════════════════════════════ */
+    /* HEADER */
     .header {
       display: flex;
       justify-content: space-between;
       align-items: flex-end;
-      margin-bottom: 24px;
-      flex-wrap: wrap;
-      gap: 14px;
-      padding-bottom: 18px;
-      position: relative;
+      margin-bottom: 28px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--line);
     }
-    .header::after {
-      content: '';
-      position: absolute;
-      left: 0; right: 0; bottom: 0;
-      height: 1px;
-      background: linear-gradient(90deg, var(--line) 0%, transparent 70%);
-    }
-
-    .brand { display: flex; align-items: center; gap: 14px; }
-    .brand-mark {
-      width: 44px; height: 44px;
-      border-radius: 12px;
-      background: linear-gradient(135deg, var(--accent) 0%, #d56a44 100%);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 21px; color: #0f0e13;
-      flex-shrink: 0;
-      box-shadow: 0 6px 18px rgba(232, 130, 90, 0.22);
-    }
-    .header h1 {
-      font-size: 24px;
-      font-weight: 700;
-      letter-spacing: -0.03em;
-      background: linear-gradient(135deg, #ffffff 0%, #a8a5b5 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      line-height: 1.1;
+    .brand h1 {
+      font-size: 30px;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      color: var(--text);
+      line-height: 1;
     }
     .header-sub {
-      font-size: 12.5px;
+      font-size: 12px;
       color: var(--text-3);
-      margin-top: 4px;
+      margin-top: 8px;
       font-family: var(--font-mono);
-    }
-    .header-right {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      flex-wrap: wrap;
+      letter-spacing: -0.01em;
     }
 
-    /* Status badge con dot pulsante */
     .status-badge {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      padding: 7px 13px;
+      padding: 6px 14px;
       border-radius: var(--r-pill);
       background: var(--ok-soft);
       color: var(--ok);
-      font-size: 11.5px;
-      font-weight: 600;
-      border: 1px solid rgba(109, 213, 140, 0.22);
+      font-size: 11px;
+      font-weight: 700;
+      border: 1px solid rgba(78, 222, 128, 0.2);
       font-family: var(--font-mono);
-      letter-spacing: -0.01em;
     }
     .status-badge.offline {
-      background: rgba(229, 105, 105, 0.08);
+      background: rgba(248, 113, 113, 0.08);
       color: var(--err);
-      border-color: rgba(229, 105, 105, 0.22);
+      border-color: rgba(248, 113, 113, 0.2);
     }
     .status-badge .badge-dot {
       width: 6px; height: 6px; border-radius: 50%;
       background: currentColor;
-      box-shadow: 0 0 0 0 currentColor;
-      animation: statusPulse 2.2s ease-out infinite;
-    }
-    .status-badge.offline .badge-dot { animation: none; }
-    @keyframes statusPulse {
-      0%   { box-shadow: 0 0 0 0 rgba(109, 213, 140, 0.55); }
-      70%  { box-shadow: 0 0 0 7px rgba(109, 213, 140, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(109, 213, 140, 0); }
+      box-shadow: 0 0 8px currentColor;
     }
 
-    /* IP box */
-    .ip-box {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
+    /* MODE CARD COMPACTA */
+    .mode-card-compact {
       background: var(--surface);
       border: 1px solid var(--line);
-      border-radius: var(--r-pill);
-      padding: 6px 6px 6px 12px;
-      font-size: 11.5px;
-      font-family: var(--font-mono);
-      color: var(--text-2);
-      transition: border-color 0.15s;
-    }
-    .ip-box:hover { border-color: var(--line-strong); }
-    .ip-box .ip-label {
-      font-family: var(--font-ui);
-      color: var(--text-3);
-      font-size: 10.5px;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      font-weight: 700;
-    }
-    .ip-box > span#ip-text { color: var(--accent); font-weight: 600; }
-    .ip-box i {
-      cursor: pointer;
-      font-size: 14px;
-      color: var(--text-3);
-      transition: color 0.15s;
-      padding: 4px;
-      border-radius: 50%;
-    }
-    .ip-box i:hover { color: var(--accent); background: var(--accent-soft); }
-
-    /* ═══════════════════════════════════════════════════
-       UPDATE BANNER
-       ═══════════════════════════════════════════════════ */
-    .update-banner {
-      display: none;
-      background: var(--surface);
-      border: 1px solid var(--line);
-      border-left: 3px solid var(--info);
+      box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
       border-radius: var(--r-md);
-      padding: 14px 18px;
-      margin-bottom: 20px;
-      align-items: center;
-      gap: 14px;
-      flex-wrap: wrap;
-      animation: slideDown 0.25s ease;
-    }
-    .update-banner.show { display: flex; }
-    .update-banner.ready { border-left-color: var(--ok); }
-    @keyframes slideDown {
-      from { opacity: 0; transform: translateY(-8px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    .update-banner .update-icon {
-      width: 36px; height: 36px;
-      border-radius: var(--r-sm);
-      background: rgba(109, 164, 229, 0.12);
-      color: var(--info);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 18px;
-      flex-shrink: 0;
-    }
-    .update-banner.ready .update-icon {
-      background: var(--ok-soft);
-      color: var(--ok);
-    }
-    .update-banner .update-info { flex: 1; min-width: 200px; }
-    .update-banner .update-title {
-      font-size: 13.5px;
-      font-weight: 700;
-      color: var(--text);
-      margin-bottom: 2px;
-    }
-    .update-banner .update-desc {
-      font-size: 12px;
-      color: var(--text-2);
-    }
-    .update-banner .update-actions { display: flex; gap: 8px; }
-    .update-banner .btn-update {
-      padding: 8px 14px;
-      border-radius: var(--r-sm);
-      border: none;
-      cursor: pointer;
-      font-family: inherit;
-      font-size: 12.5px;
-      font-weight: 700;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      transition: all 0.15s;
-      background: var(--info);
-      color: #0f0e13;
-    }
-    .update-banner .btn-update:hover:not(:disabled) { background: #7bb2ed; }
-    .update-banner .btn-update:disabled { opacity: 0.55; cursor: wait; }
-    .update-banner.ready .btn-update { background: var(--ok); }
-    .update-banner.ready .btn-update:hover { background: #7fe09c; }
-
-    .update-progress-wrap { width: 100%; margin-top: 10px; }
-    .update-progress-bar {
-      width: 100%; height: 4px;
-      background: rgba(255,255,255,0.04);
-      border-radius: var(--r-pill);
-      overflow: hidden;
-    }
-    .update-progress-fill {
-      height: 100%;
-      background: linear-gradient(90deg, var(--info) 0%, #8db8ec 100%);
-      width: 0%;
-      transition: width 0.25s ease;
-    }
-    .update-progress-text {
-      font-size: 10.5px;
-      color: var(--text-3);
-      margin-top: 5px;
-      font-family: var(--font-mono);
-    }
-
-    /* ═══════════════════════════════════════════════════
-       SECTION HEADERS
-       ═══════════════════════════════════════════════════ */
-    .section-header {
+      padding: 12px 18px;
+      margin-bottom: 32px;
       display: flex;
       align-items: center;
-      gap: 9px;
-      margin-bottom: 12px;
-      margin-top: 4px;
-    }
-    .section-header i {
-      font-size: 14px;
-      color: var(--accent);
-    }
-    .section-title {
-      font-size: 10.5px;
-      font-weight: 800;
-      color: var(--text-3);
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      margin: 0;
-    }
-
-    /* ═══════════════════════════════════════════════════
-       MODE CARD
-       ═══════════════════════════════════════════════════ */
-    .mode-card {
-      background: var(--surface);
-      border: 1px solid var(--line);
-      border-radius: var(--r-md);
-      padding: 18px 20px;
-      margin-bottom: 26px;
-      display: grid;
-      grid-template-columns: auto 1fr auto;
-      align-items: center;
+      justify-content: space-between;
       gap: 16px;
-      transition: all 0.2s;
-      position: relative;
-      overflow: hidden;
     }
-    .mode-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 2px;
-      background: var(--line);
-      transition: background 0.3s;
+    .mode-left { display: flex; align-items: center; gap: 12px; }
+    .mode-pill {
+      font-size: 10px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.1em; font-family: var(--font-mono);
+      padding: 3px 8px; border-radius: var(--r-xs);
+      background: var(--surface-2); color: var(--text-2);
+      border: 1px solid var(--line-strong);
     }
-    .mode-card.mode-server { border-color: rgba(109, 213, 140, 0.28); }
-    .mode-card.mode-server::before { background: var(--ok); }
-    .mode-card.mode-client { border-color: rgba(232, 181, 77, 0.28); }
-    .mode-card.mode-client::before { background: var(--warn); }
-    .mode-card.mode-unknown::before { background: var(--text-3); }
+    .mode-pill.server { background: var(--ok-soft); color: var(--ok); border-color: rgba(78, 222, 128, 0.3); }
+    .mode-pill.client { background: rgba(251, 191, 36, 0.1); color: var(--warn); border-color: rgba(251, 191, 36, 0.3); }
 
-    .mode-icon {
-      width: 44px; height: 44px;
-      border-radius: var(--r-sm);
-      background: var(--surface-3);
-      color: var(--text-3);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 20px;
-      flex-shrink: 0;
-    }
-    .mode-icon.mode-server {
-      background: var(--ok-soft);
-      color: var(--ok);
-    }
-    .mode-icon.mode-client {
-      background: rgba(232, 181, 77, 0.1);
-      color: var(--warn);
-    }
+    .mode-title { font-size: 13.5px; font-weight: 700; color: var(--text); }
+    .mode-right { display: flex; align-items: center; gap: 10px; }
 
-    .mode-info { flex: 1; min-width: 0; }
-    .mode-label {
-      font-size: 10px;
-      font-weight: 700;
-      color: var(--text-3);
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      margin-bottom: 5px;
-      font-family: var(--font-mono);
+    .ip-chip {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--surface-2); border: 1px solid var(--line-strong);
+      border-radius: var(--r-sm); padding: 6px 12px; font-size: 12px;
+      font-family: var(--font-mono); color: var(--accent); cursor: pointer; transition: all 0.15s;
     }
-    .mode-value {
-      font-size: 14.5px;
-      font-weight: 700;
-      color: var(--text);
-      display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 8px;
-      letter-spacing: -0.01em;
+    .ip-chip:hover { border-color: var(--accent-border); box-shadow: 0 0 12px rgba(232, 130, 90, 0.15); }
+    .ip-chip i { font-size: 14px; color: var(--text-3); }
+
+    .btn-ghost-sm {
+      background: transparent; border: none; color: var(--text-3);
+      font-size: 12px; font-weight: 600; cursor: pointer; padding: 6px 10px;
+      border-radius: var(--r-sm); transition: all 0.15s;
     }
-    .mode-detail {
-      font-size: 12px;
-      color: var(--text-2);
-      margin-top: 5px;
-      line-height: 1.5;
+    .btn-ghost-sm:hover { color: var(--err); background: rgba(248, 113, 113, 0.08); }
+
+    /* SECTION TITLES */
+    .section-title {
+      font-size: 10px; font-weight: 800; color: var(--text-3);
+      text-transform: uppercase; letter-spacing: 0.18em; margin-bottom: 14px;
     }
 
-    .mode-badge {
-      display: inline-flex;
-      align-items: center;
-      padding: 2px 9px;
-      border-radius: var(--r-pill);
-      font-size: 9.5px;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      font-family: var(--font-mono);
-    }
-    .mode-badge.server {
-      background: var(--ok-soft);
-      color: var(--ok);
-      border: 1px solid rgba(109, 213, 140, 0.3);
-    }
-    .mode-badge.client {
-      background: rgba(232, 181, 77, 0.1);
-      color: var(--warn);
-      border: 1px solid rgba(232, 181, 77, 0.3);
-    }
-
-    .mode-detail-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-top: 8px;
-      flex-wrap: wrap;
-    }
-    .mode-detail-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 10px;
-      border-radius: var(--r-sm);
-      background: var(--bg);
-      border: 1px solid var(--line);
-      font-size: 11px;
-      font-family: var(--font-mono);
-      color: var(--text-2);
-      transition: all 0.15s;
-    }
-    .mode-detail-chip i { font-size: 12px; color: var(--text-3); }
-    .mode-detail-chip.copyable { cursor: pointer; }
-    .mode-detail-chip.copyable:hover {
-      border-color: var(--accent-border);
-      color: var(--accent);
-    }
-    .mode-detail-chip.copied {
-      border-color: rgba(109, 213, 140, 0.5);
-      color: var(--ok);
-    }
-
-    .btn-danger {
-      background: transparent;
-      color: var(--err);
-      border: 1px solid rgba(229, 105, 105, 0.3);
-      padding: 9px 14px;
-      border-radius: var(--r-sm);
-      font-family: inherit;
-      font-size: 12.5px;
-      font-weight: 600;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      transition: all 0.15s;
-      white-space: nowrap;
-    }
-    .btn-danger:hover {
-      background: rgba(229, 105, 105, 0.08);
-      border-color: rgba(229, 105, 105, 0.55);
-    }
-
-    /* ═══════════════════════════════════════════════════
-       PLATFORM CARDS
-       ═══════════════════════════════════════════════════ */
+    /* PLATFORMS GRID */
     .platforms-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 10px;
-      margin-bottom: 26px;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 12px; margin-bottom: 32px;
     }
-    .platform-card {
-      background: var(--surface);
-      border: 1px solid var(--line);
-      border-radius: var(--r-md);
-      padding: 14px 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      transition: all 0.2s;
-      position: relative;
-      overflow: hidden;
+    .platform-chip-card {
+      background: var(--surface); border: 1px solid var(--line);
+      box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.03);
+      border-radius: var(--r-md); padding: 14px 16px;
+      display: flex; align-items: center; gap: 14px; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .platform-card::before {
-      content: '';
-      position: absolute;
-      left: 0; top: 0; bottom: 0;
-      width: 3px;
-      background: var(--platform-color, var(--line));
-      opacity: 0.25;
-      transition: opacity 0.2s;
+    .platform-chip-card:hover {
+      border-color: var(--line-strong); transform: translateY(-2px);
+      box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.08), 0 8px 24px rgba(0,0,0,0.4);
     }
-    .platform-card.connected::before { opacity: 1; }
-    .platform-card:hover {
-      border-color: var(--line-strong);
-      transform: translateY(-1px);
-    }
-    .platform-icon {
-      width: 38px; height: 38px;
-      border-radius: var(--r-sm);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 19px;
-      flex-shrink: 0;
-      background: var(--platform-bg);
-      color: var(--platform-color);
-      border: 1px solid var(--platform-border);
-    }
-    .platform-info { flex: 1; min-width: 0; }
-    .platform-name {
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--text);
-      margin-bottom: 3px;
-      letter-spacing: -0.01em;
-    }
-    .platform-status {
-      font-size: 11.5px;
-      color: var(--text-3);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .platform-status .dot {
-      width: 5px; height: 5px; border-radius: 50%;
-      background: var(--text-3);
-      flex-shrink: 0;
-    }
-    .platform-card.connected .platform-status .dot {
-      background: var(--ok);
-      box-shadow: 0 0 6px var(--ok);
-    }
-    .platform-card.connected .platform-status { color: var(--ok); }
+    .platform-glyph { font-size: 26px; color: var(--text-3); transition: color 0.2s, transform 0.2s; }
+    .platform-chip-card:hover .platform-glyph { transform: scale(1.1); }
+    .platform-meta { flex: 1; min-width: 0; }
+    .platform-label { font-size: 11px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.05em; }
+    .platform-user { font-size: 13.5px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-    .platform-card.twitch  { --platform-color: #a78bfa; --platform-bg: rgba(167,139,250,0.08); --platform-border: rgba(167,139,250,0.22); }
-    .platform-card.tiktok  { --platform-color: #fe2c55; --platform-bg: rgba(254,44,85,0.08);   --platform-border: rgba(254,44,85,0.22); }
-    .platform-card.kick    { --platform-color: #53fc18; --platform-bg: rgba(83,252,24,0.08);   --platform-border: rgba(83,252,24,0.22); }
-    .platform-card.youtube { --platform-color: #ff3d3d; --platform-bg: rgba(255,61,61,0.08);   --platform-border: rgba(255,61,61,0.22); }
+    .platform-chip-card.twitch.connected  { border-color: rgba(167,139,250,0.3); }
+    .platform-chip-card.twitch.connected .platform-glyph { color: #a78bfa; }
+    .platform-chip-card.tiktok.connected  { border-color: rgba(254,44,85,0.3); }
+    .platform-chip-card.tiktok.connected .platform-glyph { color: #fe2c55; }
+    .platform-chip-card.kick.connected    { border-color: rgba(83,252,24,0.3); }
+    .platform-chip-card.kick.connected .platform-glyph { color: #53fc18; }
+    .platform-chip-card.youtube.connected { border-color: rgba(255,61,61,0.3); }
+    .platform-chip-card.youtube.connected .platform-glyph { color: #ff3d3d; }
+    .platform-chip-card:not(.connected) .platform-user { font-size: 12px; font-weight: 500; color: var(--text-3); }
 
-    /* ═══════════════════════════════════════════════════
-       ACTIONS
-       ═══════════════════════════════════════════════════ */
+    /* ACTIONS GRID */
     .actions-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-      gap: 10px;
-      margin-bottom: 26px;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px; margin-bottom: 36px;
     }
     .action-card {
-      background: var(--surface);
-      border: 1px solid var(--line);
-      border-radius: var(--r-md);
-      padding: 16px 18px;
-      cursor: pointer;
-      transition: all 0.2s;
-      position: relative;
-      overflow: hidden;
-    }
-    .action-card::after {
-      content: '';
-      position: absolute;
-      bottom: 0; right: 0;
-      width: 40px; height: 40px;
-      background: radial-gradient(circle, var(--action-glow, transparent), transparent 70%);
-      opacity: 0.5;
-      pointer-events: none;
-      transition: opacity 0.3s;
+      background: var(--surface); border: 1px solid var(--line);
+      box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.05), 0 4px 16px rgba(0,0,0,0.2);
+      border-radius: var(--r-md); padding: 18px 20px; cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex; flex-direction: column; justify-content: space-between;
     }
     .action-card:hover {
-      border-color: var(--line-strong);
-      background: var(--surface-2);
-      transform: translateY(-1px);
+      background: var(--surface-hover); border-color: var(--accent-border);
+      box-shadow: inset 0 1px 0 0 rgba(232, 130, 90, 0.25), 0 12px 32px rgba(0, 0, 0, 0.5);
+      transform: translateY(-2px);
     }
-    .action-card:hover::after { opacity: 0.9; }
-    .action-card:hover .action-icon { transform: scale(1.06); }
-    .action-icon {
-      width: 38px; height: 38px;
-      border-radius: var(--r-sm);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 19px;
-      margin-bottom: 12px;
-      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-    .action-icon.amber  { background: rgba(232, 130, 90, 0.1); color: var(--accent); }
-    .action-icon.purple { background: rgba(167, 139, 250, 0.1); color: #a78bfa; }
-    .action-icon.blue   { background: rgba(109, 164, 229, 0.1); color: var(--info); }
-    .action-icon.pink   { background: rgba(244, 114, 182, 0.1); color: #f472b6; }
-    .action-icon.green  { background: rgba(109, 213, 140, 0.1); color: var(--ok); }
+    .action-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+    .action-glyph { font-size: 24px; color: var(--text-2); transition: color 0.2s, transform 0.2s; }
+    .action-card:hover .action-glyph { color: var(--accent); transform: scale(1.1); }
+    .action-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 4px; letter-spacing: -0.01em; }
+    .action-desc { font-size: 12px; color: var(--text-3); line-height: 1.45; }
 
-    .action-card[onclick*="/config"]    { --action-glow: rgba(232, 130, 90, 0.3); }
-    .action-card[onclick*="/overlays"]  { --action-glow: rgba(167, 139, 250, 0.3); }
-    .action-card[onclick*="/moderation"]{ --action-glow: rgba(109, 164, 229, 0.3); }
-    .action-card[onclick*="openDeck"]   { --action-glow: rgba(109, 213, 140, 0.3); }
-    .action-card[onclick*="openLogs"]   { --action-glow: rgba(244, 114, 182, 0.3); }
-
-    .action-title {
-      font-size: 13.5px;
-      font-weight: 700;
-      color: var(--text);
-      margin-bottom: 4px;
-      letter-spacing: -0.01em;
-    }
-    .action-desc {
-      font-size: 11.5px;
-      color: var(--text-3);
-      line-height: 1.5;
-    }
-
-    /* ═══════════════════════════════════════════════════
-       FOOTER / BUTTONS
-       ═══════════════════════════════════════════════════ */
+    /* BUTTONS */
     .footer-actions {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      padding-top: 20px;
-      border-top: 1px solid var(--line);
-      flex-wrap: wrap;
-      margin-top: auto;
+      display: flex; gap: 12px; align-items: center;
+      padding-top: 24px; border-top: 1px solid var(--line); margin-top: auto;
     }
     .btn {
-      padding: 10px 16px;
-      border-radius: var(--r-sm);
-      border: none;
-      cursor: pointer;
-      font-family: inherit;
-      font-size: 12.5px;
-      font-weight: 600;
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      transition: all 0.15s;
-      letter-spacing: -0.005em;
+      padding: 11px 20px; border-radius: var(--r-sm); border: none;
+      cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 700;
+      display: inline-flex; align-items: center; gap: 8px; transition: all 0.15s ease;
     }
     .btn-primary {
-      background: var(--accent);
-      color: #0f0e13;
-      font-weight: 700;
+      background: var(--accent); color: #08070c;
+      box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.3), 0 4px 16px rgba(232, 130, 90, 0.25);
     }
-    .btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
-    .btn-primary:active:not(:disabled) { transform: translateY(1px); }
-    .btn-primary:disabled { opacity: 0.6; cursor: wait; }
+    .btn-primary:hover:not(:disabled) {
+      background: var(--accent-hover);
+      box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.4), 0 6px 20px rgba(232, 130, 90, 0.4);
+      transform: translateY(-1px);
+    }
     .btn-secondary {
-      background: transparent;
-      color: var(--text-2);
-      border: 1px solid var(--line-strong);
+      background: var(--surface); color: var(--text-2); border: 1px solid var(--line-strong);
+      box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.03);
     }
-    .btn-secondary:hover {
-      background: var(--surface);
-      border-color: var(--accent-border);
-      color: var(--accent);
+    .btn-secondary:hover { background: var(--surface-hover); color: var(--text); border-color: var(--accent-border); }
+
+    /* ANIMATIONS */
+    .animate-in { animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
+    .delay-1 { animation-delay: 40ms; }
+    .delay-2 { animation-delay: 80ms; }
+    .delay-3 { animation-delay: 120ms; }
+    .delay-4 { animation-delay: 160ms; }
 
     /* ═══════════════════════════════════════════════════
-       MODAL
+       NUEVA CONSOLA DE LOGS (ESTILO WARP TERMINAL)
        ═══════════════════════════════════════════════════ */
     .modal {
-      position: fixed; inset: 0;
-      background: rgba(8, 7, 12, 0.82);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 999;
-      padding: 20px;
+      position: fixed; inset: 0; background: rgba(5, 4, 8, 0.85);
+      backdrop-filter: blur(8px);
+      display: none; align-items: center; justify-content: center; z-index: 999; padding: 24px;
     }
     .modal.open { display: flex; }
-    .modal-box {
-      background: var(--surface);
-      border: 1px solid var(--line-strong);
+
+    .modal-box.logs-console-box {
+      background: #09080e;
+      border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: var(--r-lg);
-      width: 820px;
-      max-width: 100%;
-      max-height: 85vh;
-      display: flex;
-      flex-direction: column;
-      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(232, 130, 90, 0.05);
-      animation: modalIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-    @keyframes modalIn {
-      from { opacity: 0; transform: scale(0.96); }
-      to   { opacity: 1; transform: scale(1); }
-    }
-    .modal-header {
-      padding: 16px 20px;
-      border-bottom: 1px solid var(--line);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-    .modal-header h3 {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--text);
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      letter-spacing: -0.01em;
-    }
-    .modal-header h3 i { color: var(--accent); font-size: 16px; }
-    .modal-actions { display: flex; gap: 6px; align-items: center; }
-    .btn-icon {
-      background: transparent;
-      border: 1px solid var(--line-strong);
-      border-radius: var(--r-xs);
-      padding: 5px 10px;
-      color: var(--text-3);
-      font-size: 11px;
-      font-weight: 700;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      transition: all 0.15s;
-      font-family: var(--font-mono);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-    .btn-icon:hover {
-      border-color: var(--accent-border);
-      color: var(--accent);
-    }
-    .btn-icon.danger:hover {
-      border-color: rgba(229, 105, 105, 0.5);
-      color: var(--err);
-    }
-    .modal-body {
-      flex: 1;
-      padding: 16px 20px;
+      width: 920px; max-width: 100%; height: 600px; max-height: 90vh;
+      display: flex; flex-direction: column;
+      box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.08), 0 32px 80px rgba(0, 0, 0, 0.9);
       overflow: hidden;
-      display: flex;
-      min-height: 300px;
+      animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .logs-output {
-      background: #0a0910;
+
+    @keyframes modalPop {
+      from { opacity: 0; transform: scale(0.97) translateY(8px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .console-header {
+      background: #0e0d14;
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--line);
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; flex-wrap: wrap;
+    }
+
+    .console-title {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 13px; font-weight: 700; color: var(--text);
+      font-family: var(--font-mono);
+    }
+    .console-title i { color: var(--accent); font-size: 16px; }
+
+    .console-controls {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    }
+
+    .console-search {
+      background: #050408;
       border: 1px solid var(--line);
       border-radius: var(--r-sm);
-      padding: 14px 16px;
-      flex: 1;
-      overflow-y: auto;
-      font-family: var(--font-mono);
-      font-size: 11.5px;
-      line-height: 1.65;
-      color: var(--text-2);
-      white-space: pre-wrap;
-      word-break: break-word;
+      padding: 5px 10px;
+      display: flex; align-items: center; gap: 6px;
+      color: var(--text-3); font-size: 12px;
     }
-    .logs-output::-webkit-scrollbar { width: 8px; }
-    .logs-output::-webkit-scrollbar-thumb {
-      background: var(--line-strong);
-      border-radius: var(--r-pill);
+    .console-search input {
+      background: transparent; border: none; outline: none;
+      color: var(--text); font-family: var(--font-mono); font-size: 11.5px; width: 130px;
     }
-    .logs-output::-webkit-scrollbar-thumb:hover { background: var(--accent); }
-    .modal-footer {
-      padding: 14px 20px;
-      border-top: 1px solid var(--line);
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
+    .console-search input::placeholder { color: var(--text-3); }
+
+    .btn-console {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--line);
+      border-radius: var(--r-sm);
+      color: var(--text-2); padding: 5px 10px;
+      font-size: 11.5px; font-weight: 600; font-family: var(--font-mono);
+      cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+      transition: all 0.15s ease;
+    }
+    .btn-console:hover {
+      background: rgba(255, 255, 255, 0.08); color: var(--text);
+      border-color: var(--line-strong);
+    }
+    .btn-console.active {
+      background: var(--accent-soft); color: var(--accent);
+      border-color: var(--accent-border);
+    }
+    .btn-console.close-btn:hover {
+      background: rgba(248, 113, 113, 0.15); color: var(--err); border-color: rgba(248, 113, 113, 0.3);
     }
 
-    /* ═══════════════════════════════════════════════════
-       TOAST
-       ═══════════════════════════════════════════════════ */
+    .console-body {
+      flex: 1; background: #050408;
+      padding: 16px; overflow-y: auto;
+      font-family: var(--font-mono); font-size: 12px;
+      line-height: 1.6; color: var(--text-2);
+    }
+    .console-body::-webkit-scrollbar { width: 8px; }
+    .console-body::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1); border-radius: var(--r-pill);
+    }
+
+    /* Estilos para las líneas de logs formateadas */
+    .log-line {
+      display: flex; gap: 12px; padding: 2px 4px; border-radius: 4px;
+      transition: background 0.1s;
+    }
+    .log-line:hover { background: rgba(255, 255, 255, 0.02); }
+    .log-time { color: var(--text-3); flex-shrink: 0; user-select: none; }
+    .log-msg { flex: 1; word-break: break-word; }
+
+    .log-tag {
+      font-weight: 700; padding: 0 4px; border-radius: 3px; font-size: 10.5px;
+      text-transform: uppercase; display: inline-block; margin-right: 6px;
+    }
+    .log-tag.info { background: rgba(56, 189, 248, 0.12); color: var(--info); }
+    .log-tag.warn { background: rgba(251, 191, 36, 0.12); color: var(--warn); }
+    .log-tag.error { background: rgba(248, 113, 113, 0.12); color: var(--err); }
+    .log-tag.success { background: rgba(78, 222, 128, 0.12); color: var(--ok); }
+
+    .console-footer {
+      background: #0e0d14; border-top: 1px solid var(--line);
+      padding: 8px 18px; display: flex; justify-content: space-between;
+      align-items: center; font-family: var(--font-mono); font-size: 11px; color: var(--text-3);
+    }
+
+    /* TOAST */
     .toast {
-      position: fixed;
-      bottom: 24px;
-      left: 50%;
-      transform: translateX(-50%) translateY(90px);
-      background: var(--surface-2);
-      border: 1px solid var(--line-strong);
-      border-left: 3px solid var(--ok);
-      color: var(--text);
-      padding: 12px 18px;
-      border-radius: var(--r-sm);
-      font-size: 12.5px;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
-      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-      z-index: 1000;
-      pointer-events: none;
-      font-family: var(--font-mono);
-      letter-spacing: -0.01em;
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(90px);
+      background: var(--surface-2); border: 1px solid var(--line-strong); border-left: 3px solid var(--ok);
+      color: var(--text); padding: 12px 20px; border-radius: var(--r-sm); font-size: 12.5px;
+      display: flex; align-items: center; gap: 10px; transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); z-index: 1000;
     }
     .toast.show { transform: translateX(-50%) translateY(0); }
-    .toast i { color: var(--ok); font-size: 16px; }
-    .toast.error { border-left-color: var(--err); }
-    .toast.error i { color: var(--err); }
-
-    /* copy feedback */
-    .copy-feedback { animation: copyPulse 0.4s ease; }
-    @keyframes copyPulse {
-      0%   { transform: scale(1); }
-      50%  { transform: scale(1.25); color: var(--accent) !important; }
-      100% { transform: scale(1); }
-    }
-
-    /* ═══════════════════════════════════════════════════
-       RESPONSIVE
-       ═══════════════════════════════════════════════════ */
-    @media (max-width: 900px) {
-      .sidebar { display: none; }
-      .main-content { padding: 20px 18px 40px; }
-      .header h1 { font-size: 20px; }
-      .mode-card { grid-template-columns: auto 1fr; }
-      .mode-card .btn-danger {
-        grid-column: 1 / -1;
-        width: 100%;
-        justify-content: center;
-      }
-    }
   </style>
 </head>
 <body>
 
-  <!-- ═══════════ SIDEBAR ═══════════ -->
+  <!-- SIDEBAR -->
   <aside class="sidebar">
     <div class="sidebar-logo">
       <div class="logo-mark"><i class="ri-broadcast-fill"></i></div>
@@ -934,57 +500,27 @@
     </div>
 
     <div class="sidebar-section-title">Principal</div>
+    <div class="sidebar-item active"><i class="ri-home-5-fill"></i><span>Inicio</span></div>
+    <div class="sidebar-item" onclick="openDeck()"><i class="ri-layout-grid-fill"></i><span>StreamDeck</span></div>
 
-    <div class="sidebar-item active" title="Inicio">
-      <i class="ri-home-5-fill"></i>
-      <span>Inicio</span>
-    </div>
-    <div class="sidebar-item" title="StreamDeck" onclick="openDeck()">
-      <i class="ri-layout-grid-fill"></i>
-      <span>StreamDeck</span>
-    </div>
-
-    <div class="sidebar-section-title" style="margin-top:16px;">Recursos</div>
-
-    <div class="sidebar-item" title="Galería de Overlays" onclick="goTo('/overlays')">
-      <i class="ri-layout-masonry-line"></i>
-      <span>Overlays</span>
-    </div>
-    <div class="sidebar-item" title="Moderación" onclick="goTo('/moderation')">
-      <i class="ri-shield-check-fill"></i>
-      <span>Moderación</span>
-    </div>
-    <div class="sidebar-item" title="Logs del sistema" onclick="openLogs()">
-      <i class="ri-terminal-box-line"></i>
-      <span>Logs</span>
-    </div>
+    <div class="sidebar-section-title" style="margin-top:20px;">Recursos</div>
+    <div class="sidebar-item" onclick="goTo('/overlays')"><i class="ri-layout-masonry-line"></i><span>Overlays</span></div>
+    <div class="sidebar-item" onclick="goTo('/moderation')"><i class="ri-shield-check-fill"></i><span>Moderación</span></div>
+    <div class="sidebar-item" onclick="openLogs()"><i class="ri-terminal-box-line"></i><span>Logs</span></div>
 
     <div class="sidebar-spacer"></div>
-
-    <div class="sidebar-item" title="Configuración" onclick="goTo('/config')">
-      <i class="ri-settings-3-fill"></i>
-      <span>Configuración</span>
-    </div>
+    <div class="sidebar-item" onclick="goTo('/config')"><i class="ri-settings-3-fill"></i><span>Configuración</span></div>
   </aside>
 
-  <!-- ═══════════ MAIN ═══════════ -->
+  <!-- MAIN CONTENT -->
   <main class="main-content">
 
-    <header class="header">
+    <header class="header animate-in">
       <div class="brand">
-        <div class="brand-mark"><i class="ri-broadcast-fill"></i></div>
-        <div>
-          <h1>Panel de Control</h1>
-          <div class="header-sub">conexiones · overlays · moderación</div>
-        </div>
+        <h1>Panel de Control</h1>
+        <div class="header-sub">conexiones · overlays · moderación</div>
       </div>
       <div class="header-right">
-        <div class="ip-box" id="ip-box" style="display:none;" title="IP local para conectar desde otra PC">
-          <span class="ip-label">IP</span>
-          <span id="ip-text">···</span>
-          <i class="ri-eye-line" id="ip-eye" onclick="toggleIp()" title="Mostrar/ocultar IP"></i>
-          <i class="ri-file-copy-line" id="ip-copy" onclick="copyIp()" title="Copiar IP"></i>
-        </div>
         <div class="status-badge" id="server-badge">
           <span class="badge-dot"></span>
           <span id="server-badge-text">Comprobando</span>
@@ -992,174 +528,146 @@
       </div>
     </header>
 
-    <!-- UPDATE BANNER -->
-    <div class="update-banner" id="update-banner">
-      <div class="update-icon"><i class="ri-download-cloud-2-line" id="update-icon-i"></i></div>
-      <div class="update-info">
-        <div class="update-title" id="update-title">Nueva versión disponible</div>
-        <div class="update-desc" id="update-desc">Preparando…</div>
-        <div class="update-progress-wrap" id="update-progress-wrap" style="display:none;">
-          <div class="update-progress-bar">
-            <div class="update-progress-fill" id="update-progress-fill"></div>
-          </div>
-          <div class="update-progress-text" id="update-progress-text">0%</div>
-        </div>
+    <!-- MODE CARD COMPACTA -->
+    <div class="mode-card-compact animate-in delay-1" id="mode-card">
+      <div class="mode-left">
+        <span class="mode-pill" id="mode-pill">Servidor</span>
+        <span class="mode-title" id="mode-value">Comprobando modo...</span>
       </div>
-      <div class="update-actions">
-        <button class="btn-update" id="update-btn" onclick="onUpdateButton()">
-          <i class="ri-download-line" id="update-btn-icon"></i>
-          <span id="update-btn-text">Descargar</span>
+      <div class="mode-right">
+        <button class="ip-chip" id="ip-btn" onclick="copyIp()" style="display:none;">
+          <i class="ri-global-line"></i>
+          <span id="ip-text">192.168.1.15</span>
+          <i class="ri-file-copy-line"></i>
         </button>
+        <button class="btn-ghost-sm" onclick="reconfigureConnection()">Reconfigurar</button>
       </div>
-    </div>
-
-    <!-- MODO DE CONEXIÓN -->
-    <div class="section-header">
-      <i class="ri-links-line"></i>
-      <div class="section-title">Modo de conexión</div>
-    </div>
-    <div class="mode-card mode-unknown" id="mode-card">
-      <div class="mode-icon" id="mode-icon"><i class="ri-question-line" id="mode-icon-i"></i></div>
-      <div class="mode-info">
-        <div class="mode-label">Función de este PC</div>
-        <div class="mode-value" id="mode-value">Comprobando…</div>
-        <div class="mode-detail" id="mode-detail"></div>
-      </div>
-      <button class="btn-danger" onclick="reconfigureConnection()">
-        <i class="ri-refresh-line"></i>
-        Reconfigurar
-      </button>
     </div>
 
     <!-- PLATAFORMAS -->
-    <div class="section-header">
-      <i class="ri-server-line"></i>
-      <div class="section-title">Estado de plataformas</div>
-    </div>
-    <div class="platforms-grid">
-      <div class="platform-card twitch" id="card-twitch">
-        <div class="platform-icon"><i class="ri-twitch-fill"></i></div>
-        <div class="platform-info">
-          <div class="platform-name">Twitch</div>
-          <div class="platform-status"><span class="dot"></span><span id="status-twitch">Sin configurar</span></div>
+    <div class="section-title animate-in delay-2">Plataformas activas</div>
+    <div class="platforms-grid animate-in delay-2">
+      <div class="platform-chip-card twitch" id="card-twitch">
+        <i class="ri-twitch-fill platform-glyph"></i>
+        <div class="platform-meta">
+          <div class="platform-label">Twitch</div>
+          <div class="platform-user" id="status-twitch">Sin configurar</div>
         </div>
       </div>
-      <div class="platform-card tiktok" id="card-tiktok">
-        <div class="platform-icon"><i class="ri-tiktok-fill"></i></div>
-        <div class="platform-info">
-          <div class="platform-name">TikTok</div>
-          <div class="platform-status"><span class="dot"></span><span id="status-tiktok">Sin configurar</span></div>
+      <div class="platform-chip-card tiktok" id="card-tiktok">
+        <i class="ri-tiktok-fill platform-glyph"></i>
+        <div class="platform-meta">
+          <div class="platform-label">TikTok</div>
+          <div class="platform-user" id="status-tiktok">Sin configurar</div>
         </div>
       </div>
-      <div class="platform-card kick" id="card-kick">
-        <div class="platform-icon"><i class="ri-live-fill"></i></div>
-        <div class="platform-info">
-          <div class="platform-name">Kick</div>
-          <div class="platform-status"><span class="dot"></span><span id="status-kick">Sin configurar</span></div>
+      <div class="platform-chip-card kick" id="card-kick">
+        <i class="ri-live-fill platform-glyph"></i>
+        <div class="platform-meta">
+          <div class="platform-label">Kick</div>
+          <div class="platform-user" id="status-kick">Sin configurar</div>
         </div>
       </div>
-      <div class="platform-card youtube" id="card-youtube">
-        <div class="platform-icon"><i class="ri-youtube-fill"></i></div>
-        <div class="platform-info">
-          <div class="platform-name">YouTube</div>
-          <div class="platform-status"><span class="dot"></span><span id="status-youtube">Sin configurar</span></div>
+      <div class="platform-chip-card youtube" id="card-youtube">
+        <i class="ri-youtube-fill platform-glyph"></i>
+        <div class="platform-meta">
+          <div class="platform-label">YouTube</div>
+          <div class="platform-user" id="status-youtube">Sin configurar</div>
         </div>
       </div>
     </div>
 
     <!-- ACCIONES -->
-    <div class="section-header">
-      <i class="ri-flashlight-line"></i>
-      <div class="section-title">Acciones rápidas</div>
-    </div>
-    <div class="actions-grid">
+    <div class="section-title animate-in delay-3">Acciones rápidas</div>
+    <div class="actions-grid animate-in delay-3">
       <div class="action-card" onclick="goTo('/config')">
-        <div class="action-icon amber"><i class="ri-settings-3-fill"></i></div>
-        <div class="action-title">Configuración</div>
-        <div class="action-desc">Conecta cuentas, activa filtros y ajusta el TTS</div>
+        <div class="action-top"><i class="ri-settings-3-fill action-glyph"></i></div>
+        <div><div class="action-title">Configuración</div><div class="action-desc">Cuentas, filtros y ajustes de TTS</div></div>
       </div>
       <div class="action-card" onclick="goTo('/overlays')">
-        <div class="action-icon purple"><i class="ri-layout-masonry-line"></i></div>
-        <div class="action-title">Galería de overlays</div>
-        <div class="action-desc">Chat, tops, seguidores, stats y TTS — copia URLs para OBS</div>
+        <div class="action-top"><i class="ri-layout-masonry-line action-glyph"></i></div>
+        <div><div class="action-title">Galería de Overlays</div><div class="action-desc">Chat, tops y alertas para OBS</div></div>
       </div>
       <div class="action-card" onclick="goTo('/moderation')">
-        <div class="action-icon blue"><i class="ri-shield-check-fill"></i></div>
-        <div class="action-title">Moderación</div>
-        <div class="action-desc">Bans, timeouts, encuestas y estadísticas en vivo</div>
+        <div class="action-top"><i class="ri-shield-check-fill action-glyph"></i></div>
+        <div><div class="action-title">Moderación</div><div class="action-desc">Bans, encuestas y eventos en vivo</div></div>
       </div>
       <div class="action-card" onclick="openDeck()">
-        <div class="action-icon green"><i class="ri-layout-grid-fill"></i></div>
-        <div class="action-title">StreamDeck</div>
-        <div class="action-desc">Botones de control: OBS, TTS, chat y TikTok desde el móvil</div>
-      </div>
-      <div class="action-card" onclick="openLogs()">
-        <div class="action-icon pink"><i class="ri-terminal-box-line"></i></div>
-        <div class="action-title">Logs del sistema</div>
-        <div class="action-desc">Estado del servidor y diagnóstico de errores</div>
+        <div class="action-top"><i class="ri-layout-grid-fill action-glyph"></i></div>
+        <div><div class="action-title">StreamDeck</div><div class="action-desc">Botones de control para el móvil</div></div>
       </div>
     </div>
 
     <!-- FOOTER -->
-    <div class="footer-actions">
+    <div class="footer-actions animate-in delay-4">
       <button class="btn btn-primary" id="btn-restart" onclick="restartServers()">
-        <i class="ri-refresh-line"></i>
-        <span id="btn-restart-text">Reiniciar servidores</span>
+        <i class="ri-refresh-line"></i><span id="btn-restart-text">Reiniciar servidores</span>
       </button>
       <button class="btn btn-secondary" onclick="openLogs()">
-        <i class="ri-terminal-box-line"></i>
-        Ver logs
+        <i class="ri-terminal-box-line"></i> Ver consola de logs
       </button>
     </div>
 
   </main>
 
-  <!-- MODAL LOGS -->
+  <!-- MODAL CONSOLA DE LOGS REDISEÑADA -->
   <div class="modal" id="logs-modal">
-    <div class="modal-box">
-      <div class="modal-header">
-        <h3><i class="ri-terminal-box-line"></i> Logs del sistema</h3>
-        <div class="modal-actions">
-          <button class="btn-icon" onclick="toggleAutoscroll()" id="btn-autoscroll">
-            <i class="ri-arrow-down-line"></i> Auto-scroll
+    <div class="modal-box logs-console-box">
+      <div class="console-header">
+        <div class="console-title">
+          <i class="ri-terminal-box-fill"></i> Consola del Sistema
+        </div>
+        <div class="console-controls">
+          <div class="console-search">
+            <i class="ri-search-line"></i>
+            <input type="text" id="log-search-input" placeholder="Filtrar eventos..." oninput="filterLogs()">
+          </div>
+          <button class="btn-console active" id="btn-autoscroll" onclick="toggleAutoscroll()">
+            <i class="ri-arrow-down-circle-line"></i> Auto-scroll
           </button>
-          <button class="btn-icon danger" onclick="clearLogsUI()">
+          <button class="btn-console" onclick="copyConsoleLogs()">
+            <i class="ri-file-copy-line"></i> Copiar
+          </button>
+          <button class="btn-console" onclick="clearLogsUI()">
             <i class="ri-delete-bin-line"></i> Limpiar
+          </button>
+          <button class="btn-console close-btn" onclick="closeLogs()">
+            <i class="ri-close-line"></i>
           </button>
         </div>
       </div>
-      <div class="modal-body">
-        <div class="logs-output" id="logs-output">Cargando...</div>
+      <div class="console-body" id="logs-output">
+        <!-- Los eventos formateados aparecerán aquí -->
       </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="closeLogs()">Cerrar</button>
+      <div class="console-footer">
+        <span id="console-count">0 eventos registrados</span>
+        <span>Modo: Interactivo</span>
       </div>
     </div>
   </div>
 
   <!-- TOAST -->
   <div class="toast" id="toast">
-    <i class="ri-checkbox-circle-fill"></i>
     <span id="toast-text">Listo</span>
   </div>
 
   <script>
     const { ipcRenderer } = require('electron');
-
-    let serverOnline = false;
+    let serverIp = '';
+    let rawLogs = [];
+    let autoscroll = true;
+    let logsInterval = null;
 
     async function checkServerStatus() {
       try {
         const res = await fetch(window.SERVER_BASE + '/health');
         const data = await res.json();
         if (data.status === 'ok') {
-          serverOnline = true;
           setServerBadge(true);
           await updatePlatformStatus();
           return;
         }
       } catch (e) {}
-      serverOnline = false;
       setServerBadge(false);
       resetPlatforms();
     }
@@ -1168,13 +676,13 @@
       const badge = document.getElementById('server-badge');
       const text = document.getElementById('server-badge-text');
       badge.classList.toggle('offline', !online);
-      text.textContent = online ? 'Servidor activo' : 'Servidor inactivo';
+      text.textContent = online ? 'Servidor activo' : 'Inactivo';
     }
 
     function resetPlatforms() {
       ['twitch', 'tiktok', 'kick', 'youtube'].forEach(p => {
         document.getElementById('card-' + p).classList.remove('connected');
-        document.getElementById('status-' + p).textContent = 'Sin conexión';
+        document.getElementById('status-' + p).textContent = 'Sin conectar';
       });
     }
 
@@ -1202,327 +710,55 @@
       }
     }
 
-    /* ============ IP LOCAL + MODO DE CONEXIÓN ============ */
-    let serverIp = '';
-    let serverPort = 3000;
-    let ipVisible = false;
-    let currentMode = null;
+    async function loadConnectionMode() {
+      const pill = document.getElementById('mode-pill');
+      const val = document.getElementById('mode-value');
+      const ipBtn = document.getElementById('ip-btn');
 
-    async function loadServerIp() {
       try {
-        const res = await fetch(window.SERVER_BASE + '/api/local-ip');
-        const data = await res.json();
-        if (data && data.ip) serverIp = data.ip;
-        try {
-          const url = new URL(window.SERVER_BASE);
-          if (url.port) serverPort = url.port;
-        } catch (e) {}
-      } catch (e) {}
-    }
+        const info = await ipcRenderer.invoke('setup:get-info');
+        if (info && info.mode) {
+          pill.textContent = info.mode === 'server' ? 'Servidor' : 'Cliente';
+          pill.className = 'mode-pill ' + info.mode;
+          val.textContent = info.mode === 'server' ? 'PC Principal' : 'PC Secundaria';
 
-    function toggleIp() {
-      ipVisible = !ipVisible;
-      const header = document.getElementById('ip-text');
-      if (header) header.textContent = ipVisible ? serverIp : '···';
-      const eye = document.getElementById('ip-eye');
-      if (eye) eye.className = ipVisible ? 'ri-eye-off-line' : 'ri-eye-line';
-      const chipText = document.getElementById('chip-ip-text');
-      if (chipText && currentMode === 'server') {
-        chipText.textContent = ipVisible ? (serverIp || '···') : '···';
-      }
+          if (info.mode === 'server') {
+            const res = await fetch(window.SERVER_BASE + '/api/local-ip');
+            const data = await res.json();
+            if (data && data.ip) {
+              serverIp = data.ip;
+              document.getElementById('ip-text').textContent = serverIp;
+              ipBtn.style.display = 'inline-flex';
+            }
+          }
+        }
+      } catch (e) {}
     }
 
     function copyIp() {
       if (!serverIp) return;
-      copyText(serverIp).then(() => {
-        const icon = document.getElementById('ip-copy');
-        icon.classList.add('copy-feedback');
-        setTimeout(() => icon.classList.remove('copy-feedback'), 400);
-      });
+      navigator.clipboard.writeText(serverIp);
+      showToast('IP copiada: ' + serverIp);
     }
 
-    async function copyText(text) {
-      if (!text) return;
-      try {
-        if (navigator.clipboard && window.isSecureContext) {
-          await navigator.clipboard.writeText(text);
-        } else {
-          const ta = document.createElement('textarea');
-          ta.value = text;
-          ta.style.position = 'fixed';
-          ta.style.opacity = '0';
-          document.body.appendChild(ta);
-          ta.select();
-          document.execCommand('copy');
-          document.body.removeChild(ta);
-        }
-        showToast('Copiado: ' + text, false);
-      } catch (e) {
-        showToast('No se pudo copiar', true);
-      }
-    }
-
-    async function loadConnectionMode() {
-      const card = document.getElementById('mode-card');
-      const icon = document.getElementById('mode-icon');
-      const iconI = document.getElementById('mode-icon-i');
-      const value = document.getElementById('mode-value');
-      const detail = document.getElementById('mode-detail');
-      const ipBox = document.getElementById('ip-box');
-
-      card.className = 'mode-card mode-unknown';
-      icon.className = 'mode-icon';
-
-      let info = null;
-      try {
-        info = await ipcRenderer.invoke('setup:get-info');
-      } catch (e) {
-        console.warn('No se pudo leer setup:', e.message);
-      }
-
-      if (!info || !info.mode) {
-        currentMode = null;
-        iconI.className = 'ri-question-line';
-        value.textContent = 'Sin configurar';
-        detail.textContent = 'Vuelve a configurar para elegir el modo';
-        ipBox.style.display = 'none';
-        return;
-      }
-
-      currentMode = info.mode;
-
-      if (info.mode === 'server') {
-        card.classList.add('mode-server');
-        icon.classList.add('mode-server');
-        iconI.className = 'ri-server-line';
-        value.innerHTML = 'PC principal <span class="mode-badge server">Servidor</span>';
-        detail.innerHTML = `
-          <div>Este PC aloja los servidores y los comparte con la red local.</div>
-          <div class="mode-detail-row">
-            <span class="mode-detail-chip copyable" id="chip-ip" title="Copiar IP">
-              <i class="ri-global-line"></i>
-              <span id="chip-ip-text">${ipVisible && serverIp ? serverIp : '···'}</span>
-            </span>
-            <span class="mode-detail-chip">
-              <i class="ri-plug-line"></i>
-              Puerto ${serverPort}
-            </span>
-          </div>
-        `;
-        ipBox.style.display = 'inline-flex';
-        document.getElementById('ip-text').textContent = ipVisible ? serverIp : '···';
-
-        const chip = document.getElementById('chip-ip');
-        if (chip) {
-          chip.onclick = () => {
-            copyText(serverIp).then(() => {
-              chip.classList.add('copied');
-              const txt = document.getElementById('chip-ip-text');
-              if (txt) txt.textContent = ipVisible ? serverIp : '···';
-              setTimeout(() => {
-                chip.classList.remove('copied');
-                if (txt) txt.textContent = ipVisible ? serverIp : '···';
-              }, 1200);
-            });
-          };
-        }
-
-      } else if (info.mode === 'client') {
-        card.classList.add('mode-client');
-        icon.classList.add('mode-client');
-        iconI.className = 'ri-computer-line';
-        value.innerHTML = 'PC secundaria <span class="mode-badge client">Cliente</span>';
-        const serverHost = info.ip || '?';
-        const serverPortRemote = info.port || serverPort;
-        detail.innerHTML = `
-          <div>Conectada al servidor remoto.</div>
-          <div class="mode-detail-row">
-            <span class="mode-detail-chip copyable" id="chip-ip" title="Copiar IP del servidor">
-              <i class="ri-server-line"></i>
-              <span id="chip-ip-text">${serverHost}</span>
-            </span>
-            <span class="mode-detail-chip">
-              <i class="ri-plug-line"></i>
-              Puerto ${serverPortRemote}
-            </span>
-          </div>
-        `;
-        ipBox.style.display = 'none';
-
-        const chip = document.getElementById('chip-ip');
-        if (chip) {
-          chip.onclick = () => {
-            copyText(serverHost).then(() => {
-              chip.classList.add('copied');
-              const txt = document.getElementById('chip-ip-text');
-              if (txt) txt.textContent = '¡Copiada!';
-              setTimeout(() => {
-                chip.classList.remove('copied');
-                if (txt) txt.textContent = serverHost;
-              }, 1200);
-            });
-          };
-        }
-
-      } else {
-        iconI.className = 'ri-question-line';
-        value.textContent = 'Modo desconocido';
-        detail.textContent = 'Modo: ' + info.mode;
-        ipBox.style.display = 'none';
-      }
-    }
-
-    async function reconfigureConnection() {
-      const ok = confirm(
-        '¿Reconfigurar la conexión?\n\n' +
-        'Esto borrará la configuración actual (servidor/cliente) y reiniciará la app.\n' +
-        'Tus datos de plataformas NO se borrarán.\n\n' +
-        '¿Continuar?'
-      );
-      if (!ok) return;
-      try {
-        await ipcRenderer.invoke('setup:reset');
-      } catch (e) {
-        showToast('Error al reconfigurar: ' + e.message, true);
-      }
-    }
-
-    /* ============ AUTO-UPDATE UI ============ */
-    let updateState = 'idle';
-    let pendingUpdateVersion = '';
-
-    function setUpdateState(state, data = {}) {
-      updateState = state;
-      const banner = document.getElementById('update-banner');
-      const title = document.getElementById('update-title');
-      const desc = document.getElementById('update-desc');
-      const icon = document.getElementById('update-icon-i');
-      const btn = document.getElementById('update-btn');
-      const btnIcon = document.getElementById('update-btn-icon');
-      const btnText = document.getElementById('update-btn-text');
-      const progressWrap = document.getElementById('update-progress-wrap');
-
-      banner.classList.toggle('ready', state === 'ready');
-
-      if (state === 'available') {
-        pendingUpdateVersion = data.version || '';
-        title.textContent = 'Nueva versión ' + pendingUpdateVersion + ' disponible';
-        desc.textContent = data.releaseNotes ? String(data.releaseNotes).slice(0, 120) : 'Pulsa "Descargar" para actualizar.';
-        icon.className = 'ri-download-cloud-2-line';
-        btn.disabled = false;
-        btnIcon.className = 'ri-download-line';
-        btnText.textContent = 'Descargar';
-        progressWrap.style.display = 'none';
-        banner.classList.add('show');
-      } else if (state === 'downloading') {
-        title.textContent = 'Descargando versión ' + pendingUpdateVersion + '…';
-        desc.textContent = 'No cierres la aplicación mientras se descarga.';
-        icon.className = 'ri-download-cloud-2-line';
-        btn.disabled = true;
-        btnIcon.className = 'ri-loader-4-line';
-        btnText.textContent = 'Descargando…';
-        progressWrap.style.display = 'block';
-        banner.classList.add('show');
-      } else if (state === 'ready') {
-        title.textContent = 'Versión ' + pendingUpdateVersion + ' lista';
-        desc.textContent = 'Reinicia la aplicación para aplicar la actualización.';
-        icon.className = 'ri-restart-line';
-        btn.disabled = false;
-        btnIcon.className = 'ri-restart-line';
-        btnText.textContent = 'Reiniciar e instalar';
-        progressWrap.style.display = 'none';
-        banner.classList.add('show');
-      } else if (state === 'error') {
-        title.textContent = 'Error al actualizar';
-        desc.textContent = data.message || 'No se pudo descargar la actualización.';
-        icon.className = 'ri-error-warning-line';
-        btn.disabled = false;
-        btnIcon.className = 'ri-refresh-line';
-        btnText.textContent = 'Reintentar';
-        banner.classList.add('show');
-      }
-    }
-
-    async function onUpdateButton() {
-      if (updateState === 'available' || updateState === 'error') {
-        setUpdateState('downloading');
-        try {
-          const res = await ipcRenderer.invoke('update:download');
-          if (!res || !res.success) {
-            setUpdateState('error', { message: res?.error || 'Error desconocido' });
-          }
-        } catch (e) {
-          setUpdateState('error', { message: e.message });
-        }
-      } else if (updateState === 'ready') {
-        try {
-          await ipcRenderer.invoke('update:install');
-        } catch (e) {
-          showToast('Error al instalar: ' + e.message, true);
-        }
-      }
-    }
-
-    ipcRenderer.on('update:available', (_e, info) => setUpdateState('available', info));
-    ipcRenderer.on('update:progress', (_e, p) => {
-      const fill = document.getElementById('update-progress-fill');
-      const text = document.getElementById('update-progress-text');
-      if (fill) fill.style.width = (p.percent || 0) + '%';
-      if (text) text.textContent = (p.percent || 0) + '% · ' + (p.mbps || '0') + ' MB/s';
-    });
-    ipcRenderer.on('update:ready', (_e, info) => setUpdateState('ready', info));
-    ipcRenderer.on('update:error', (_e, msg) => setUpdateState('error', { message: msg }));
-
-    /* ============ ARRANQUE ============ */
-    setInterval(checkServerStatus, 3000);
-    checkServerStatus();
-    (async () => {
-      await loadServerIp();
-      await loadConnectionMode();
-    })();
-
-    function goTo(path) {
-      window.location.href = window.SERVER_BASE + path;
-    }
-
-    function openDeck() {
-      fetch(window.SERVER_BASE + '/api/deck-token')
-        .then(r => r.json())
-        .then(data => {
-          const url = (data && data.token)
-            ? window.SERVER_BASE + '/deck?t=' + encodeURIComponent(data.token)
-            : window.SERVER_BASE + '/deck';
-          window.location.href = url;
-        })
-        .catch(() => {
-          window.location.href = window.SERVER_BASE + '/deck';
-        });
-    }
+    function goTo(path) { window.location.href = window.SERVER_BASE + path; }
+    function openDeck() { window.location.href = window.SERVER_BASE + '/deck'; }
 
     async function restartServers() {
       const btn = document.getElementById('btn-restart');
-      const text = document.getElementById('btn-restart-text');
       btn.disabled = true;
-      text.textContent = 'Reiniciando...';
       try {
-        const result = await ipcRenderer.invoke('restart-servers');
-        if (result && result.success) {
-          showToast('Servidores reiniciados correctamente', false);
-        } else {
-          showToast('No se pudo reiniciar: ' + (result?.error || 'desconocido'), true);
-        }
+        await ipcRenderer.invoke('restart-servers');
+        showToast('Servidores reiniciados');
       } catch (e) {
-        showToast('Error al reiniciar: ' + e.message, true);
+        showToast('Error al reiniciar');
       }
-      setTimeout(() => {
-        btn.disabled = false;
-        text.textContent = 'Reiniciar servidores';
-      }, 2000);
+      setTimeout(() => btn.disabled = false, 2000);
     }
 
-    let logsInterval = null;
-    let autoscroll = true;
-
+    /* ═══════════════════════════════════════════════════
+       LÓGICA DE LA CONSOLA DE LOGS
+       ═══════════════════════════════════════════════════ */
     function openLogs() {
       document.getElementById('logs-modal').classList.add('open');
       refreshLogs();
@@ -1538,39 +774,87 @@
     async function refreshLogs() {
       try {
         const logs = await ipcRenderer.invoke('get-logs');
-        const output = document.getElementById('logs-output');
-        output.textContent = (logs && logs.length > 0) ? logs.join('\n') : 'Sin logs todavía.';
-        if (autoscroll) output.scrollTop = output.scrollHeight;
+        rawLogs = logs || [];
+        renderLogs();
       } catch (e) {
-        document.getElementById('logs-output').textContent = 'Error al cargar logs: ' + e.message;
+        document.getElementById('logs-output').innerHTML = `<div class="log-line"><span class="log-msg" style="color:var(--err)">Error al leer logs: ${e.message}</span></div>`;
       }
     }
+
+    function renderLogs() {
+      const container = document.getElementById('logs-output');
+      const searchVal = document.getElementById('log-search-input').value.toLowerCase();
+      const countEl = document.getElementById('console-count');
+
+      const filtered = rawLogs.filter(line => line.toLowerCase().includes(searchVal));
+      countEl.textContent = `${filtered.length} eventos mostrados`;
+
+      if (filtered.length === 0) {
+        container.innerHTML = '<div style="color:var(--text-3); text-align:center; padding: 40px 0;">Sin eventos registrados o coincidentes.</div>';
+        return;
+      }
+
+      const html = filtered.map(line => {
+        let tag = 'info';
+        let text = line;
+
+        if (line.includes('ERROR') || line.includes('Err')) tag = 'error';
+        else if (line.includes('WARN') || line.includes('Advertencia')) tag = 'warn';
+        else if (line.includes('OK') || line.includes('éxito') || line.includes('Iniciado')) tag = 'success';
+
+        const timeMatch = line.match(/^\[(.*?)\]/);
+        const time = timeMatch ? timeMatch[1] : new Date().toLocaleTimeString();
+        const cleanMsg = timeMatch ? line.replace(timeMatch[0], '') : line;
+
+        return `
+          <div class="log-line">
+            <span class="log-time">${time}</span>
+            <span class="log-msg"><span class="log-tag ${tag}">${tag}</span>${cleanMsg}</span>
+          </div>
+        `;
+      }).join('');
+
+      container.innerHTML = html;
+
+      if (autoscroll) {
+        container.scrollTop = container.scrollHeight;
+      }
+    }
+
+    function filterLogs() { renderLogs(); }
 
     function toggleAutoscroll() {
       autoscroll = !autoscroll;
       const btn = document.getElementById('btn-autoscroll');
-      btn.style.borderColor = autoscroll ? 'var(--accent-border)' : 'var(--line-strong)';
-      btn.style.color = autoscroll ? 'var(--accent)' : 'var(--text-3)';
+      btn.classList.toggle('active', autoscroll);
+    }
+
+    function copyConsoleLogs() {
+      if (!rawLogs.length) return;
+      navigator.clipboard.writeText(rawLogs.join('\n'));
+      showToast('Logs copiados al portapapeles');
     }
 
     function clearLogsUI() {
-      document.getElementById('logs-output').textContent = 'Logs limpiados.';
+      rawLogs = [];
+      renderLogs();
+      showToast('Consola limpiada');
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-text').textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2500);
     }
 
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') closeLogs();
     });
 
-    let toastTimer = null;
-    function showToast(message, isError) {
-      const toast = document.getElementById('toast');
-      const text = document.getElementById('toast-text');
-      text.textContent = message;
-      toast.classList.toggle('error', !!isError);
-      toast.classList.add('show');
-      if (toastTimer) clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => toast.classList.remove('show'), 2600);
-    }
+    setInterval(checkServerStatus, 4000);
+    checkServerStatus();
+    loadConnectionMode();
   </script>
 </body>
 </html>

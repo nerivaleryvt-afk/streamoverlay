@@ -1,7 +1,7 @@
 {
   "token": "deck-xxxxxxxx",
   "theme": "cristal",
-  "enabled": true,
+  "enabled": false,
   "obs": {
     "host": "127.0.0.1",
     "port": 4455,
