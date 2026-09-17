@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gemini Live — TogiPanel</title>
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+<style>
+    :root {
+        --bg: #0f0d17;
+        --card: #181523;
+        --border: #262033;
+        --text: #e8e4f0;
+        --muted: #8a819c;
+        --accent: #a970ff;
+        --ok: #4ade80;
+        --warn: #fbbf24;
+        --err: #f87171;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        padding: 24px;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+    }
+    .wrap { width: 100%; max-width: 520px; }
+    h1 {
+        font-size: 20px; font-weight: 600; margin-bottom: 6px;
+        display: flex; align-items: center; gap: 8px;
+    }
+    .sub { font-size: 13px; color: var(--muted); margin-bottom: 22px; }
+    .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 18px;
+        margin-bottom: 16px;
+    }
+    .card h2 {
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--text);
+    }
+    label {
+        display: block;
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+    }
+    input, select, textarea {
+        width: 100%;
+        padding: 10px 12px;
+        background: #0d0a16;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        color: var(--text);
+        font-size: 14px;
+        font-family: inherit;
+        margin-bottom: 14px;
+    }
+    textarea {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12px;
+        letter-spacing: 0.5px;
+        resize: vertical;
+        min-height: 90px;
+        line-height: 1.5;
+    }
+    input:focus, select:focus, textarea:focus {
+        outline: none;
+        border-color: var(--accent);
+    }
+    button {
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: inherit;
+        transition: opacity 0.15s, transform 0.1s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+    button:hover { opacity: 0.9; }
+    button:active { transform: scale(0.98); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-live {
+        background: #2a1f3d;
+        color: var(--text);
+        border: 1px solid var(--accent);
+    }
+    .btn-live.active {
+        background: #1f3d2a;
+        border-color: var(--ok);
+        color: var(--ok);
+    }
+    .status {
+        display: flex; align-items: center; gap: 8px;
+        font-size: 13px; padding: 8px 12px; border-radius: 6px;
+        background: #0d0a16; margin-bottom: 14px; color: var(--muted);
+    }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+    .dot.ok { background: var(--ok); box-shadow: 0 0 6px var(--ok); }
+    .dot.warn { background: var(--warn); box-shadow: 0 0 6px var(--warn); }
+    .dot.err { background: var(--err); box-shadow: 0 0 6px var(--err); }
+    .toast {
+        position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+        background: #1f1b2e; border: 1px solid var(--border);
+        color: var(--text); padding: 10px 18px; border-radius: 8px;
+        font-size: 13px; opacity: 0; pointer-events: none;
+        transition: opacity 0.2s; z-index: 100;
+    }
+    .toast.show { opacity: 1; }
+    .toast.ok { border-color: var(--ok); }
+    .toast.err { border-color: var(--err); }
+    .help {
+        font-size: 11px; color: var(--muted);
+        margin-top: -8px; margin-bottom: 14px;
+    }
+    a.link { color: var(--accent); text-decoration: none; font-size: 12px; }
+    a.link:hover { text-decoration: underline; }
+
+    .modo-actual {
+        display: flex; align-items: center; gap: 8px;
+        font-size: 12px; color: var(--muted);
+        padding: 8px 12px; border-radius: 6px;
+        background: #0d0a16; margin-bottom: 12px;
+        text-transform: uppercase; letter-spacing: 0.4px;
+    }
+    .modo-actual strong { color: var(--text); font-weight: 600; text-transform: none; letter-spacing: 0; }
+    .grid-modos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 8px; }
+    .grid-acciones { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .btn-modo {
+        background: #0d0a16; border: 1px solid var(--border);
+        color: var(--text); padding: 14px 6px;
+        font-size: 12px; font-weight: 600;
+        flex-direction: column; gap: 4px;
+    }
+    .btn-modo i { font-size: 18px; }
+    .btn-modo:hover { border-color: var(--accent); }
+    .btn-modo.activo {
+        background: #2a1f3d; border-color: var(--accent);
+        color: #fff; box-shadow: 0 0 0 1px var(--accent) inset;
+    }
+    .btn-accion {
+        background: #0d0a16; border: 1px solid var(--border);
+        color: var(--text); padding: 12px 6px;
+        font-size: 11px; font-weight: 600;
+        flex-direction: column; gap: 4px;
+    }
+    .btn-accion i { font-size: 16px; }
+    .btn-accion:hover { border-color: var(--accent); }
+    .btn-accion.peligro { color: var(--warn); border-color: #3d2f1f; }
+    .btn-accion.peligro:hover { border-color: var(--warn); }
+    .btn-accion.peligro-fuerte { color: var(--err); border-color: #3d1f1f; }
+    .btn-accion.peligro-fuerte:hover { border-color: var(--err); }
+    .btn-accion.armado {
+        background: #3d1f1f; border-color: var(--err);
+        color: #fff; animation: pulso 0.6s infinite alternate;
+    }
+    @keyframes pulso {
+        from { box-shadow: 0 0 0 0 rgba(248,113,113,0.4); }
+        to   { box-shadow: 0 0 0 6px rgba(248,113,113,0); }
+    }
+
+    .fila-toggle {
+        display: flex; align-items: center; justify-content: space-between;
+        gap: 12px; margin-bottom: 12px;
+    }
+    .fila-toggle .info { flex: 1; }
+    .fila-toggle .info strong { display: block; font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+    .fila-toggle .info span { font-size: 11px; color: var(--muted); }
+    .btn-toggle {
+        width: auto; min-width: 76px; padding: 10px 14px;
+        font-size: 12px; border-radius: 999px;
+        background: #2a2338; color: var(--muted); border: 1px solid var(--border);
+    }
+    .btn-toggle.on { background: #1f3d2a; color: var(--ok); border-color: var(--ok); }
+    .trans-caja {
+        background: #0d0a16; border: 1px solid var(--border);
+        border-radius: 6px; padding: 10px 12px;
+        max-height: 180px; overflow-y: auto;
+        font-size: 12px; line-height: 1.5; margin-bottom: 10px;
+    }
+    .trans-caja .vacia { color: var(--muted); font-style: italic; }
+    .trans-linea { margin-bottom: 6px; }
+    .trans-linea .rol { font-weight: 600; margin-right: 6px; }
+    .trans-linea.user .rol { color: var(--accent); }
+    .trans-linea.model .rol { color: var(--ok); }
+    .trans-linea .texto { color: var(--text); }
+    .fila-limpiar { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+    .btn-mini {
+        width: auto; padding: 8px 12px; font-size: 11px;
+        background: #0d0a16; border: 1px solid var(--border);
+        color: var(--text); border-radius: 6px;
+    }
+    .btn-mini:hover { border-color: var(--accent); }
+    .btn-mini.peligro { color: var(--err); border-color: #3d1f1f; }
+    .btn-mini.peligro:hover { border-color: var(--err); }
+
+    .keys-info {
+        font-size: 11px; color: var(--muted);
+        padding: 8px 12px; background: #0d0a16;
+        border-radius: 6px; margin-bottom: 10px;
+    }
+    .keys-info strong { color: var(--accent); }
+
+    #pronombrePersonalizado { margin-top: -6px; }
+
+    /* 📚 Gemini Text */
+    .text-info {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-bottom: 12px;
+    }
+    .text-info-item {
+        background: #0d0a16;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 8px 10px;
+        font-size: 11px;
+        color: var(--muted);
+    }
+    .text-info-item strong {
+        display: block;
+        font-size: 16px;
+        color: var(--text);
+        margin-top: 4px;
+        font-weight: 600;
+    }
+    .resumen-box {
+        background: #0d0a16;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 10px 12px;
+        font-size: 12px;
+        line-height: 1.5;
+        margin-bottom: 10px;
+        min-height: 60px;
+        max-height: 180px;
+        overflow-y: auto;
+        color: var(--text);
+    }
+    .resumen-box .vacia {
+        color: var(--muted);
+        font-style: italic;
+    }
+    .resumen-linea {
+        margin-bottom: 6px;
+        padding-bottom: 6px;
+        border-bottom: 1px dashed #262033;
+    }
+    .resumen-linea:last-child { border-bottom: none; }
+    .resumen-ts {
+        font-size: 10px;
+        color: var(--muted);
+        margin-right: 6px;
+    }
+    .buscar-fila {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 10px;
+    }
+    .buscar-fila input {
+        margin-bottom: 0;
+        flex: 1;
+    }
+    .buscar-fila button {
+        width: auto;
+        padding: 10px 16px;
+        flex-shrink: 0;
+    }
+
+    /* 🎙️ Card OBS Audio */
+    .url-box {
+        background: #0d0a16;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 10px 12px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12px;
+        color: var(--accent);
+        margin-bottom: 10px;
+        word-break: break-all;
+        user-select: all;
+    }
+    .obs-pasos {
+        font-size: 11px;
+        color: var(--muted);
+        line-height: 1.7;
+        background: #0d0a16;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 10px 12px;
+        margin-bottom: 10px;
+    }
+    .obs-pasos strong { color: var(--text); }
+    .obs-pasos code {
+        color: var(--accent);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+    }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+    <h1><i class="ri-robot-2-line" style="color: var(--accent)"></i> Gemini Live</h1>
+    <p class="sub">Voz natural para el co-host. Compatible con Gemini Live API.</p>
+
+    <!-- 🎙️ Card OBS Audio -->
+    <div class="card">
+        <h2><i class="ri-mic-2-fill"></i> Audio para OBS</h2>
+
+        <label>URL para la fuente de navegador en OBS</label>
+        <div class="url-box" id="obsUrl">http://localhost:3000/gemini-audio.html</div>
+
+        <button class="btn-primary" id="btnCopiarObsUrl" style="margin-bottom: 12px;">
+            <i class="ri-file-copy-line"></i> Copiar URL para OBS
+        </button>
+
+        <div class="obs-pasos">
+            <strong>1.</strong> En OBS: Fuentes → <strong>+</strong> → <strong>Navegador</strong>.<br>
+            <strong>2.</strong> Nombre: <code>Gemini Audio</code>.<br>
+            <strong>3.</strong> Pega la URL.<br>
+            <strong>4.</strong> Ancho: <code>1</code>, Alto: <code>1</code>.<br>
+            <strong>5.</strong> Marca <strong>"Control de audio mediante OBS"</strong>.<br>
+            <strong>6.</strong> Desmarca <strong>"Apagar fuente cuando no sea visible"</strong>.<br>
+            <strong>7.</strong> Desmarca <strong>"Actualizar navegador cuando la escena se active"</strong>.<br>
+            <strong>8.</strong> Sube el volumen de esa fuente en el mezclador.
+        </div>
+    </div>
+
+    <!-- ⚙️ Card de configuración Gemini Live -->
+    <div class="card">
+        <h2><i class="ri-settings-3-line"></i> Gemini Live (voz)</h2>
+
+        <label>API Keys de Google AI Studio</label>
+        <textarea id="apiKeys" placeholder="AQ.Ab8...&#10;AQ.Cd2...&#10;AIza..." autocomplete="off" spellcheck="false"></textarea>
+        <div class="help">Una key por línea. Se usa la primera. Si falla (401/403/429), salta a la siguiente. <a class="link" href="https://aistudio.google.com/app/apikey" target="_blank">Obtener key</a></div>
+
+        <div class="keys-info" id="keysInfo">
+            Pool: <strong id="keysPool">0</strong> keys | Usando: <strong id="keysActual">-</strong>
+        </div>
+
+        <label>Voz</label>
+        <select id="voz">
+            <option value="Kore">Kore — Firme (F)</option>
+            <option value="Puck">Puck — Animada (M)</option>
+            <option value="Charon">Charon — Informativa (M)</option>
+            <option value="Aoede">Aoede — Ligera (F)</option>
+            <option value="Fenrir">Fenrir — Excitante (M)</option>
+            <option value="Zephyr">Zephyr — Brillante</option>
+            <option value="Leda">Leda</option>
+            <option value="Orus">Orus</option>
+        </select>
+
+        <label>Pronombre de la streamer</label>
+        <select id="pronombre">
+            <option value="ella">Ella (femenino)</option>
+            <option value="el">Él (masculino)</option>
+            <option value="elle">Elle (neutral)</option>
+            <option value="personalizado">Personalizado…</option>
+        </select>
+        <input type="text" id="pronombrePersonalizado" placeholder="Ej: ella/elle o instrucción libre" autocomplete="off" style="display:none;">
+        <div class="help">Cómo la IA se refiere a ti y a Togi/Lugi.</div>
+
+        <label>Comando de chat</label>
+        <input type="text" id="comandoChat" placeholder="!voz" autocomplete="off">
+
+        <label>Palabra clave por micrófono</label>
+        <input type="text" id="palabraClave" placeholder="gemini" autocomplete="off">
+
+        <button class="btn-primary" id="btnGuardar">
+            <i class="ri-save-line"></i> Guardar configuración
+        </button>
+    </div>
+
+    <!-- 🎤 Card de activación -->
+    <div class="card">
+        <div class="status">
+            <span class="dot" id="statusDot"></span>
+            <span id="statusText">Cargando…</span>
+        </div>
+
+        <button class="btn-live" id="geminiLiveBtn">
+            <i class="ri-mic-line"></i>
+            <span id="geminiLiveLabel">Activar IA</span>
+        </button>
+    </div>
+
+    <!-- 🎛️ Card de modos y acciones -->
+    <div class="card">
+        <div class="modo-actual">
+            <i class="ri-equalizer-line"></i>
+            Modo actual: <strong id="modoActual">Normal</strong>
+        </div>
+
+        <div class="grid-modos">
+            <button class="btn-modo activo" id="btnModoNormal" data-modo="normal">
+                <i class="ri-volume-up-line"></i>
+                <span>Normal</span>
+            </button>
+            <button class="btn-modo" id="btnModoSilencio" data-modo="silencio">
+                <i class="ri-volume-mute-line"></i>
+                <span>Silencio</span>
+            </button>
+            <button class="btn-modo" id="btnModoAuto" data-modo="autonomo">
+                <i class="ri-robot-2-line"></i>
+                <span>Autónomo</span>
+            </button>
+        </div>
+
+        <div class="grid-acciones">
+            <button class="btn-accion" id="btnResumen">
+                <i class="ri-file-list-3-line"></i>
+                <span>Resumen</span>
+            </button>
+            <button class="btn-accion peligro" id="btnOlvidarStream">
+                <i class="ri-eraser-line"></i>
+                <span>Olvidar stream</span>
+            </button>
+            <button class="btn-accion peligro-fuerte" id="btnOlvidarTodo" data-requiere-doble="1">
+                <i class="ri-delete-bin-6-line"></i>
+                <span>Olvidar todo</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- 📚 Card Gemini Text (Etapa 3) -->
+    <div class="card">
+        <h2><i class="ri-book-2-line"></i> Gemini Text (búsqueda + resúmenes)</h2>
+
+        <div class="fila-toggle" style="margin-bottom: 14px;">
+            <div class="info">
+                <strong id="textActivoLabel"><i class="ri-book-2-line"></i> Módulo activo</strong>
+                <span id="textActivoInfo">Si está OFF, no gasta cuota. Los botones manuales siguen funcionando.</span>
+            </div>
+            <button class="btn-toggle" id="btnTextActivo">OFF</button>
+        </div>
+
+        <div id="textCuerpo">
+            <label>API Keys de Gemini Text</label>
+            <textarea id="textApiKeys" placeholder="AQ.Ab8...&#10;AQ.Cd2..." autocomplete="off" spellcheck="false"></textarea>
+            <div class="help">Keys separadas para el módulo de texto. Pueden ser las mismas que las de Live o distintas. Una por línea.</div>
+
+            <div class="keys-info" id="textKeysInfo">
+                Pool: <strong id="textKeysPool">0</strong> | Modelo: <strong id="textModelo">-</strong>
+            </div>
+
+            <label>Modelo de texto</label>
+            <input type="text" id="textModeloInput" placeholder="gemini-3.6-flash" autocomplete="off">
+
+            <label>Intervalo de resumen automático (minutos)</label>
+            <input type="number" id="textIntervalo" placeholder="5" min="1" max="30" step="1">
+
+            <button class="btn-primary" id="btnGuardarText">
+                <i class="ri-save-line"></i> Guardar Gemini Text
+            </button>
+
+            <div style="height: 14px;"></div>
+
+            <div class="text-info">
+                <div class="text-info-item">
+                    Resúmenes
+                    <strong id="textResumenesTotal">0</strong>
+                </div>
+                <div class="text-info-item">
+                    Búsquedas
+                    <strong id="textBusquedasTotal">0</strong>
+                </div>
+            </div>
+
+            <label>Buscar en Google</label>
+            <div class="buscar-fila">
+                <input type="text" id="textBuscarInput" placeholder="Ej: clima en Santiago de Chile" autocomplete="off">
+                <button class="btn-mini" id="btnBuscarText">
+                    <i class="ri-search-line"></i> Buscar
+                </button>
+            </div>
+
+            <label>Último resumen</label>
+            <div class="resumen-box" id="resumenBox">
+                <div class="vacia">Sin resúmenes todavía.</div>
+            </div>
+
+            <div class="fila-limpiar">
+                <button class="btn-mini" id="btnRefrescarText">
+                    <i class="ri-refresh-line"></i> Refrescar
+                </button>
+                <button class="btn-mini" id="btnResumenManual">
+                    <i class="ri-file-list-3-line"></i> Resumen ahora
+                </button>
+                <button class="btn-mini peligro" id="btnOlvidarResumenes">
+                    <i class="ri-delete-bin-6-line"></i> Olvidar resúmenes
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🎤 Card de memoria de voz -->
+    <div class="card">
+        <div class="fila-toggle">
+            <div class="info">
+                <strong><i class="ri-mic-2-line"></i> Memoria de voz</strong>
+                <span id="memVozInfo">Transcribe y guarda la conversación. Por defecto OFF.</span>
+            </div>
+            <button class="btn-toggle" id="btnMemVozToggle">OFF</button>
+        </div>
+
+        <div class="trans-caja" id="transCaja">
+            <div class="vacia">Sin transcripciones todavía.</div>
+        </div>
+
+        <div class="fila-limpiar">
+            <button class="btn-mini" id="btnRefrescarMemVoz">
+                <i class="ri-refresh-line"></i> Refrescar
+            </button>
+            <button class="btn-mini" id="btnCopiarMemVoz">
+                <i class="ri-file-copy-line"></i> Copiar
+            </button>
+            <button class="btn-mini peligro" id="btnLimpiarMemVoz">
+                <i class="ri-delete-bin-6-line"></i> Limpiar
+            </button>
+        </div>
+    </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+window.SERVER_BASE = window.location.origin;
+</script>
+<script src="/js/gemini-live-client.js"></script>
+<script>
+(function () {
+    'use strict';
+    const $ = (id) => document.getElementById(id);
+
+    function toast(msg, tipo) {
+        const t = $('toast');
+        t.textContent = msg;
+        t.className = 'toast show ' + (tipo || '');
+        setTimeout(() => { t.className = 'toast ' + (tipo || ''); }, 2200);
+    }
+    window.geminiToast = toast;
+
+    function setStatus(texto, clase) {
+        $('statusText').textContent = texto;
+        $('statusDot').className = 'dot ' + (clase || '');
+    }
+
+    // 🎙️ Mostrar URL de OBS real según el host actual
+    function pintarObsUrl() {
+        const base = window.location.origin;
+        const url = base + '/gemini-audio.html';
+        $('obsUrl').textContent = url;
+    }
+
+    // 📋 Copiar URL de OBS
+    async function copiarObsUrl() {
+        const url = $('obsUrl').textContent;
+        try {
+            await navigator.clipboard.writeText(url);
+            toast('URL copiada. Pégala en OBS.', 'ok');
+        } catch (e) {
+            const ta = document.createElement('textarea');
+            ta.value = url;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            try {
+                document.execCommand('copy');
+                toast('URL copiada. Pégala en OBS.', 'ok');
+            } catch (err) {
+                toast('Error al copiar: ' + err.message, 'err');
+            }
+            document.body.removeChild(ta);
+        }
+    }
+
+    // 🏳️ Mostrar/ocultar input personalizado
+    function actualizarVisibilidadPronombre() {
+        const sel = $('pronombre');
+        const inp = $('pronombrePersonalizado');
+        if (!sel || !inp) return;
+        inp.style.display = sel.value === 'personalizado' ? 'block' : 'none';
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // ⚙️ GEMINI LIVE
+    // ═══════════════════════════════════════════════════════════
+    async function cargar() {
+        try {
+            const r = await fetch('/api/gemini-live/config');
+            const d = await r.json();
+            if (!d.ok) { setStatus('Error cargando config', 'err'); return; }
+            const c = d.config || {};
+
+            let keys = [];
+            if (Array.isArray(c.apiKeys) && c.apiKeys.length) keys = c.apiKeys;
+            else if (c.apiKey) keys = [c.apiKey];
+            if (keys.length > 0 && keys.every(k => k === '***')) {
+                $('apiKeys').value = '';
+                $('apiKeys').placeholder = '•••••••••••• (ya configurada, pega una nueva para reemplazar)';
+            } else {
+                $('apiKeys').value = keys.join('\n');
+            }
+            $('keysPool').textContent = keys.length;
+
+            $('voz').value = c.voz || 'Kore';
+            $('comandoChat').value = c.comandoChat || '!voz';
+            $('palabraClave').value = c.palabraClave || 'gemini';
+
+            const pron = c.pronombre || 'ella';
+            $('pronombre').value = pron;
+            $('pronombrePersonalizado').value = c.pronombrePersonalizado || '';
+            actualizarVisibilidadPronombre();
+
+            const r2 = await fetch('/api/gemini-live/status');
+            const d2 = await r2.json();
+            if (d2.ok) {
+                if (d2.activo) setStatus('Sesión activa', 'ok');
+                else if (keys.length) setStatus('Configurado, listo para activar', 'warn');
+                else setStatus('Falta API key', 'err');
+            }
+        } catch (e) {
+            setStatus('Servidor no disponible', 'err');
+        }
+    }
+
+    $('pronombre').addEventListener('change', actualizarVisibilidadPronombre);
+
+    $('btnGuardar').addEventListener('click', async () => {
+        const rawKeys = $('apiKeys').value.split('\n').map(s => s.trim()).filter(Boolean);
+        const keys = rawKeys.filter(k => k !== '***');
+        if (keys.length > 5) { toast('Máximo 5 keys', 'err'); return; }
+
+        const pron = $('pronombre').value;
+        const pronCustom = $('pronombrePersonalizado').value.trim();
+        if (pron === 'personalizado' && !pronCustom) {
+            toast('Escribe el pronombre personalizado', 'err');
+            return;
+        }
+
+        const body = {
+            voz: $('voz').value,
+            comandoChat: $('comandoChat').value.trim() || '!voz',
+            palabraClave: $('palabraClave').value.trim() || 'Togi',
+            pronombre: pron,
+            pronombrePersonalizado: pronCustom
+        };
+        if (keys.length > 0) {
+            body.apiKeys = keys;
+            body.apiKey = keys[0];
+        }
+
+        $('btnGuardar').disabled = true;
+        try {
+            const r = await fetch('/api/gemini-live/config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            const d = await r.json();
+            if (d.ok) {
+                toast(keys.length > 0 ? `Guardado (${keys.length} keys)` : 'Guardado', 'ok');
+                if (keys.length > 0) $('keysPool').textContent = keys.length;
+                setStatus('Configurado, listo para activar', 'warn');
+            } else {
+                toast('Error al guardar: ' + (d.error || 'desconocido'), 'err');
+            }
+        } catch (e) {
+            toast('Error: ' + e.message, 'err');
+        } finally {
+            $('btnGuardar').disabled = false;
+        }
+    });
+
+    setInterval(() => {
+        if (!window.geminiLiveClient) return;
+        const est = window.geminiLiveClient.getEstado();
+        if (est === 'active') setStatus('IA escuchando', 'ok');
+        else setStatus('Inactivo', '');
+    }, 1000);
+
+    // ═══════════════════════════════════════════════════════════
+    // 📚 GEMINI TEXT
+    // ═══════════════════════════════════════════════════════════
+    let textoActivo = false;
+
+    function pintarToggleTexto(activo) {
+        textoActivo = !!activo;
+        const btn = $('btnTextActivo');
+        const info = $('textActivoInfo');
+        const cuerpo = $('textCuerpo');
+        if (!btn || !info) return;
+        if (textoActivo) {
+            btn.textContent = 'ON';
+            btn.classList.add('on');
+            info.textContent = 'Resúmenes automáticos activos. Gasta cuota cada intervalo.';
+            if (cuerpo) cuerpo.style.display = 'block';
+        } else {
+            btn.textContent = 'OFF';
+            btn.classList.remove('on');
+            info.textContent = 'Activa para configurar keys, modelo e intervalo.';
+            if (cuerpo) cuerpo.style.display = 'none';
+        }
+    }
+
+    async function cargarTexto() {
+        try {
+            const r = await fetch('/api/gemini-text/config');
+            const d = await r.json();
+            if (!d.ok) return;
+            const c = d.config || {};
+
+            let keys = [];
+            if (Array.isArray(c.apiKeys) && c.apiKeys.length) keys = c.apiKeys;
+            else if (c.apiKey) keys = [c.apiKey];
+            if (keys.length > 0 && keys.every(k => k === '***')) {
+                $('textApiKeys').value = '';
+                $('textApiKeys').placeholder = '•••••••••••• (ya configurada, pega una nueva para reemplazar)';
+            } else {
+                $('textApiKeys').value = keys.join('\n');
+            }
+            $('textKeysPool').textContent = keys.length;
+            $('textModelo').textContent = c.modelo || '-';
+            $('textModeloInput').value = c.modelo || 'gemini-3.6-flash';
+            $('textIntervalo').value = Math.round((c.intervaloResumenMs || 300000) / 60000);
+            pintarToggleTexto(c.activo !== false);
+
+            const r2 = await fetch('/api/gemini-text/status');
+            const d2 = await r2.json();
+            if (d2.ok) {
+                $('textResumenesTotal').textContent = d2.resumenesGenerados || 0;
+                $('textBusquedasTotal').textContent = d2.busquedasRealizadas || 0;
+                if (d2.ultimoResumen) renderResumenes([{ ts: d2.ultimoResumenTs, texto: d2.ultimoResumen }]);
+            }
+        } catch (e) {
+            console.error('Error cargando Gemini Text:', e.message);
+        }
+    }
+
+    function renderResumenes(resumenes) {
+        const box = $('resumenBox');
+        if (!box) return;
+        if (!resumenes || resumenes.length === 0) {
+            box.innerHTML = '<div class="vacia">Sin resúmenes todavía.</div>';
+            return;
+        }
+        const partes = resumenes.map(r => {
+            const fecha = r.ts ? new Date(r.ts) : new Date();
+            const hora = fecha.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+            return `<div class="resumen-linea"><span class="resumen-ts">${hora}</span>${escapeHtml(r.texto || '')}</div>`;
+        });
+        box.innerHTML = partes.join('');
+        box.scrollTop = box.scrollHeight;
+    }
+
+    function escapeHtml(s) {
+        return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    $('btnTextActivo').addEventListener('click', async () => {
+        const nuevo = !textoActivo;
+        try {
+            const r = await fetch('/api/gemini-text/config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ activo: nuevo })
+            });
+            const d = await r.json();
+            if (d.ok) {
+                pintarToggleTexto(nuevo);
+                toast(nuevo ? 'Gemini Text: ON' : 'Gemini Text: OFF', 'ok');
+            } else {
+                toast('Error: ' + (d.error || 'desconocido'), 'err');
+            }
+        } catch (e) {
+            toast('Error: ' + e.message, 'err');
+        }
+    });
+
+    $('btnGuardarText').addEventListener('click', async () => {
+        const rawKeys = $('textApiKeys').value.split('\n').map(s => s.trim()).filter(Boolean);
+        const keys = rawKeys.filter(k => k !== '***');
+        if (keys.length > 5) { toast('Máximo 5 keys', 'err'); return; }
+
+        const body = {
+            modelo: $('textModeloInput').value.trim() || 'gemini-3.6-flash',
+            intervaloResumenMs: Math.max(1, Math.min(30, parseInt($('textIntervalo').value, 10) || 5)) * 60000
+        };
+        if (keys.length > 0) {
+            body.apiKeys = keys;
+            body.apiKey = keys[0];
+        }
+
+        $('btnGuardarText').disabled = true;
+        try {
+            const r = await fetch('/api/gemini-text/config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            const d = await r.json();
+            if (d.ok) {
+                toast(keys.length > 0 ? `Gemini Text guardado (${keys.length} keys)` : 'Gemini Text guardado', 'ok');
+                if (keys.length > 0) $('textKeysPool').textContent = keys.length;
+                cargarTexto();
+            } else {
+                toast('Error: ' + (d.error || 'desconocido'), 'err');
+            }
+        } catch (e) {
+            toast('Error: ' + e.message, 'err');
+        } finally {
+            $('btnGuardarText').disabled = false;
+        }
+    });
+
+    $('btnBuscarText').addEventListener('click', async () => {
+        const query = $('textBuscarInput').value.trim();
+        if (!query) { toast('Escribe qué buscar', 'err'); return; }
+        $('btnBuscarText').disabled = true;
+        toast('Buscando…', 'ok');
+        try {
+            const r = await fetch('/api/gemini-text/buscar', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query })
+            });
+            const d = await r.json();
+            if (d.ok && d.respuesta) {
+                renderResumenes([{ ts: Date.now(), texto: '🔍 ' + query + ': ' + d.respuesta }]);
+                toast('Búsqueda OK', 'ok');
+                $('textBusquedasTotal').textContent = (parseInt($('textBusquedasTotal').textContent, 10) || 0) + 1;
+            } else {
+                toast('Error: ' + (d.error || 'sin resultado'), 'err');
+            }
+        } catch (e) {
+            toast('Error: ' + e.message, 'err');
+        } finally {
+            $('btnBuscarText').disabled = false;
+        }
+    });
+
+    $('btnResumenManual').addEventListener('click', async () => {
+        $('btnResumenManual').disabled = true;
+        toast('Generando resumen…', 'ok');
+        try {
+            const r = await fetch('/api/gemini-text/resumen', { method: 'POST' });
+            const d = await r.json();
+            if (d.ok && d.texto) {
+                renderResumenes([{ ts: Date.now(), texto: d.texto }]);
+                toast('Resumen generado', 'ok');
+            } else {
+                toast('Sin contenido para resumir', 'warn');
+            }
+        } catch (e) {
+            toast('Error: ' + e.message, 'err');
+        } finally {
+            $('btnResumenManual').disabled = false;
+            cargarTexto();
+        }
+    });
+
+    $('btnRefrescarText').addEventListener('click', () => {
+        cargarTexto();
+        toast('Refrescando…', 'ok');
+    });
+
+    $('btnOlvidarResumenes').addEventListener('click', async () => {
+        try {
+            await fetch('/api/gemini-text/olvidar-resumenes', { method: 'POST' });
+            renderResumenes([]);
+            $('textResumenesTotal').textContent = '0';
+            toast('Resúmenes olvidados', 'ok');
+        } catch (e) {
+            toast('Error: ' + e.message, 'err');
+        }
+    });
+
+    // ═══════════════════════════════════════════════════════════
+    // 🎤 MEMORIA DE VOZ
+    // ═══════════════════════════════════════════════════════════
+    let memVozActiva = false;
+    let ultimasTranscripciones = [];
+
+    function pintarToggleMemVoz(activa) {
+        memVozActiva = activa;
+        const btn = $('btnMemVozToggle');
+        const info = $('memVozInfo');
+        if (!btn || !info) return;
+        if (activa) {
+            btn.textContent = 'ON';
+            btn.classList.add('on');
+            info.textContent = 'Transcribiendo y guardando la conversación.';
+        } else {
+            btn.textContent = 'OFF';
+            btn.classList.remove('on');
+            info.textContent = 'Transcribe y guarda la conversación. Por defecto OFF.';
+        }
+    }
+
+    function renderTranscripciones(entradas) {
+        const caja = $('transCaja');
+        if (!caja) return;
+        ultimasTranscripciones = entradas || [];
+        if (!entradas || entradas.length === 0) {
+            caja.innerHTML = '<div class="vacia">Sin transcripciones todavía.</div>';
+            return;
+        }
+        const partes = [];
+        for (const e of entradas) {
+            const rol = e.rol === 'user' ? 'Tú' : 'IA';
+            const claseRol = e.rol === 'user' ? 'user' : 'model';
+            partes.push(
+                `<div class="trans-linea ${claseRol}">` +
+                `<span class="rol">${rol}:</span>` +
+                `<span class="texto">${escapeHtml(e.texto || '')}</span>` +
+                `</div>`
+            );
+        }
+        caja.innerHTML = partes.join('');
+        caja.scrollTop = caja.scrollHeight;
+    }
+
+    $('btnMemVozToggle').addEventListener('click', () => {
+        const nuevo = !memVozActiva;
+        if (window.geminiLiveClient && typeof window.geminiLiveClient.setMemoriaVoz === 'function') {
+            window.geminiLiveClient.setMemoriaVoz(nuevo);
+            toast(nuevo ? 'Memoria de voz: ON' : 'Memoria de voz: OFF', 'ok');
+            pintarToggleMemVoz(nuevo);
+        } else {
+            toast('Cliente no listo', 'err');
+        }
+    });
+
+    $('btnRefrescarMemVoz').addEventListener('click', () => {
+        if (window.geminiLiveClient && typeof window.geminiLiveClient.pedirMemoriaVoz === 'function') {
+            window.geminiLiveClient.pedirMemoriaVoz();
+            toast('Refrescando…', 'ok');
+        }
+    });
+
+    // 📋 Copiar transcripciones al portapapeles
+    $('btnCopiarMemVoz').addEventListener('click', async () => {
+        if (!ultimasTranscripciones || ultimasTranscripciones.length === 0) {
+            toast('Nada que copiar', 'warn');
+            return;
+        }
+        const texto = ultimasTranscripciones.map(e => {
+            const rol = e.rol === 'user' ? 'Tú' : 'IA';
+            return `${rol}: ${e.texto || ''}`;
+        }).join('\n');
+
+        try {
+            await navigator.clipboard.writeText(texto);
+            toast('Transcripciones copiadas', 'ok');
+        } catch (e) {
+            const ta = document.createElement('textarea');
+            ta.value = texto;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            try {
+                document.execCommand('copy');
+                toast('Transcripciones copiadas', 'ok');
+            } catch (err) {
+                toast('Error al copiar: ' + err.message, 'err');
+            }
+            document.body.removeChild(ta);
+        }
+    });
+
+    $('btnLimpiarMemVoz').addEventListener('click', () => {
+        if (window.geminiLiveClient && typeof window.geminiLiveClient.limpiarMemoriaVoz === 'function') {
+            window.geminiLiveClient.limpiarMemoriaVoz();
+            renderTranscripciones([]);
+            toast('Transcripciones limpiadas', 'ok');
+        }
+    });
+
+    // ═══════════════════════════════════════════════════════════
+    // 🔌 SOCKETS para Gemini Text
+    // ═══════════════════════════════════════════════════════════
+    if (typeof io === 'function') {
+        const socket = io(window.SERVER_BASE || window.location.origin, { transports: ['websocket', 'polling'] });
+
+        socket.on('gemini-live:busqueda-lista', (payload) => {
+            if (payload && payload.respuesta) {
+                renderResumenes([{ ts: Date.now(), texto: '🔍 ' + payload.query + ': ' + payload.respuesta }]);
+            }
+        });
+
+        socket.on('gemini-live:resumen-listo', (payload) => {
+            if (payload && payload.texto) {
+                renderResumenes([{ ts: payload.ts || Date.now(), texto: payload.texto }]);
+                cargarTexto();
+            }
+        });
+
+        socket.on('gemini-text:estado', (payload) => {
+            if (!payload) return;
+            $('textResumenesTotal').textContent = payload.resumenesGenerados || 0;
+            $('textBusquedasTotal').textContent = payload.busquedasRealizadas || 0;
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // 🚀 ARRANQUE
+    // ═══════════════════════════════════════════════════════════
+    document.addEventListener('DOMContentLoaded', () => {
+        pintarObsUrl();
+        $('btnCopiarObsUrl').addEventListener('click', copiarObsUrl);
+
+        cargar();
+        cargarTexto();
+        setInterval(cargarTexto, 30000);
+
+        setTimeout(() => {
+            if (window.geminiLiveClient && typeof window.geminiLiveClient.pedirMemoriaVoz === 'function') {
+                window.geminiLiveClient.pedirMemoriaVoz();
+            }
+        }, 500);
+    });
+
+    window.geminiLiveMemVoz = {
+        pintarToggle: pintarToggleMemVoz,
+        render: renderTranscripciones
+    };
+})();
+</script>
+</body>
+</html>

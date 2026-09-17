@@ -9,6 +9,14 @@ extras/node_modules/
 extras/modules/
 extras/npm-debug.log*
 
+# Python embebido (NO subir)
+extras/python/
+**/__pycache__/
+*.pyc
+
+# Binarios pesados (NO subir)
+extras/bin/
+
 # Build de la app
 dist-installer/
 dist/
@@ -23,6 +31,8 @@ extras-backup/
 config.json
 setup.json
 extras/config.json
+.env
+.env.local
 *.log
 logs/
 
@@ -36,6 +46,18 @@ out/
 
 # Estado interno de la app
 extras/jar-state.json
+extras/timer-state.json
+timer-state.json
+jar-state.json
+
+# Duplicados en raíz (el bueno está en extras/)
+custom-overlay.js
+public/overlay-shim.js
+public/overlay-custom.html
+
+# Música apagada
+extras/musica.js
+extras/spotify-login.js
 
 # Backups
 main.rar

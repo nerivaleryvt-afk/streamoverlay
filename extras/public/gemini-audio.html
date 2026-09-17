@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Gemini Audio (OBS)</title>
+<style>
+    html, body { margin: 0; padding: 0; background: transparent; overflow: hidden; width: 100%; height: 100%; }
+</style>
+</head>
+<body>
+<div id="estado" style="font-family: monospace; color: #a970ff; font-size: 8px; opacity: 0.3; padding: 2px;"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+(function () {
+    'use strict';
+
+    const SERVER = window.location.origin;
+    const socket = io(SERVER, { transports: ['websocket', 'polling'] });
+
+    const elEstado = document.getElementById('estado');
+
+    let estado = 'idle';
+    let stream = null;
+    let ctxIn = null;
+    let ctxOut = null;
+    let worklet = null;
+    let fuente = null;
+    let muteGain = null;
+    let nextPlayTime = 0;
+    let timerSilencio = null;
+    let modoActual = 'normal';
+
+    const TIMER_INACTIVIDAD_MS = 300000;
+
+    function log(msg) {
+        elEstado.textContent = msg;
+        console.log('[gemini-audio]', msg);
+    }
+
+    const PCM_WORKLET_CODE = `
+        class PCMProcessor extends AudioWorkletProcessor {
+            constructor() {
+                super();
+                this.buf = new Float32Array(1024);
+                this.pos = 0;
+            }
+            process(inputs) {
+                const ch = inputs[0] && inputs[0][0];
+                if (!ch) return true;
+                for (let i = 0; i < ch.length; i++) {
+                    this.buf[this.pos++] = ch[i];
+                    if (this.pos >= 1024) {
+                        this.port.postMessage(this.buf.slice(0));
+                        this.pos = 0;
+                    }
+                }
+                return true;
+            }
+        }
+        registerProcessor('pcm-processor', PCMProcessor);
+    `;
+
+    async function iniciarCaptura() {
+        if (stream) return;
+
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({
+                audio: {
+                    channelCount: 1,
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                    autoGainControl: true
+                }
+            });
+        } catch (e) {
+            log('❌ Sin micrófono: ' + e.message);
+            throw e;
+        }
+
+        try {
+            ctxIn = new (window.AudioContext || window.webkitAudioContext)({
+                sampleRate: 16000,
+                latencyHint: 'interactive'
+            });
+        } catch (e) {
+            ctxIn = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'interactive' });
+        }
+        const rateNativo = ctxIn.sampleRate;
+        log('🎤 rate ' + rateNativo);
+
+        try {
+            const blob = new Blob([PCM_WORKLET_CODE], { type: 'application/javascript' });
+            const url = URL.createObjectURL(blob);
+            await ctxIn.audioWorklet.addModule(url);
+            URL.revokeObjectURL(url);
+        } catch (e) {
+            log('❌ Worklet: ' + e.message);
+            throw e;
+        }
+
+        fuente = ctxIn.createMediaStreamSource(stream);
+        worklet = new AudioWorkletNode(ctxIn, 'pcm-processor');
+
+        worklet.port.onmessage = (e) => {
+            if (estado !== 'active') return;
+            const input = e.data;
+            const pcm16 = floatTo16BitPCM(
+                rateNativo === 16000 ? input : downsample(input, rateNativo, 16000)
+            );
+            const b64 = int16ToBase64(pcm16);
+            socket.emit('gemini-live:audio-input', { data: b64 });
+        };
+
+        muteGain = ctxIn.createGain();
+        muteGain.gain.value = 0;
+
+        fuente.connect(worklet);
+        worklet.connect(muteGain);
+        muteGain.connect(ctxIn.destination);
+
+        log('🎤 capturando');
+    }
+
+    function detenerCaptura() {
+        estado = 'idle';
+        if (worklet) { try { worklet.port.onmessage = null; } catch (e) {} try { worklet.disconnect(); } catch (e) {} worklet = null; }
+        if (muteGain) { try { muteGain.disconnect(); } catch (e) {} muteGain = null; }
+        if (fuente) { try { fuente.disconnect(); } catch (e) {} fuente = null; }
+        if (stream) { stream.getTracks().forEach(t => { try { t.stop(); } catch (e) {} }); stream = null; }
+        if (ctxIn) { try { ctxIn.close(); } catch (e) {} ctxIn = null; }
+        if (timerSilencio) { clearTimeout(timerSilencio); timerSilencio = null; }
+        log('🎤 detenido');
+    }
+
+    function resetearTimerSilencio() {
+        if (timerSilencio) { clearTimeout(timerSilencio); timerSilencio = null; }
+        if (modoActual === 'silencio') return;
+
+        timerSilencio = setTimeout(() => {
+            log('⏱️ 5 min inactivo → deteniendo');
+            detenerCaptura();
+            socket.emit('gemini-live:stop');
+        }, TIMER_INACTIVIDAD_MS);
+    }
+
+    function reproducirChunk(base64PCM24k) {
+        if (!ctxOut) {
+            ctxOut = new (window.AudioContext || window.webkitAudioContext)({
+                latencyHint: 'interactive',
+                sampleRate: 24000
+            });
+        }
+        const bin = atob(base64PCM24k);
+        const bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        const int16 = new Int16Array(bytes.buffer);
+        const float32 = new Float32Array(int16.length);
+        for (let i = 0; i < int16.length; i++) float32[i] = int16[i] / 32768;
+        const buf = ctxOut.createBuffer(1, float32.length, 24000);
+        buf.copyToChannel(float32, 0);
+        const src = ctxOut.createBufferSource();
+        src.buffer = buf;
+        src.connect(ctxOut.destination);
+        const ahora = ctxOut.currentTime;
+        if (nextPlayTime < ahora) nextPlayTime = ahora + 0.02;
+        src.start(nextPlayTime);
+        nextPlayTime += buf.duration;
+    }
+
+    function downsample(input, fromRate, toRate) {
+        if (fromRate === toRate) return input;
+        const ratio = fromRate / toRate;
+        const outLen = Math.floor(input.length / ratio);
+        const out = new Float32Array(outLen);
+        for (let i = 0; i < outLen; i++) {
+            const start = Math.floor(i * ratio);
+            const end = Math.min(Math.floor((i + 1) * ratio), input.length);
+            let sum = 0;
+            for (let j = start; j < end; j++) sum += input[j];
+            out[i] = sum / (end - start);
+        }
+        return out;
+    }
+
+    function floatTo16BitPCM(input) {
+        const out = new Int16Array(input.length);
+        for (let i = 0; i < input.length; i++) {
+            const s = Math.max(-1, Math.min(1, input[i]));
+            out[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+        }
+        return out;
+    }
+
+    function int16ToBase64(int16) {
+        const bytes = new Uint8Array(int16.buffer);
+        let bin = '';
+        const chunk = 0x8000;
+        for (let i = 0; i < bytes.length; i += chunk) {
+            bin += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+        }
+        return btoa(bin);
+    }
+
+    socket.on('connect', () => {
+        log('🔌 conectado');
+        socket.emit('gemini-audio:hello');
+    });
+
+    socket.on('gemini-audio:start-captura', async () => {
+        if (estado === 'active') return;
+        try {
+            await iniciarCaptura();
+            estado = 'active';
+            resetearTimerSilencio();
+            socket.emit('gemini-audio:captura-activa', { activo: true });
+        } catch (e) {
+            log('❌ error activar');
+        }
+    });
+
+    socket.on('gemini-audio:stop-captura', () => {
+        detenerCaptura();
+        socket.emit('gemini-audio:captura-activa', { activo: false });
+    });
+
+    socket.on('gemini-live:audio-output', ({ data }) => {
+        if (!data) return;
+        try { reproducirChunk(data); } catch (e) { console.error(e.message); }
+    });
+
+    socket.on('gemini-live:turn-complete', () => resetearTimerSilencio());
+
+    socket.on('gemini-live:modo-cambiado', ({ modo }) => {
+        modoActual = modo || 'normal';
+        if (estado === 'active') resetearTimerSilencio();
+    });
+
+    socket.on('gemini-live:status', (payload) => {
+        if (!payload) return;
+        if (typeof payload.modo === 'string') modoActual = payload.modo;
+        if (payload.activo === false && estado === 'active') {
+            detenerCaptura();
+        }
+    });
+
+    log('listo');
+})();
+</script>
+</body>
+</html>

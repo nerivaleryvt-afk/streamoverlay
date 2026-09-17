@@ -17,6 +17,8 @@ const tiktokProxy = require('./tiktok-proxy');
 // 🤖 AI CO-HOST
 const aiKeyPool = require('./ai-key-pool');
 const aiCohost = require('./ai-cohost');
+const geminiLive = require('./gemini-live');
+const geminiText = require('./gemini-text');
 
 // 🔊 PATCH 1 — Requires del sistema TTS
 const { TTSQueue } = require('./tts-queue');
@@ -1315,6 +1317,22 @@ if (typeof parsed.TIMER_COLOR !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(parsed.T
 
 let config = loadConfig();
 
+// 🤖 Gemini Live — módulo puente
+geminiLive.init(io, config);
+
+// 📚 Gemini Text — sesión paralela (resúmenes + búsqueda)
+geminiText.init(io, config);
+// 🔗 Conectar gemini-text con las fuentes de gemini-live
+try {
+    geminiText.registrarFuentes({
+        getBufferChat: () => (typeof geminiLive.obtenerBufferChat === 'function' ? geminiLive.obtenerBufferChat() : []),
+        getTranscripcionVoz: () => (typeof geminiLive.obtenerTranscripcionVoz === 'function' ? geminiLive.obtenerTranscripcionVoz() : '')
+    });
+    console.log('🔗 [GEMINI-TEXT] Fuentes conectadas a Gemini Live');
+} catch (e) {
+    console.error('❌ [GEMINI-TEXT] Error conectando fuentes:', e.message);
+}
+
 // ================================================================
 // 🏳️🌈 PRIDE — helpers (dependen de `config` y `CONFIG_PATH`)
 // ================================================================
@@ -1755,6 +1773,177 @@ app.post('/api/ai/test-key', async (req, res) => {
     }
 });
 
+// ================================================================
+// 🤖 RUTAS API — GEMINI LIVE
+// ================================================================
+app.get('/api/gemini-live/status', (req, res) => {
+    try {
+        res.json({ ok: true, ...geminiLive.estado() });
+    } catch (e) {
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+app.post('/api/gemini-live/config', (req, res) => {
+    try {
+        const actual = geminiLive.cargarConfig();
+        const body = req.body || {};
+        const merged = {
+            ...actual,
+            voz: typeof body.voz === 'string' && body.voz.trim() ? body.voz.trim() : actual.voz,
+            comandoChat: typeof body.comandoChat === 'string' && body.comandoChat.trim() ? body.comandoChat.trim() : actual.comandoChat,
+            palabraClave: typeof body.palabraClave === 'string' && body.palabraClave.trim() ? body.palabraClave.trim() : actual.palabraClave,
+            pronombre: typeof body.pronombre === 'string' && body.pronombre.trim() ? body.pronombre.trim() : actual.pronombre,
+            pronombrePersonalizado: typeof body.pronombrePersonalizado === 'string' ? body.pronombrePersonalizado.trim() : actual.pronombrePersonalizado
+        };
+
+        // 🔑 Multi-key: aceptar apiKeys array
+        if (Array.isArray(body.apiKeys)) {
+            const keysLimpias = body.apiKeys
+                .map(k => String(k || '').trim())
+                .filter(k => k && k !== '***');
+            if (keysLimpias.length > 0) {
+                merged.apiKeys = keysLimpias;
+                merged.apiKey = keysLimpias[0];
+            }
+        } else if (typeof body.apiKey === 'string' && body.apiKey.trim() && body.apiKey.trim() !== '***') {
+            merged.apiKey = body.apiKey.trim();
+            merged.apiKeys = [merged.apiKey];
+        }
+
+        const ok = geminiLive.guardarConfig(merged);
+        const sanitized = { ...merged };
+        if (sanitized.apiKey) sanitized.apiKey = '***';
+        if (Array.isArray(sanitized.apiKeys)) {
+            sanitized.apiKeys = sanitized.apiKeys.map(() => '***');
+        }
+        res.json({ ok, config: sanitized });
+    } catch (e) {
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+app.get('/api/gemini-live/config', (req, res) => {
+    try {
+        const cfg = geminiLive.cargarConfig();
+        const sanitized = { ...cfg };
+        if (sanitized.apiKey) sanitized.apiKey = '***';
+        if (Array.isArray(sanitized.apiKeys)) {
+            sanitized.apiKeys = sanitized.apiKeys.map(k => k ? '***' : '');
+        }
+        res.json({ ok: true, config: sanitized });
+    } catch (e) {
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+// ================================================================
+// 📚 RUTAS API — GEMINI TEXT (sesión paralela)
+// ================================================================
+app.get('/api/gemini-text/status', (req, res) => {
+    try {
+        res.json({ ok: true, ...geminiText.estado() });
+    } catch (e) {
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+app.get('/api/gemini-text/config', (req, res) => {
+    try {
+        const cfg = geminiText.cargarConfig();
+        const sanitized = { ...cfg };
+        if (sanitized.apiKey) sanitized.apiKey = '***';
+        if (Array.isArray(sanitized.apiKeys)) {
+            sanitized.apiKeys = sanitized.apiKeys.map(k => k ? '***' : '');
+        }
+        res.json({ ok: true, config: sanitized });
+    } catch (e) {
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+app.post('/api/gemini-text/config', (req, res) => {
+    try {
+        const actual = geminiText.cargarConfig();
+        const body = req.body || {};
+        const merged = { ...actual };
+
+        // apiKeys: si viene array válido, reemplaza. Si viene '***', mantiene las actuales.
+        if (Array.isArray(body.apiKeys)) {
+            const keysLimpias = body.apiKeys
+                .map(k => String(k || '').trim())
+                .filter(k => k && k !== '***');
+            if (keysLimpias.length > 0) {
+                merged.apiKeys = keysLimpias;
+                merged.apiKey = keysLimpias[0];
+            }
+        }
+        if (typeof body.apiKey === 'string' && body.apiKey.trim() && body.apiKey.trim() !== '***') {
+            merged.apiKey = body.apiKey.trim();
+            if (!Array.isArray(merged.apiKeys) || merged.apiKeys.length === 0) {
+                merged.apiKeys = [merged.apiKey];
+            }
+        }
+        if (typeof body.modelo === 'string' && body.modelo.trim()) {
+            merged.modelo = body.modelo.trim();
+        }
+        if (typeof body.intervaloResumenMs === 'number' && body.intervaloResumenMs >= 60000) {
+            merged.intervaloResumenMs = body.intervaloResumenMs;
+        }
+        if (typeof body.activo === 'boolean') {
+            merged.activo = body.activo;
+        }
+
+        const ok = geminiText.guardarConfig(merged);
+        res.json({ ok });
+    } catch (e) {
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+// 🔍 Búsqueda en Google (endpoint directo)
+app.post('/api/gemini-text/buscar', async (req, res) => {
+    try {
+        const { query, contexto } = req.body || {};
+        if (!query) return res.status(400).json({ ok: false, error: 'Falta query' });
+        const r = await geminiText.buscar(query, contexto);
+        res.json(r);
+    } catch (e) {
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+// 📝 Resumen manual (endpoint directo)
+app.post('/api/gemini-text/resumen', async (req, res) => {
+    try {
+        const buffer = (typeof geminiLive.obtenerBufferChat === 'function') ? geminiLive.obtenerBufferChat() : [];
+        const voz = (typeof geminiLive.obtenerTranscripcionVoz === 'function') ? geminiLive.obtenerTranscripcionVoz() : '';
+        const r = await geminiText.generarResumen(buffer, voz);
+        res.json({ ok: !!r, texto: r || '' });
+    } catch (e) {
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+// 🧹 Olvidar resúmenes guardados
+app.post('/api/gemini-text/olvidar-resumenes', (req, res) => {
+    try {
+        // Emitimos por socket para que el propio módulo limpie
+        io.emit('gemini-text:olvidar-resumenes');
+        res.json({ ok: true });
+    } catch (e) {
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+// 🖼️ Página de control (si quieres una página nueva)
+app.get('/gemini-text', (req, res) => {
+    res.sendFile(path.join(publicDir, 'gemini-live.html'));
+});
+
+// ================================================================
+// 🤖 RUTAS API — AI CO-HOST (RELOAD)
+// ================================================================
 app.post('/api/ai/reload', (req, res) => {
     try {
         const nuevo = loadConfig();
@@ -1766,6 +1955,29 @@ app.post('/api/ai/reload', (req, res) => {
         res.status(500).json({ ok: false, error: e.message });
     }
 });
+
+// ================================================================
+// 🔥 HELPERS DE TOGGLES DE PLATAFORMAS
+// ================================================================
+
+// ================================================================
+// 🤖 RUTAS API — AI CO-HOST (RELOAD)
+// ================================================================
+app.post('/api/ai/reload', (req, res) => {
+    try {
+        const nuevo = loadConfig();
+        config = nuevo;
+        aiKeyPool.cargarProveedores(config);
+        io.emit('ai-status', aiKeyPool.estadoProveedores());
+        res.json({ ok: true });
+    } catch (e) {
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+// ================================================================
+// 🔥 HELPERS DE TOGGLES DE PLATAFORMAS
+// ================================================================
 
 // ================================================================
 // 🔥 HELPERS DE TOGGLES DE PLATAFORMAS
@@ -2189,6 +2401,7 @@ const tiktokChat = new TikTokChat({
             text: `${msg.username} dice: ${msg.message}`,
             type: 'chat', platform: 'tiktok', user: msg.username
         });
+		if (geminiLive.procesarComandoChat(msg.username, msg.message, 'tiktok', msg.channel)) return;
         procesarCoHost(msg.username, msg.message, 'tiktok', msg.channel);
     },
     onLike: (data) => { io.emit('tiktok-like', data); },
@@ -2353,6 +2566,7 @@ const youtubeChat = new YouTubeChat({
             text: `${msg.username} dice: ${msg.message}`,
             type: 'chat', platform: 'youtube', user: msg.username
         });
+		if (geminiLive.procesarComandoChat(msg.username, msg.message, 'youtube', msg.channel)) return;
         procesarCoHost(msg.username, msg.message, 'youtube', msg.channel);
     },
     onGift: (data) => {
@@ -3055,7 +3269,7 @@ async function connectTwitchChannel(channelName, account) {
                 platform: 'twitch',
                 user: username
             });
-
+           if (geminiLive.procesarComandoChat(username, message, 'twitch', canal)) return;
             procesarCoHost(username, message, 'twitch', canal);
         });
 
@@ -3311,7 +3525,7 @@ async function connectKick() {
                         platform: 'kick',
                         user: kickUsername
                     });
-
+                  if (geminiLive.procesarComandoChat(kickUsername, payload.content, 'kick', kickUser)) return;
                     procesarCoHost(kickUsername, payload.content, 'kick', kickUser);
                 }
             }

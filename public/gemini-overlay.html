@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gemini Overlay — OBS</title>
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+        width: 100%;
+        height: 100%;
+        background: transparent !important;
+        overflow: hidden;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    #overlay {
+        position: fixed;
+        bottom: 40px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 90%;
+        max-width: 900px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        align-items: center;
+        pointer-events: none;
+    }
+
+    .linea {
+        background: rgba(15, 13, 23, 0.78);
+        border: 1px solid rgba(169, 112, 255, 0.35);
+        border-radius: 10px;
+        padding: 10px 18px;
+        font-size: 22px;
+        font-weight: 600;
+        color: #ffffff;
+        text-align: center;
+        line-height: 1.35;
+        letter-spacing: -0.01em;
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
+        backdrop-filter: blur(6px);
+        max-width: 100%;
+        opacity: 0;
+        transition: opacity 0.35s ease;
+        word-wrap: break-word;
+    }
+
+    .linea.visible { opacity: 1; }
+
+    .linea.user {
+        font-size: 18px;
+        color: #c8b8ff;
+        border-color: rgba(169, 112, 255, 0.35);
+    }
+
+    .linea.model {
+        color: #ffffff;
+        border-color: rgba(78, 222, 128, 0.35);
+    }
+
+    .linea.model::before {
+        content: "🤖 ";
+        font-size: 0.9em;
+        opacity: 0.7;
+    }
+</style>
+</head>
+<body>
+
+<div id="overlay">
+    <div class="linea user" id="lineaUser"></div>
+    <div class="linea model" id="lineaModel"></div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+(function () {
+    'use strict';
+
+    const SERVER = window.location.origin;
+    const socket = io(SERVER, { transports: ['websocket', 'polling'] });
+
+    const VISIBLE_MS = 6000; // cuánto dura el texto en pantalla tras el último cambio
+
+    const elUser = document.getElementById('lineaUser');
+    const elModel = document.getElementById('lineaModel');
+
+    let timerUser = null;
+    let timerModel = null;
+
+    let textoUserActual = '';
+    let textoModelActual = '';
+
+    function mostrar(el, texto, timerRef) {
+        if (!texto || !texto.trim()) return;
+        el.textContent = texto.trim();
+        el.classList.add('visible');
+    }
+
+    function programarOcultar(el, timerVar) {
+        return setTimeout(() => {
+            el.classList.remove('visible');
+        }, VISIBLE_MS);
+    }
+
+    socket.on('connect', () => {
+        console.log('[gemini-overlay] conectado');
+    });
+
+    socket.on('gemini-live:transcripcion', (payload) => {
+        if (!payload || !payload.texto) return;
+
+        if (payload.rol === 'user') {
+            textoUserActual = payload.texto;
+            mostrar(elUser, textoUserActual);
+            if (timerUser) clearTimeout(timerUser);
+            timerUser = programarOcultar(elUser);
+        } else if (payload.rol === 'model') {
+            textoModelActual = payload.texto;
+            mostrar(elModel, textoModelActual);
+            if (timerModel) clearTimeout(timerModel);
+            timerModel = programarOcultar(elModel);
+        } else if (payload.rol === 'turno' && payload.final) {
+            // fin de turno: dejar el texto visible 6s y limpiar
+            setTimeout(() => {
+                if (timerUser) clearTimeout(timerUser);
+                if (timerModel) clearTimeout(timerModel);
+                timerUser = programarOcultar(elUser);
+                timerModel = programarOcultar(elModel);
+            }, 100);
+        }
+    });
+
+    // Al iniciar sesión, limpiar todo
+    socket.on('gemini-live:ready', () => {
+        elUser.textContent = '';
+        elModel.textContent = '';
+        elUser.classList.remove('visible');
+        elModel.classList.remove('visible');
+    });
+
+    socket.on('gemini-live:status', (payload) => {
+        if (!payload) return;
+        if (!payload.activo) {
+            elUser.classList.remove('visible');
+            elModel.classList.remove('visible');
+        }
+    });
+
+    console.log('[gemini-overlay] cargado');
+})();
+</script>
+</body>
+</html>
