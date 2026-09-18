@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Configuración del Sistema</title>
+    <title>Configuración · Toki</title>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
     <link rel="preconnect" href="https://api.fontshare.com">
     <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600,700,900&display=swap" rel="stylesheet">
@@ -19,868 +19,969 @@
 </head>
 <body>
 
-    <div class="layout">
+<div class="layout">
 
-<!-- ============================= -->
-        <!-- SIDEBAR                       -->
-        <!-- ============================= -->
-        <aside class="sidebar" id="sidebar">
-            <div class="sidebar-logo">
-                <div class="logo-icon"><i class="ri-settings-3-line"></i></div>
-                <span>Configuración</span>
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- SIDEBAR                                          -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-logo">
+            <div class="logo-icon">
+                <img src="/img/toki.png" alt="Toki">
             </div>
-
-            <div class="sidebar-section-title">Secciones</div>
-
-            <button class="sidebar-item" data-target="section-general">
-                <i class="ri-equalizer-line"></i>
-                <span>General</span>
-            </button>
-            <button class="sidebar-item" data-target="section-twitch">
-                <i class="ri-twitch-fill"></i>
-                <span>Twitch</span>
-                <span class="count" id="countTwitch">0</span>
-            </button>
-            <button class="sidebar-item" data-target="section-tiktok">
-                <i class="ri-tiktok-fill"></i>
-                <span>TikTok</span>
-                <span class="count" id="countTikTok">0</span>
-            </button>
-            <button class="sidebar-item" data-target="section-kick">
-                <i class="ri-live-fill"></i>
-                <span>Kick</span>
-                <span class="count" id="countKick">0</span>
-            </button>
-            <button class="sidebar-item" data-target="section-youtube">
-                <i class="ri-youtube-fill"></i>
-                <span>YouTube</span>
-                <span class="count" id="countYouTube">0</span>
-            </button>
-            <button class="sidebar-item" data-target="section-tts">
-                <i class="ri-volume-up-line"></i>
-                <span>Texto a Voz</span>
-            </button>
-            <button class="sidebar-item" data-target="section-overlay">
-                <i class="ri-goblet-line"></i>
-                <span>Overlay</span>
-            </button>
-            <button class="sidebar-item" data-target="section-ai">
-                <i class="ri-robot-2-line"></i>
-                <span>AI Co-Host</span>
-                <span class="check" id="checkAI" style="display:none;"><i class="ri-checkbox-circle-fill"></i></span>
-            </button>
-
-            <div class="sidebar-bottom">
-                <a href="/" class="sidebar-item">
-                    <i class="ri-dashboard-line"></i>
-                    <span>Panel</span>
-                </a>
-                <a href="/overlays" class="sidebar-item">
-                    <i class="ri-layout-grid-line"></i>
-                    <span>Overlays</span>
-                </a>
-                <a href="/moderation" class="sidebar-item">
-                    <i class="ri-shield-check-line"></i>
-                    <span>Moderación</span>
-                </a>
+            <div class="logo-text">
+                <span class="logo-name">Toki</span>
+                <span class="logo-sub">Configuración</span>
             </div>
-        </aside>
+        </div>
 
-        <main class="main-content">
+        <div class="sidebar-section-title">Plataformas</div>
 
-            <div class="card">
+        <button class="sidebar-item" data-target="section-general">
+            <i class="ri-equalizer-line"></i>
+            <span>General</span>
+        </button>
+        <button class="sidebar-item" data-target="section-twitch">
+            <i class="ri-twitch-fill" style="color:#a78bfa"></i>
+            <span>Twitch</span>
+            <span class="count" id="countTwitch">0</span>
+        </button>
+        <button class="sidebar-item" data-target="section-tiktok">
+            <i class="ri-tiktok-fill" style="color:#ff0080"></i>
+            <span>TikTok</span>
+            <span class="count" id="countTikTok">0</span>
+        </button>
+        <button class="sidebar-item" data-target="section-kick">
+            <i class="ri-live-fill" style="color:#53fc18"></i>
+            <span>Kick</span>
+            <span class="count" id="countKick">0</span>
+        </button>
+        <button class="sidebar-item" data-target="section-youtube">
+            <i class="ri-youtube-fill" style="color:#ff3b3b"></i>
+            <span>YouTube</span>
+            <span class="count" id="countYouTube">0</span>
+        </button>
 
-                <!-- ============================= -->
-                <!-- PÁGINA PRINCIPAL DE CONFIG    -->
-                <!-- ============================= -->
-                <div id="mainConfig">
+        <div class="sidebar-section-title" style="margin-top:16px;">Extras</div>
 
-                    <h2>Configuración</h2>
-                    <p class="subtitle">Completa los apartados que necesites. Nada es obligatorio excepto lo que uses.</p>
+        <button class="sidebar-item" data-target="section-tts">
+            <i class="ri-volume-up-line" style="color:#00d9ff"></i>
+            <span>Texto a Voz</span>
+        </button>
+        <button class="sidebar-item" data-target="section-overlay">
+            <i class="ri-goblet-line" style="color:#b8ff00"></i>
+            <span>Overlay</span>
+        </button>
+        <button class="sidebar-item" data-target="section-ai">
+            <i class="ri-robot-2-line" style="color:#ff0080"></i>
+            <span>AI Co-Host</span>
+            <span class="check" id="checkAI" style="display:none;"><i class="ri-checkbox-circle-fill"></i></span>
+        </button>
 
+        <div class="sidebar-bottom">
+            <a href="/" class="sidebar-item">
+                <i class="ri-dashboard-line"></i>
+                <span>Panel</span>
+            </a>
+            <a href="/overlays" class="sidebar-item">
+                <i class="ri-layout-grid-line"></i>
+                <span>Overlays</span>
+            </a>
+            <a href="/moderation" class="sidebar-item">
+                <i class="ri-shield-check-line"></i>
+                <span>Moderación</span>
+            </a>
+        </div>
+    </aside>
+
+    <main class="main-content">
+
+        <div class="card">
+
+            <!-- ═══════════════════════════════════════ -->
+            <!-- PÁGINA PRINCIPAL DE CONFIG               -->
+            <!-- ═══════════════════════════════════════ -->
+            <div id="mainConfig">
+
+                <header class="page-head">
+                    <div class="page-head-left">
+                        <h2>Configuración</h2>
+                        <p class="subtitle">Conecta tus plataformas. Todo es opcional — solo lo que uses.</p>
+                    </div>
                     <div id="unsavedBadge" class="unsaved-badge">Cambios sin guardar</div>
+                </header>
 
-                    <section id="section-general" class="platform-section">
-                        <div class="token-info">
-                            <h4><i class="ri-key-2-line"></i> Varias cuentas de Twitch</h4>
-                            <p>Puedes registrar más de una cuenta de Twitch, cada una con sus tokens, su bot y sus canales. Útil cuando:</p>
+                <!-- ═══ GENERAL ═══ -->
+                <section id="section-general" class="platform-section">
+                    <div class="section-head">
+                        <div class="section-head-icon" style="--sh-color:#b8ff00">
+                            <i class="ri-equalizer-line"></i>
+                        </div>
+                        <div class="section-head-text">
+                            <h3>General</h3>
+                            <p>Enciende solo las plataformas que uses. Las apagadas no dan errores en la terminal.</p>
+                        </div>
+                    </div>
+
+                    <div class="platform-toggles">
+                        <div class="platform-toggles-title">
+                            <i class="ri-toggle-line"></i> Plataformas activas
+                        </div>
+                        <p class="platform-toggles-hint">
+                            Si una está apagada, el servidor ni siquiera intentará conectarse.
+                        </p>
+                        <div class="toggle-grid">
+                            <label class="toggle-item">
+                                <input type="checkbox" id="platformTwitch" onchange="onPlatformToggle()">
+                                <span class="toggle-label"><i class="ri-twitch-fill" style="color:#a78bfa"></i> Twitch</span>
+                            </label>
+                            <label class="toggle-item">
+                                <input type="checkbox" id="platformTikTok" onchange="onPlatformToggle()">
+                                <span class="toggle-label"><i class="ri-tiktok-fill" style="color:#ff0080"></i> TikTok</span>
+                            </label>
+                            <label class="toggle-item">
+                                <input type="checkbox" id="platformKick" onchange="onPlatformToggle()">
+                                <span class="toggle-label"><i class="ri-live-fill" style="color:#53fc18"></i> Kick</span>
+                            </label>
+                            <label class="toggle-item">
+                                <input type="checkbox" id="platformYouTube" onchange="onPlatformToggle()">
+                                <span class="toggle-label"><i class="ri-youtube-fill" style="color:#ff3b3b"></i> YouTube</span>
+                            </label>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ═══ TWITCH ═══ -->
+                <div id="section-twitch" class="platform-section">
+                    <div class="section-head">
+                        <div class="section-head-icon" style="--sh-color:#a78bfa">
+                            <i class="ri-twitch-fill"></i>
+                        </div>
+                        <div class="section-head-text">
+                            <h3>Twitch</h3>
+                            <p>Registra una o varias cuentas. Cada una con sus tokens y sus canales.</p>
+                        </div>
+                    </div>
+
+                    <details class="info-collapse">
+                        <summary>
+                            <i class="ri-information-line"></i>
+                            <span>¿Por qué varias cuentas de Twitch?</span>
+                            <i class="ri-arrow-down-s-line chev"></i>
+                        </summary>
+                        <div class="info-collapse-body">
+                            <p>Útil cuando:</p>
                             <ul>
                                 <li>Moderas canales donde no eres editor (el dueño te pasa su token).</li>
                                 <li>Quieres tener varias identidades de bot.</li>
                                 <li>Necesitas cambiar título o categoría en canales con permisos distintos.</li>
                             </ul>
-                            <span class="highlight">Si solo usas una cuenta, deja la primera y ya está.</span>
+                            <p class="highlight">Si solo usas una cuenta, deja la primera y ya está.</p>
+                        </div>
+                    </details>
+
+                    <div id="twitchAccountsContainer"></div>
+
+                    <button class="add-item-btn" type="button" onclick="addTwitchAccount()">
+                        <i class="ri-add-line"></i> Añadir otra cuenta de Twitch
+                    </button>
+                </div>
+
+                <!-- ═══ TIKTOK ═══ -->
+                <div id="section-tiktok" class="platform-section">
+                    <div class="section-head">
+                        <div class="section-head-icon" style="--sh-color:#ff0080">
+                            <i class="ri-tiktok-fill"></i>
+                        </div>
+                        <div class="section-head-text">
+                            <h3>TikTok</h3>
+                            <p>Sin @, solo el nombre. Necesitas estar en vivo para que aparezcan mensajes.</p>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="label-row">
+                            <label>TikTok Users:</label>
+                            <span class="label-hint">0 o más</span>
+                        </div>
+                        <div id="tiktokUsersList" class="multi-list"></div>
+                        <button class="add-item-btn" type="button" onclick="addTikTokUser()">
+                            <i class="ri-add-line"></i> Añadir otro usuario de TikTok
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ═══ KICK ═══ -->
+                <div id="section-kick" class="platform-section">
+                    <div class="section-head">
+                        <div class="section-head-icon" style="--sh-color:#53fc18">
+                            <i class="ri-live-fill"></i>
+                        </div>
+                        <div class="section-head-text">
+                            <h3>Kick</h3>
+                            <p>Solo el nombre de usuario. Sin tokens ni APIs.</p>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="label-row">
+                            <label>Kick Users:</label>
+                            <span class="label-hint">0 o más</span>
+                        </div>
+                        <div id="kickUsersList" class="multi-list"></div>
+                        <button class="add-item-btn" type="button" onclick="addKickUser()">
+                            <i class="ri-add-line"></i> Añadir otro usuario de Kick
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ═══ YOUTUBE ═══ -->
+                <div id="section-youtube" class="platform-section">
+                    <div class="section-head">
+                        <div class="section-head-icon" style="--sh-color:#ff3b3b">
+                            <i class="ri-youtube-fill"></i>
+                        </div>
+                        <div class="section-head-text">
+                            <h3>YouTube</h3>
+                            <p>Acepta <code>@handle</code>, URL completa del canal o ID <code>UC...</code>.</p>
+                        </div>
+                        <button class="btn-help" type="button" onclick="toggleModal('modalYouTube')">
+                            <i class="ri-question-line"></i> ¿Cómo obtenerlo?
+                        </button>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="label-row">
+                            <label>YouTube Canales:</label>
+                            <span class="label-hint">0 o más</span>
+                        </div>
+                        <div id="youtubeUsersList" class="multi-list"></div>
+                        <button class="add-item-btn" type="button" onclick="addYouTubeUser()">
+                            <i class="ri-add-line"></i> Añadir otro canal de YouTube
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ═══ TTS ═══ -->
+                <section id="section-tts" class="platform-section">
+                    <div class="section-head">
+                        <div class="section-head-icon" style="--sh-color:#00d9ff">
+                            <i class="ri-volume-up-line"></i>
+                        </div>
+                        <div class="section-head-text">
+                            <h3>Texto a Voz</h3>
+                            <p>Lee los mensajes del chat en voz alta. Elige voz, velocidad, tono y volumen.</p>
+                        </div>
+                    </div>
+
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="ttsEnabled" onchange="onFieldChange()">
+                        <label for="ttsEnabled"><b>Activar TTS</b> — lee los mensajes en voz alta</label>
+                    </div>
+
+                    <div class="tts-panel">
+                        <div class="input-group" style="margin-bottom: 16px;">
+                            <div class="label-row">
+                                <label>Voz:</label>
+                                <span class="label-hint">Español + inglés</span>
+                            </div>
+                            <select id="ttsVoice" onchange="onFieldChange()">
+                                <option value="es-ES-AlvaroNeural">Álvaro — Español (España) ♂</option>
+                                <option value="es-ES-ElviraNeural">Elvira — Español (España) ♀</option>
+                                <option value="es-MX-DaliaNeural">Dalia — Español (México) ♀</option>
+                                <option value="es-MX-JorgeNeural">Jorge — Español (México) ♂</option>
+                                <option value="es-AR-ElenaNeural">Elena — Español (Argentina) ♀</option>
+                                <option value="es-AR-TomasNeural">Tomás — Español (Argentina) ♂</option>
+                                <option value="es-CO-SalomeNeural">Salomé — Español (Colombia) ♀</option>
+                                <option value="es-CO-GonzaloNeural">Gonzalo — Español (Colombia) ♂</option>
+                                <option value="es-PE-CamilaNeural">Camila — Español (Perú) ♀</option>
+                                <option value="es-CL-CatalinaNeural">Catalina — Español (Chile) ♀</option>
+                                <option value="es-VE-PaolaNeural">Paola — Español (Venezuela) ♀</option>
+                                <option value="en-US-AriaNeural">Aria — English (US) ♀</option>
+                                <option value="en-US-GuyNeural">Guy — English (US) ♂</option>
+                            </select>
                         </div>
 
-                        <div class="guide-banner">
+                        <div class="input-group" style="margin-bottom: 14px;">
+                            <div class="label-row">
+                                <label>Velocidad:</label>
+                                <span class="tts-slider-val" id="ttsRateVal">+0%</span>
+                            </div>
+                            <input type="range" id="ttsRate" min="-50" max="50" value="0"
+                                oninput="document.getElementById('ttsRateVal').textContent=(this.value>0?'+':'')+this.value+'%'; onFieldChange();">
+                        </div>
+
+                        <div class="input-group" style="margin-bottom: 14px;">
+                            <div class="label-row">
+                                <label>Tono:</label>
+                                <span class="tts-slider-val" id="ttsPitchVal">+0Hz</span>
+                            </div>
+                            <input type="range" id="ttsPitch" min="-50" max="50" value="0"
+                                oninput="document.getElementById('ttsPitchVal').textContent=(this.value>0?'+':'')+this.value+'Hz'; onFieldChange();">
+                        </div>
+
+                        <div class="input-group" style="margin-bottom: 4px;">
+                            <div class="label-row">
+                                <label>Volumen:</label>
+                                <span class="tts-slider-val" id="ttsVolumeVal">80%</span>
+                            </div>
+                            <input type="range" id="ttsVolume" min="0" max="100" value="80"
+                                oninput="document.getElementById('ttsVolumeVal').textContent=this.value+'%'; onFieldChange();">
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="label-row">
+                            <label>Leer de estas plataformas:</label>
+                        </div>
+                        <div class="toggle-grid">
+                            <label class="toggle-item">
+                                <input type="checkbox" id="ttsFromTwitch" onchange="onFieldChange()">
+                                <span class="toggle-label"><i class="ri-twitch-fill" style="color:#a78bfa"></i> Twitch</span>
+                            </label>
+                            <label class="toggle-item">
+                                <input type="checkbox" id="ttsFromTikTok" onchange="onFieldChange()">
+                                <span class="toggle-label"><i class="ri-tiktok-fill" style="color:#ff0080"></i> TikTok</span>
+                            </label>
+                            <label class="toggle-item">
+                                <input type="checkbox" id="ttsFromKick" onchange="onFieldChange()">
+                                <span class="toggle-label"><i class="ri-live-fill" style="color:#53fc18"></i> Kick</span>
+                            </label>
+                            <label class="toggle-item">
+                                <input type="checkbox" id="ttsFromYouTube" onchange="onFieldChange()">
+                                <span class="toggle-label"><i class="ri-youtube-fill" style="color:#ff3b3b"></i> YouTube</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="label-row">
+                            <label>Leer estos eventos:</label>
+                        </div>
+                        <div class="toggle-grid">
+                            <label class="toggle-item">
+                                <input type="checkbox" id="ttsEventChat" onchange="onFieldChange()">
+                                <span class="toggle-label">Chat</span>
+                            </label>
+                            <label class="toggle-item">
+                                <input type="checkbox" id="ttsEventGifts" onchange="onFieldChange()">
+                                <span class="toggle-label">Regalos</span>
+                            </label>
+                            <label class="toggle-item">
+                                <input type="checkbox" id="ttsEventFollows" onchange="onFieldChange()">
+                                <span class="toggle-label">Follows</span>
+                            </label>
+                            <label class="toggle-item">
+                                <input type="checkbox" id="ttsEventSubs" onchange="onFieldChange()">
+                                <span class="toggle-label">Subs</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <button class="secondary-btn" id="btnProbarTTS" onclick="probarVozTTS(this)">
+                        <i class="ri-volume-up-line"></i> Probar voz (solo en este navegador)
+                    </button>
+                </section>
+
+                <!-- ═══ OVERLAY CRISTAL ═══ -->
+                <section id="section-overlay" class="platform-section">
+                    <div class="section-head">
+                        <div class="section-head-icon" style="--sh-color:#b8ff00">
+                            <i class="ri-goblet-line"></i>
+                        </div>
+                        <div class="section-head-text">
+                            <h3>Overlay de Cristal</h3>
+                            <p>Cómo se ve tu meta de donaciones en pantalla. Se aplica al recargar el overlay.</p>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="label-row">
+                            <label>Estilo del contenedor:</label>
+                            <span class="label-hint">2 estilos disponibles</span>
+                        </div>
+                        <select id="crystalStyle" onchange="onFieldChange()">
+                            <option value="jar">Frasco — avatares que caen y se apilan</option>
+                            <option value="bar">Barra — se llena de izquierda a derecha</option>
+                        </select>
+                        <div class="field-help">
                             <i class="ri-information-line"></i>
-                            <div>
-                                <h3>Cada plataforma es independiente</h3>
-                                <p>Puedes configurar solo Twitch, solo TikTok, solo Kick o solo YouTube. <b>No hace falta llenar todo.</b></p>
-                            </div>
+                            Más estilos se irán sumando (Marcador, Jardín). Por ahora Frasco y Barra.
                         </div>
+                    </div>
 
-                        <div class="platform-toggles">
-                            <div class="platform-toggles-title">
-                                <i class="ri-toggle-line"></i> Plataformas activas
+                    <div class="input-group">
+                        <div class="label-row">
+                            <label>Meta de diamantes:</label>
+                            <span class="label-hint">Número entero</span>
+                        </div>
+                        <input type="number" id="crystalMeta" min="1" step="1" placeholder="500" oninput="onFieldChange()" autocomplete="off">
+                        <div class="field-help">
+                            <i class="ri-information-line"></i>
+                            Cuando el total llegue a este número, la barra se llena y el cristal se pone dorado.
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ═══ AI CO-HOST ═══ -->
+                <section id="section-ai" class="platform-section">
+                    <div class="section-head">
+                        <div class="section-head-icon" style="--sh-color:#ff0080">
+                            <i class="ri-robot-2-line"></i>
+                        </div>
+                        <div class="section-head-text">
+                            <h3>AI Co-Host</h3>
+                            <p>Un asistente que responde en el chat cuando lo mencionan. Usa tus propias API keys.</p>
+                        </div>
+                    </div>
+
+                    <div class="ai-entry-card">
+                        <div class="ai-entry-info">
+                            <div class="ai-entry-title">
+                                <i class="ri-robot-2-line"></i> Asistente de chat con IA
                             </div>
-                            <p class="platform-toggles-hint">
-                                Desactiva las que no uses. Si están apagadas, el servidor no intentará conectarse
-                                y no verás errores en la terminal.
+                            <p class="ai-entry-desc">
+                                Opcional — si no lo usas, no pasa nada. Cuando lo actives,
+                                configura el nombre, personalidad y proveedores.
                             </p>
-                            <div class="toggle-grid">
-                                <label class="toggle-item">
-                                    <input type="checkbox" id="platformTwitch" onchange="onPlatformToggle()">
-                                    <span class="toggle-label"><i class="ri-twitch-fill" style="color:#a78bfa"></i> Twitch</span>
-                                </label>
-                                <label class="toggle-item">
-                                    <input type="checkbox" id="platformTikTok" onchange="onPlatformToggle()">
-                                    <span class="toggle-label"><i class="ri-tiktok-fill" style="color:#fe2c55"></i> TikTok</span>
-                                </label>
-                                <label class="toggle-item">
-                                    <input type="checkbox" id="platformKick" onchange="onPlatformToggle()">
-                                    <span class="toggle-label"><i class="ri-live-fill" style="color:#53fc18"></i> Kick</span>
-                                </label>
-                                <label class="toggle-item">
-                                    <input type="checkbox" id="platformYouTube" onchange="onPlatformToggle()">
-                                    <span class="toggle-label"><i class="ri-youtube-fill" style="color:#ff0000"></i> YouTube</span>
-                                </label>
-                            </div>
                         </div>
-                    </section>
-
-                    <div id="section-twitch" class="platform-section">
-                        <div class="section-divider"><span>Cuentas de Twitch</span></div>
-
-                        <div id="twitchAccountsContainer"></div>
-
-                        <button class="add-item-btn" type="button" onclick="addTwitchAccount()" style="margin-bottom: 22px;">
-                            <i class="ri-add-line"></i> Añadir otra cuenta de Twitch
+                        <button class="ai-entry-btn" type="button" onclick="abrirAsistente()">
+                            <i class="ri-arrow-right-line"></i> Abrir asistente
                         </button>
                     </div>
+                </section>
 
-                    <div id="section-tiktok" class="platform-section">
-                        <div class="section-divider"><span>TikTok (opcional)</span></div>
-
-                        <div class="input-group">
-                            <div class="label-row">
-                                <label>TikTok Users:</label>
-                                <span style="font-size: 12px; color: #6f6c80;">0 o más</span>
-                            </div>
-                            <div id="tiktokUsersList" class="multi-list"></div>
-                            <button class="add-item-btn" type="button" onclick="addTikTokUser()"><i class="ri-add-line"></i> Añadir otro usuario de TikTok</button>
-                            <div class="field-help" id="tiktokUsersHelp"><i class="ri-information-line"></i> Sin @, solo el nombre. Necesitas estar en vivo para que aparezcan mensajes.</div>
+                <!-- ═══ EXTRAS ═══ -->
+                <section class="platform-section">
+                    <div class="section-head">
+                        <div class="section-head-icon" style="--sh-color:#00d9ff">
+                            <i class="ri-shield-star-line"></i>
+                        </div>
+                        <div class="section-head-text">
+                            <h3>Extras</h3>
+                            <p>Ajustes adicionales de comportamiento.</p>
                         </div>
                     </div>
-
-                    <div id="section-kick" class="platform-section">
-                        <div class="section-divider"><span>Kick (opcional)</span></div>
-
-                        <div class="input-group">
-                            <div class="label-row">
-                                <label>Kick Users:</label>
-                                <span style="font-size: 12px; color: #6f6c80;">0 o más</span>
-                            </div>
-                            <div id="kickUsersList" class="multi-list"></div>
-                            <button class="add-item-btn" type="button" onclick="addKickUser()"><i class="ri-add-line"></i> Añadir otro usuario de Kick</button>
-                            <div class="hint-kick">
-                                <i class="ri-information-line"></i>
-                                <span>Solo necesitas el nombre de usuario de Kick. <b>Sin tokens ni APIs.</b></span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="section-youtube" class="platform-section">
-                        <div class="section-divider"><span>YouTube (opcional)</span></div>
-
-                        <div class="input-group">
-                            <div class="label-row">
-                                <label>YouTube Canales:</label>
-                                <button class="btn-help" type="button" onclick="toggleModal('modalYouTube')"><i class="ri-question-line"></i> ¿Cómo obtenerlo?</button>
-                            </div>
-                            <div id="youtubeUsersList" class="multi-list"></div>
-                            <button class="add-item-btn" type="button" onclick="addYouTubeUser()"><i class="ri-add-line"></i> Añadir otro canal de YouTube</button>
-                            <div class="hint-youtube">
-                                <i class="ri-information-line"></i>
-                                <span>Acepta <code>@handle</code>, URL completa del canal o ID <code>UC...</code>. <b>Sin API Key ni OAuth.</b></span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <section id="section-tts" class="platform-section">
-                        <div class="section-divider"><span>Texto a Voz</span></div>
-
-                        <div class="checkbox-container">
-                            <input type="checkbox" id="ttsEnabled" onchange="onFieldChange()">
-                            <label for="ttsEnabled"><b>Activar TTS</b> — lee los mensajes en voz alta</label>
-                        </div>
-
-                        <div class="tts-panel">
-                            <div class="input-group" style="margin-bottom: 16px;">
-                                <div class="label-row">
-                                    <label>Voz:</label>
-                                    <span style="font-size: 12px; color: #6f6c80;">Español + inglés</span>
-                                </div>
-                                <select id="ttsVoice" onchange="onFieldChange()">
-                                    <option value="es-ES-AlvaroNeural">Álvaro — Español (España) ♂</option>
-                                    <option value="es-ES-ElviraNeural">Elvira — Español (España) ♀</option>
-                                    <option value="es-MX-DaliaNeural">Dalia — Español (México) ♀</option>
-                                    <option value="es-MX-JorgeNeural">Jorge — Español (México) ♂</option>
-                                    <option value="es-AR-ElenaNeural">Elena — Español (Argentina) ♀</option>
-                                    <option value="es-AR-TomasNeural">Tomás — Español (Argentina) ♂</option>
-                                    <option value="es-CO-SalomeNeural">Salomé — Español (Colombia) ♀</option>
-                                    <option value="es-CO-GonzaloNeural">Gonzalo — Español (Colombia) ♂</option>
-                                    <option value="es-PE-CamilaNeural">Camila — Español (Perú) ♀</option>
-                                    <option value="es-CL-CatalinaNeural">Catalina — Español (Chile) ♀</option>
-                                    <option value="es-VE-PaolaNeural">Paola — Español (Venezuela) ♀</option>
-                                    <option value="en-US-AriaNeural">Aria — English (US) ♀</option>
-                                    <option value="en-US-GuyNeural">Guy — English (US) ♂</option>
-                                </select>
-                            </div>
-
-                            <div class="input-group" style="margin-bottom: 14px;">
-                                <div class="label-row">
-                                    <label>Velocidad:</label>
-                                    <span class="tts-slider-val" id="ttsRateVal">+0%</span>
-                                </div>
-                                <input type="range" id="ttsRate" min="-50" max="50" value="0"
-                                    oninput="document.getElementById('ttsRateVal').textContent=(this.value>0?'+':'')+this.value+'%'; onFieldChange();">
-                            </div>
-
-                            <div class="input-group" style="margin-bottom: 14px;">
-                                <div class="label-row">
-                                    <label>Tono:</label>
-                                    <span class="tts-slider-val" id="ttsPitchVal">+0Hz</span>
-                                </div>
-                                <input type="range" id="ttsPitch" min="-50" max="50" value="0"
-                                    oninput="document.getElementById('ttsPitchVal').textContent=(this.value>0?'+':'')+this.value+'Hz'; onFieldChange();">
-                            </div>
-
-                            <div class="input-group" style="margin-bottom: 4px;">
-                                <div class="label-row">
-                                    <label>Volumen:</label>
-                                    <span class="tts-slider-val" id="ttsVolumeVal">80%</span>
-                                </div>
-                                <input type="range" id="ttsVolume" min="0" max="100" value="80"
-                                    oninput="document.getElementById('ttsVolumeVal').textContent=this.value+'%'; onFieldChange();">
-                            </div>
-                        </div>
-
-                        <div class="input-group">
-                            <div class="label-row">
-                                <label>Leer de estas plataformas:</label>
-                            </div>
-                            <div class="toggle-grid">
-                                <label class="toggle-item">
-                                    <input type="checkbox" id="ttsFromTwitch" onchange="onFieldChange()">
-                                    <span class="toggle-label"><i class="ri-twitch-fill" style="color:#a78bfa"></i> Twitch</span>
-                                </label>
-                                <label class="toggle-item">
-                                    <input type="checkbox" id="ttsFromTikTok" onchange="onFieldChange()">
-                                    <span class="toggle-label"><i class="ri-tiktok-fill" style="color:#fe2c55"></i> TikTok</span>
-                                </label>
-                                <label class="toggle-item">
-                                    <input type="checkbox" id="ttsFromKick" onchange="onFieldChange()">
-                                    <span class="toggle-label"><i class="ri-live-fill" style="color:#53fc18"></i> Kick</span>
-                                </label>
-                                <label class="toggle-item">
-                                    <input type="checkbox" id="ttsFromYouTube" onchange="onFieldChange()">
-                                    <span class="toggle-label"><i class="ri-youtube-fill" style="color:#ff0000"></i> YouTube</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <div class="input-group">
-                            <div class="label-row">
-                                <label>Leer estos eventos:</label>
-                            </div>
-                            <div class="toggle-grid">
-                                <label class="toggle-item">
-                                    <input type="checkbox" id="ttsEventChat" onchange="onFieldChange()">
-                                    <span class="toggle-label">Chat</span>
-                                </label>
-                                <label class="toggle-item">
-                                    <input type="checkbox" id="ttsEventGifts" onchange="onFieldChange()">
-                                    <span class="toggle-label">Regalos</span>
-                                </label>
-                                <label class="toggle-item">
-                                    <input type="checkbox" id="ttsEventFollows" onchange="onFieldChange()">
-                                    <span class="toggle-label">Follows</span>
-                                </label>
-                                <label class="toggle-item">
-                                    <input type="checkbox" id="ttsEventSubs" onchange="onFieldChange()">
-                                    <span class="toggle-label">Subs</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <button class="secondary-btn" id="btnProbarTTS" onclick="probarVozTTS(this)" style="margin-bottom: 22px;">
-                            <i class="ri-volume-up-line"></i> Probar voz (solo en este navegador)
-                        </button>
-                    </section>
-
-                    <section id="section-overlay" class="platform-section">
-                        <div class="section-divider"><span>Overlay de Cristal</span></div>
-
-                        <div class="guide-banner">
-                            <i class="ri-information-line"></i>
-                            <div>
-                                <h3>Cómo se ve tu meta de donaciones</h3>
-                                <p>Elige el estilo visual del contenedor. Podés cambiarlo cuando quieras — se aplica al recargar el overlay.</p>
-                            </div>
-                        </div>
-
-<div class="input-group">
-    <div class="label-row">
-        <label>Estilo del contenedor:</label>
-        <span style="font-size: 12px; color: #6f6c80;">2 estilos disponibles</span>
-    </div>
-    <select id="crystalStyle" onchange="onFieldChange()">
-        <option value="jar">Frasco — avatares que caen y se apilan</option>
-        <option value="bar">Barra — se llena de izquierda a derecha</option>
-    </select>
-    <div class="field-help">
-        <i class="ri-information-line"></i>
-        Más estilos se irán sumando (Marcador, Jardín). Por ahora Frasco y Barra.
-    </div>
-</div>
-
-<div class="input-group">
-    <div class="label-row">
-        <label>Meta de diamantes:</label>
-        <span style="font-size: 12px; color: #6f6c80;">Número entero</span>
-    </div>
-    <input type="number" id="crystalMeta" min="1" step="1" placeholder="500" oninput="onFieldChange()" autocomplete="off">
-    <div class="field-help">
-        <i class="ri-information-line"></i>
-        Cuando el total llegue a este número, la barra se llena y el cristal se pone dorado.
-    </div>
-</div>
-                       
-                        </div>
-                    </section>
-
-                    <section id="section-ai" class="platform-section">
-                        <div class="section-divider"><span>AI Co-Host</span></div>
-
-                        <div class="ai-entry-card">
-                            <div class="ai-entry-info">
-                                <div class="ai-entry-title">
-                                    <i class="ri-robot-2-line"></i> Asistente de chat con IA
-                                </div>
-                                <p class="ai-entry-desc">
-                                    Configura un asistente que responde en el chat cuando lo mencionan.
-                                    Usa tus propias API keys (BYOK). Opcional — si no lo usas, no pasa nada.
-                                </p>
-                            </div>
-                            <button class="ai-entry-btn" type="button" onclick="abrirAsistente()">
-                                <i class="ri-arrow-right-line"></i> Abrir asistente
-                            </button>
-                        </div>
-                    </section>
 
                     <div class="checkbox-container">
                         <input type="checkbox" id="enableCensorship" onchange="onFieldChange()">
                         <label for="enableCensorship">Activar Filtro de Censura Positiva (cambia palabras feas por bonitas)</label>
                     </div>
+                </section>
 
-                    <div class="action-row">
-                        <button class="main-btn" onclick="saveConfig()">Guardar y abrir panel</button>
-                        <button class="btn-restore" onclick="restoreFromServer()" title="Restaurar datos guardados en el servidor">Restaurar</button>
-                    </div>
-
-                    <button class="secondary-btn" onclick="window.location.href = window.SERVER_BASE + '/'"><i class="ri-arrow-left-line"></i> Volver al panel sin guardar</button>
-
-                    <div class="footer">
-                        Tus datos se guardan en <code style="color:#6f6c80;">config.json</code>
-                    </div>
-                </div>
-
-                <!-- ============================= -->
-                <!-- SUB-PÁGINA DEL ASISTENTE      -->
-                <!-- ============================= -->
-                <div id="aiSubpage">
-
-                    <button class="subpage-back-btn" type="button" onclick="cerrarAsistente()">
-                        <i class="ri-arrow-left-line"></i> Volver a configuración
+                <!-- ═══ ACCIONES ═══ -->
+                <div class="action-row">
+                    <button class="main-btn" onclick="saveConfig()">
+                        <i class="ri-save-3-line"></i> Guardar y abrir panel
                     </button>
+                    <button class="btn-restore" onclick="restoreFromServer()" title="Restaurar datos guardados en el servidor">
+                        <i class="ri-history-line"></i> Restaurar
+                    </button>
+                </div>
 
-                    <h2>🤖 AI Co-Host</h2>
-                    <p class="subtitle">Configura tu asistente de chat. Todo es opcional y se guarda en tu propia PC.</p>
+                <button class="secondary-btn" onclick="window.location.href = window.SERVER_BASE + '/'">
+                    <i class="ri-arrow-left-line"></i> Volver al panel sin guardar
+                </button>
 
-                    <div class="checkbox-container">
-                        <input type="checkbox" id="aiEnabled" onchange="onFieldChange()">
-                        <label for="aiEnabled"><b>Activar AI Co-Host</b> — responde en el chat cuando lo mencionan</label>
+                <div class="footer">
+                    Tus datos se guardan en <code>config.json</code>
+                </div>
+            </div>
+
+            <!-- ═══════════════════════════════════════ -->
+            <!-- SUB-PÁGINA DEL ASISTENTE                 -->
+            <!-- ═══════════════════════════════════════ -->
+            <div id="aiSubpage">
+
+                <button class="subpage-back-btn" type="button" onclick="cerrarAsistente()">
+                    <i class="ri-arrow-left-line"></i> Volver a configuración
+                </button>
+
+                <div class="section-head" style="margin-bottom:24px;">
+                    <div class="section-head-icon" style="--sh-color:#ff0080">
+                        <i class="ri-robot-2-line"></i>
+                    </div>
+                    <div class="section-head-text">
+                        <h3>AI Co-Host</h3>
+                        <p>Configura tu asistente. Todo se guarda en tu propia PC.</p>
+                    </div>
+                </div>
+
+                <div class="checkbox-container">
+                    <input type="checkbox" id="aiEnabled" onchange="onFieldChange()">
+                    <label for="aiEnabled"><b>Activar AI Co-Host</b> — responde en el chat cuando lo mencionan</label>
+                </div>
+
+                <div class="input-group">
+                    <div class="label-row">
+                        <label>Nombre del asistente:</label>
+                        <span class="label-hint">Ej: Togi, Aura, Nova</span>
+                    </div>
+                    <input type="text" id="aiNombre" placeholder="Togi" oninput="onFieldChange()" autocomplete="off">
+                </div>
+
+                <div class="input-group">
+                    <div class="label-row">
+                        <label>Comando de invocación:</label>
+                        <span class="label-hint">Ej: !guia</span>
+                    </div>
+                    <input type="text" id="aiComando" placeholder="!guia" oninput="onFieldChange()" autocomplete="off">
+                    <div class="field-help"><i class="ri-information-line"></i> También responde si alguien escribe <code>@nombre</code>.</div>
+                </div>
+
+                <div class="input-group">
+                    <div class="label-row">
+                        <label>Personalidad:</label>
+                        <span class="label-hint">Cómo quieres que hable</span>
+                    </div>
+                    <textarea id="aiPersonalidad" placeholder="Ej: Eres graciosa, breve, usas emojis y respondes en español. Nunca rompes el personaje." oninput="onFieldChange()"></textarea>
+                    <div class="field-help"><i class="ri-information-line"></i> Sé descriptivo. Cuanto más claro, mejor se comportará.</div>
+                </div>
+
+                <div class="section-divider"><span>Proveedores de IA</span></div>
+
+                <div class="guide-banner">
+                    <i class="ri-information-line"></i>
+                    <div>
+                        <h3>Rellena solo las que tengas</h3>
+                        <p>Con una sola key ya funciona. Si rellenas varias, el sistema <b>rota automáticamente</b> entre ellas si alguna falla. <b>Todo gratis.</b></p>
+                    </div>
+                </div>
+
+                <!-- GROQ -->
+                <div class="provider-block">
+                    <div class="provider-header">
+                        <div class="provider-name">
+                            <i class="ri-flashlight-fill" style="color:#f55036"></i> Groq
+                            <span class="provider-priority">Principal</span>
+                        </div>
+                        <button class="btn-help" type="button" onclick="toggleModal('modalKeyGroq')"><i class="ri-question-line"></i> ¿Cómo la consigo?</button>
                     </div>
 
-                    <div class="input-group">
-                        <div class="label-row">
-                            <label>Nombre del asistente:</label>
-                            <span style="font-size: 12px; color: #6f6c80;">Ej: Togi, Aura, Nova</span>
-                        </div>
-                        <input type="text" id="aiNombre" placeholder="Togi" oninput="onFieldChange()" autocomplete="off">
+                    <div class="label-row">
+                        <label>API Key:</label>
+                        <span class="provider-status sin-key" id="statusGroq"><i class="ri-circle-fill" style="font-size:8px"></i> sin key</span>
+                    </div>
+                    <div class="password-wrap">
+                        <input type="password" id="aiKeyGroq" placeholder="gsk_..." oninput="onFieldChange()" autocomplete="off" spellcheck="false">
+                        <button class="toggle-eye-btn" type="button" onclick="toggleTokenVisibility(this)" title="Mostrar"><i class="ri-eye-line"></i></button>
                     </div>
 
-                    <div class="input-group">
-                        <div class="label-row">
-                            <label>Comando de invocación:</label>
-                            <span style="font-size: 12px; color: #6f6c80;">Ej: !guia</span>
-                        </div>
-                        <input type="text" id="aiComando" placeholder="!guia" oninput="onFieldChange()" autocomplete="off">
-                        <div class="field-help"><i class="ri-information-line"></i> También responde si alguien escribe <code>@nombre</code>.</div>
-                    </div>
-
-                    <div class="input-group">
-                        <div class="label-row">
-                            <label>Personalidad:</label>
-                            <span style="font-size: 12px; color: #6f6c80;">Cómo quieres que hable</span>
-                        </div>
-                        <textarea id="aiPersonalidad" placeholder="Ej: Eres graciosa, breve, usas emojis y respondes en español. Nunca rompes el personaje." oninput="onFieldChange()"></textarea>
-                        <div class="field-help"><i class="ri-information-line"></i> Sé descriptivo. Cuanto más claro, mejor se comportará.</div>
-                    </div>
-
-                    <div class="section-divider"><span>Proveedores de IA</span></div>
-
-                    <div class="guide-banner">
-                        <i class="ri-information-line"></i>
-                        <div>
-                            <h3>Rellena solo las que tengas</h3>
-                            <p>Con una sola key ya funciona. Si rellenas varias, el sistema <b>rota automáticamente</b> entre ellas si alguna falla. <b>Todo gratis.</b></p>
-                        </div>
-                    </div>
-
-                    <!-- GROQ -->
-                    <div class="provider-block">
-                        <div class="provider-header">
-                            <div class="provider-name">
-                                <i class="ri-flashlight-fill" style="color:#f55036"></i> Groq
-                                <span class="provider-priority">Principal</span>
-                            </div>
-                            <button class="btn-help" type="button" onclick="toggleModal('modalKeyGroq')"><i class="ri-question-line"></i> ¿Cómo la consigo?</button>
-                        </div>
-
-                        <div class="label-row">
-                            <label>API Key:</label>
-                            <span class="provider-status sin-key" id="statusGroq"><i class="ri-circle-fill" style="font-size:8px"></i> sin key</span>
-                        </div>
-                        <div class="password-wrap">
-                            <input type="password" id="aiKeyGroq" placeholder="gsk_..." oninput="onFieldChange()" autocomplete="off" spellcheck="false">
-                            <button class="toggle-eye-btn" type="button" onclick="toggleTokenVisibility(this)" title="Mostrar"><i class="ri-eye-line"></i></button>
-                        </div>
-
-                        <div class="provider-actions">
-                            <button class="btn-test" type="button" id="btnTestGroq" onclick="probarKey('groq', this)">
-                                <i class="ri-play-circle-line"></i> Probar
-                            </button>
-                        </div>
-                        <div class="test-result" id="testResultGroq"></div>
-                    </div>
-
-                    <!-- CEREBRAS -->
-                    <div class="provider-block">
-                        <div class="provider-header">
-                            <div class="provider-name">
-                                <i class="ri-cpu-line" style="color:#7c5cff"></i> Cerebras
-                                <span class="provider-priority">Respaldo 1</span>
-                            </div>
-                            <button class="btn-help" type="button" onclick="toggleModal('modalKeyCerebras')"><i class="ri-question-line"></i> ¿Cómo la consigo?</button>
-                        </div>
-
-                        <div class="label-row">
-                            <label>API Key:</label>
-                            <span class="provider-status sin-key" id="statusCerebras"><i class="ri-circle-fill" style="font-size:8px"></i> sin key</span>
-                        </div>
-                        <div class="password-wrap">
-                            <input type="password" id="aiKeyCerebras" placeholder="csk-..." oninput="onFieldChange()" autocomplete="off" spellcheck="false">
-                            <button class="toggle-eye-btn" type="button" onclick="toggleTokenVisibility(this)" title="Mostrar"><i class="ri-eye-line"></i></button>
-                        </div>
-
-                        <div class="provider-actions">
-                            <button class="btn-test" type="button" id="btnTestCerebras" onclick="probarKey('cerebras', this)">
-                                <i class="ri-play-circle-line"></i> Probar
-                            </button>
-                        </div>
-                        <div class="test-result" id="testResultCerebras"></div>
-                    </div>
-
-                    <!-- OPENROUTER -->
-                    <div class="provider-block">
-                        <div class="provider-header">
-                            <div class="provider-name">
-                                <i class="ri-route-line" style="color:#e8825a"></i> OpenRouter
-                                <span class="provider-priority">Respaldo 2</span>
-                            </div>
-                            <button class="btn-help" type="button" onclick="toggleModal('modalKeyOpenRouter')"><i class="ri-question-line"></i> ¿Cómo la consigo?</button>
-                        </div>
-
-                        <div class="label-row">
-                            <label>API Key:</label>
-                            <span class="provider-status sin-key" id="statusOpenRouter"><i class="ri-circle-fill" style="font-size:8px"></i> sin key</span>
-                        </div>
-                        <div class="password-wrap">
-                            <input type="password" id="aiKeyOpenRouter" placeholder="sk-or-..." oninput="onFieldChange()" autocomplete="off" spellcheck="false">
-                            <button class="toggle-eye-btn" type="button" onclick="toggleTokenVisibility(this)" title="Mostrar"><i class="ri-eye-line"></i></button>
-                        </div>
-
-                        <div class="provider-actions">
-                            <button class="btn-test" type="button" id="btnTestOpenRouter" onclick="probarKey('openrouter', this)">
-                                <i class="ri-play-circle-line"></i> Probar
-                            </button>
-                        </div>
-                        <div class="test-result" id="testResultOpenRouter"></div>
-                    </div>
-
-                    <!-- AGNES -->
-                    <div class="provider-block">
-                        <div class="provider-header">
-                            <div class="provider-name">
-                                <i class="ri-sparkling-2-fill" style="color:#d4a017"></i> Agnes
-                                <span class="provider-priority">Respaldo 3</span>
-                            </div>
-                            <button class="btn-help" type="button" onclick="toggleModal('modalKeyAgnes')"><i class="ri-question-line"></i> ¿Cómo la consigo?</button>
-                        </div>
-
-                        <div class="label-row">
-                            <label>API Key:</label>
-                            <span class="provider-status sin-key" id="statusAgnes"><i class="ri-circle-fill" style="font-size:8px"></i> sin key</span>
-                        </div>
-                        <div class="password-wrap">
-                            <input type="password" id="aiKeyAgnes" placeholder="sk-..." oninput="onFieldChange()" autocomplete="off" spellcheck="false">
-                            <button class="toggle-eye-btn" type="button" onclick="toggleTokenVisibility(this)" title="Mostrar"><i class="ri-eye-line"></i></button>
-                        </div>
-
-                        <div class="provider-actions">
-                            <button class="btn-test" type="button" id="btnTestAgnes" onclick="probarKey('agnes', this)">
-                                <i class="ri-play-circle-line"></i> Probar
-                            </button>
-                        </div>
-                        <div class="test-result" id="testResultAgnes"></div>
-                    </div>
-
-                    <div class="alert-box info" style="margin-top: 20px;">
-                        <b>Tus keys se quedan en tu PC.</b> No se envían a ningún servidor nuestro. Solo tu propio TogiPanel las usa para hablar con el proveedor.
-                    </div>
-
-                    <div class="subpage-actions">
-                        <button class="main-btn" type="button" onclick="guardarAsistenteYVolver()">
-                            <i class="ri-check-line"></i> Guardar asistente
-                        </button>
-                        <button class="btn-restore" type="button" onclick="cerrarAsistente()">
-                            Cancelar
+                    <div class="provider-actions">
+                        <button class="btn-test" type="button" id="btnTestGroq" onclick="probarKey('groq', this)">
+                            <i class="ri-play-circle-line"></i> Probar
                         </button>
                     </div>
+                    <div class="test-result" id="testResultGroq"></div>
+                </div>
 
+                <!-- CEREBRAS -->
+                <div class="provider-block">
+                    <div class="provider-header">
+                        <div class="provider-name">
+                            <i class="ri-cpu-line" style="color:#7c5cff"></i> Cerebras
+                            <span class="provider-priority">Respaldo 1</span>
+                        </div>
+                        <button class="btn-help" type="button" onclick="toggleModal('modalKeyCerebras')"><i class="ri-question-line"></i> ¿Cómo la consigo?</button>
+                    </div>
+
+                    <div class="label-row">
+                        <label>API Key:</label>
+                        <span class="provider-status sin-key" id="statusCerebras"><i class="ri-circle-fill" style="font-size:8px"></i> sin key</span>
+                    </div>
+                    <div class="password-wrap">
+                        <input type="password" id="aiKeyCerebras" placeholder="csk-..." oninput="onFieldChange()" autocomplete="off" spellcheck="false">
+                        <button class="toggle-eye-btn" type="button" onclick="toggleTokenVisibility(this)" title="Mostrar"><i class="ri-eye-line"></i></button>
+                    </div>
+
+                    <div class="provider-actions">
+                        <button class="btn-test" type="button" id="btnTestCerebras" onclick="probarKey('cerebras', this)">
+                            <i class="ri-play-circle-line"></i> Probar
+                        </button>
+                    </div>
+                    <div class="test-result" id="testResultCerebras"></div>
+                </div>
+
+                <!-- OPENROUTER -->
+                <div class="provider-block">
+                    <div class="provider-header">
+                        <div class="provider-name">
+                            <i class="ri-route-line" style="color:#e8825a"></i> OpenRouter
+                            <span class="provider-priority">Respaldo 2</span>
+                        </div>
+                        <button class="btn-help" type="button" onclick="toggleModal('modalKeyOpenRouter')"><i class="ri-question-line"></i> ¿Cómo la consigo?</button>
+                    </div>
+
+                    <div class="label-row">
+                        <label>API Key:</label>
+                        <span class="provider-status sin-key" id="statusOpenRouter"><i class="ri-circle-fill" style="font-size:8px"></i> sin key</span>
+                    </div>
+                    <div class="password-wrap">
+                        <input type="password" id="aiKeyOpenRouter" placeholder="sk-or-..." oninput="onFieldChange()" autocomplete="off" spellcheck="false">
+                        <button class="toggle-eye-btn" type="button" onclick="toggleTokenVisibility(this)" title="Mostrar"><i class="ri-eye-line"></i></button>
+                    </div>
+
+                    <div class="provider-actions">
+                        <button class="btn-test" type="button" id="btnTestOpenRouter" onclick="probarKey('openrouter', this)">
+                            <i class="ri-play-circle-line"></i> Probar
+                        </button>
+                    </div>
+                    <div class="test-result" id="testResultOpenRouter"></div>
+                </div>
+
+                <!-- AGNES -->
+                <div class="provider-block">
+                    <div class="provider-header">
+                        <div class="provider-name">
+                            <i class="ri-sparkling-2-fill" style="color:#d4a017"></i> Agnes
+                            <span class="provider-priority">Respaldo 3</span>
+                        </div>
+                        <button class="btn-help" type="button" onclick="toggleModal('modalKeyAgnes')"><i class="ri-question-line"></i> ¿Cómo la consigo?</button>
+                    </div>
+
+                    <div class="label-row">
+                        <label>API Key:</label>
+                        <span class="provider-status sin-key" id="statusAgnes"><i class="ri-circle-fill" style="font-size:8px"></i> sin key</span>
+                    </div>
+                    <div class="password-wrap">
+                        <input type="password" id="aiKeyAgnes" placeholder="sk-..." oninput="onFieldChange()" autocomplete="off" spellcheck="false">
+                        <button class="toggle-eye-btn" type="button" onclick="toggleTokenVisibility(this)" title="Mostrar"><i class="ri-eye-line"></i></button>
+                    </div>
+
+                    <div class="provider-actions">
+                        <button class="btn-test" type="button" id="btnTestAgnes" onclick="probarKey('agnes', this)">
+                            <i class="ri-play-circle-line"></i> Probar
+                        </button>
+                    </div>
+                    <div class="test-result" id="testResultAgnes"></div>
+                </div>
+
+                <div class="alert-box info" style="margin-top: 20px;">
+                    <b>Tus keys se quedan en tu PC.</b> No se envían a ningún servidor nuestro. Solo tu propio TogiPanel las usa para hablar con el proveedor.
+                </div>
+
+                <div class="subpage-actions">
+                    <button class="main-btn" type="button" onclick="guardarAsistenteYVolver()">
+                        <i class="ri-check-line"></i> Guardar asistente
+                    </button>
+                    <button class="btn-restore" type="button" onclick="cerrarAsistente()">
+                        Cancelar
+                    </button>
                 </div>
 
             </div>
 
-        </main>
-    </div>
-
-    <!-- ==================== MODAL: TWITCH CLIENT ID ==================== -->
-    <div id="modalClient" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Obtener el Twitch Client ID</h3>
-                <button class="close-btn" onclick="closeModal('modalClient')">&times;</button>
-            </div>
-
-            <div class="alert-box info">
-                Todo se saca desde el mismo sitio: <code>twitchtokengenerator.com</code>. Ahí generas el token y también te da el <b>Client ID</b>. No hace falta ir a ningún otro lado.
-            </div>
-
-            <div class="modal-step">
-                <h4><span>1</span> Abre el generador</h4>
-                <p>Ve a <b>https://twitchtokengenerator.com/</b> y pulsa <b>Generate Token</b>.</p>
-            </div>
-
-            <div class="modal-step">
-                <h4><span>2</span> Inicia sesión con Twitch</h4>
-                <p>Te pedirá iniciar sesión con tu cuenta. Acepta los permisos que muestra.</p>
-            </div>
-
-            <div class="modal-step">
-                <h4><span>3</span> Elige Custom Scope Token</h4>
-                <p>Cuando aparezcan las opciones, pulsa <b>Custom Scope Token</b> (no elijas Bot Chat Token, porque no te dejará banear ni crear encuestas).</p>
-            </div>
-
-            <div class="modal-step">
-                <h4><span>4</span> Marca estos permisos</h4>
-                <ul>
-                    <li><code>chat:read</code> y <code>chat:edit</code></li>
-                    <li><code>channel:manage:broadcast</code></li>
-                    <li><code>channel:manage:polls</code></li>
-                    <li><code>channel:manage:predictions</code></li>
-                    <li><code>moderator:manage:banned_users</code></li>
-                    <li><code>user:read:emotes</code> — para ver emotes nativos de Twitch</li>
-                </ul>
-            </div>
-
-            <div class="modal-step">
-                <h4><span>5</span> Copia tus datos</h4>
-                <p>La página te mostrará dos cosas:</p>
-                <ul>
-                    <li><b>Client ID</b> → pégalo en el campo correspondiente.</li>
-                    <li><b>Access Token</b> → pégalo en el campo <b>Twitch Token (API)</b>.</li>
-                </ul>
-                <p style="margin-top: 8px; color: #e8b54d;">Copia el <b>Access Token</b>, no el Refresh Token.</p>
-            </div>
-
-            <a href="https://twitchtokengenerator.com/" target="_blank" class="external-link">Ir al generador</a>
         </div>
-    </div>
 
-    <!-- ==================== MODAL: TWITCH TOKEN ==================== -->
-    <div id="modalToken" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Generar el Twitch OAuth Token</h3>
-                <button class="close-btn" onclick="closeModal('modalToken')">&times;</button>
-            </div>
+    </main>
+</div>
 
-            <div class="alert-box info">
-                Todo se saca desde el mismo sitio: <code>twitchtokengenerator.com</code>. Si ya generaste el Client ID ahí, esta vez solo necesitas copiar el <b>Access Token</b>.
-            </div>
+<!-- ════════════════ MODALES (igual que antes) ════════════════ -->
 
-            <div class="alert-box">
-                <b>Importante:</b> debes elegir <b>Custom Scope Token</b>. Si eliges Bot Chat Token, no podrás banear ni crear encuestas.
-            </div>
-
-            <div class="modal-step">
-                <h4><span>1</span> Abre el generador</h4>
-                <p>Ve a <b>https://twitchtokengenerator.com/</b> y pulsa <b>Generate Token</b>. Inicia sesión con la cuenta correcta.</p>
-            </div>
-
-            <div class="modal-step">
-                <h4><span>2</span> Elige el tipo correcto</h4>
-                <p>Cuando aparezcan las opciones, pulsa <b>Custom Scope Token</b>.</p>
-            </div>
-
-            <div class="modal-step">
-                <h4><span>3</span> Marca estos permisos</h4>
-                <ul>
-                    <li><code>chat:read</code> y <code>chat:edit</code></li>
-                    <li><code>channel:manage:broadcast</code></li>
-                    <li><code>channel:manage:polls</code></li>
-                    <li><code>channel:manage:predictions</code></li>
-                    <li><code>moderator:manage:banned_users</code></li>
-                    <li><code>user:read:emotes</code> — para ver emotes nativos de Twitch</li>
-                </ul>
-            </div>
-
-            <div class="modal-step">
-                <h4><span>4</span> Copia tu Access Token</h4>
-                <p>Copia el <b>Access Token</b> (empieza sin "oauth:") y pégalo en el campo <b>Twitch Token (API)</b>.</p>
-                <p style="margin-top: 8px; color: #e8b54d;">No copies el Refresh Token ni el Client Secret. Solo el <b>Access Token</b>.</p>
-            </div>
-
-            <a href="https://twitchtokengenerator.com/" target="_blank" class="external-link">Ir al generador de tokens</a>
+<!-- MODAL: TWITCH CLIENT ID -->
+<div id="modalClient" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Obtener el Twitch Client ID</h3>
+            <button class="close-btn" onclick="closeModal('modalClient')">&times;</button>
         </div>
-    </div>
 
-    <!-- ==================== MODAL: YOUTUBE ==================== -->
-    <div id="modalYouTube" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Obtener el canal de YouTube</h3>
-                <button class="close-btn" onclick="closeModal('modalYouTube')">&times;</button>
-            </div>
-
-            <div class="alert-box info">
-                No necesitas API Key ni OAuth. Solo el identificador del canal. Tienes tres formas, elige la que prefieras.
-            </div>
-
-            <div class="modal-step">
-                <h4><span>1</span> Forma fácil: el @handle</h4>
-                <p>Abre tu canal en YouTube. En la barra de direcciones verás algo como:</p>
-                <p><code>https://www.youtube.com/@tucanal</code></p>
-                <p>Copia desde la @ hasta el final y pégalo en el campo.</p>
-                <p style="margin-top: 6px; color: #e8b54d;">Si no sabes cuál es tu @handle, ve a <b>https://www.youtube.com/account</b> y aparece ahí.</p>
-            </div>
-
-            <div class="modal-step">
-                <h4><span>2</span> Forma estable: el Channel ID</h4>
-                <p>El @handle puede cambiar, pero el Channel ID nunca cambia. Es más confiable.</p>
-                <p><b>Paso A:</b> Abre tu canal en YouTube y pulsa <code>F12</code> para abrir DevTools.</p>
-                <p><b>Paso B:</b> Ve a la pestaña <code>Console</code> y pega esto:</p>
-                <p><code>document.querySelector('meta[itemprop="channelId"]').content</code></p>
-                <p><b>Paso C:</b> Te devuelve algo como <code>UCq0wtwcAmYtS3VUCgh1BWAg</code>. Copia ese valor.</p>
-            </div>
-
-            <div class="modal-step">
-                <h4><span>3</span> Forma rápida: la URL completa</h4>
-                <p>También puedes pegar la URL completa del canal, el sistema la procesa igual:</p>
-                <p><code>https://www.youtube.com/@tucanal</code></p>
-            </div>
-
-            <div class="modal-step">
-                <h4><span>4</span> ¿Varios canales?</h4>
-                <p>Puedes añadir tantos como quieras con el botón <b>Añadir otro canal de YouTube</b>. Cada uno en su propia línea.</p>
-            </div>
-
-            <a href="https://www.youtube.com/account" target="_blank" class="external-link" style="background: #e56969;">Ver mi cuenta de YouTube</a>
+        <div class="alert-box info">
+            Todo se saca desde el mismo sitio: <code>twitchtokengenerator.com</code>. Ahí generas el token y también te da el <b>Client ID</b>. No hace falta ir a ningún otro lado.
         </div>
-    </div>
 
-    <!-- ==================== MODAL: GROQ KEY ==================== -->
-    <div id="modalKeyGroq" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Obtener tu API Key de Groq</h3>
-                <button class="close-btn" onclick="closeModal('modalKeyGroq')">&times;</button>
-            </div>
-
-            <div class="alert-box info">
-                Groq es <b>gratis</b> y muy rápido. Tiene un límite diario muy generoso para responder al chat.
-            </div>
-
-            <div class="modal-step">
-                <h4><span>1</span> Crea una cuenta</h4>
-                <p>Ve a <b>https://console.groq.com/</b> y regístrate con Google o tu email.</p>
-            </div>
-
-            <div class="modal-step">
-                <h4><span>2</span> Abre la sección de keys</h4>
-                <p>Una vez dentro, en el menú lateral pulsa <b>API Keys</b>.</p>
-                <p>O ve directo a: <code>https://console.groq.com/keys</code></p>
-            </div>
-
-            <div class="modal-step">
-                <h4><span>3</span> Crea una nueva key</h4>
-                <p>Pulsa el botón <b>Create API Key</b>. Ponle un nombre (ej: <code>togi</code>) y pulsa <b>Submit</b>.</p>
-            </div>
-
-            <div class="modal-step">
-                <h4><span>4</span> Cópiala y pégala aquí</h4>
-                <p>Te mostrará una key que empieza con <code>gsk_</code>. Cópiala.</p>
-                <p style="color: #e8b54d; margin-top: 8px;"><b>Ojo:</b> solo se muestra una vez. Si la pierdes, tendrás que crear otra.</p>
-            </div>
-
-            <a href="https://console.groq.com/keys" target="_blank" class="external-link">Ir a Groq Console</a>
+        <div class="modal-step">
+            <h4><span>1</span> Abre el generador</h4>
+            <p>Ve a <b>https://twitchtokengenerator.com/</b> y pulsa <b>Generate Token</b>.</p>
         </div>
-    </div>
 
-    <!-- ==================== MODAL: CEREBRAS KEY ==================== -->
-    <div id="modalKeyCerebras" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Obtener tu API Key de Cerebras</h3>
-                <button class="close-btn" onclick="closeModal('modalKeyCerebras')">&times;</button>
-            </div>
-
-            <div class="alert-box info">
-                Cerebras es <b>gratis</b> y da muchísimo volumen diario. Perfecto como respaldo cuando Groq no responde.
-            </div>
-
-            <div class="modal-step">
-                <h4><span>1</span> Crea una cuenta</h4>
-                <p>Ve a <b>https://cloud.cerebras.ai/</b> y regístrate con Google o tu email.</p>
-            </div>
-
-            <div class="modal-step">
-                <h4><span>2</span> Abre la sección de keys</h4>
-                <p>En el menú lateral pulsa <b>API Keys</b>.</p>
-                <p>O ve directo a: <code>https://cloud.cerebras.ai/platform/api-keys</code></p>
-            </div>
-
-            <div class="modal-step">
-                <h4><span>3</span> Crea una nueva key</h4>
-                <p>Pulsa <b>Create API Key</b>. Ponle un nombre (ej: <code>togi</code>) y confirma.</p>
-            </div>
-
-            <div class="modal-step">
-                <h4><span>4</span> Cópiala y pégala aquí</h4>
-                <p>Te mostrará una key que empieza con <code>csk-</code>. Cópiala.</p>
-                <p style="color: #e8b54d; margin-top: 8px;">Solo se muestra una vez. Guárdala bien.</p>
-            </div>
-
-            <a href="https://cloud.cerebras.ai/platform/api-keys" target="_blank" class="external-link">Ir a Cerebras Cloud</a>
+        <div class="modal-step">
+            <h4><span>2</span> Inicia sesión con Twitch</h4>
+            <p>Te pedirá iniciar sesión con tu cuenta. Acepta los permisos que muestra.</p>
         </div>
-    </div>
 
-    <!-- ==================== MODAL: OPENROUTER KEY ==================== -->
-    <div id="modalKeyOpenRouter" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Obtener tu API Key de OpenRouter</h3>
-                <button class="close-btn" onclick="closeModal('modalKeyOpenRouter')">&times;</button>
-            </div>
-
-            <div class="alert-box info">
-                OpenRouter es <b>gratis</b> y da acceso a 20+ modelos. Bueno como último respaldo y para probar modelos distintos.
-            </div>
-
-            <div class="modal-step">
-                <h4><span>1</span> Crea una cuenta</h4>
-                <p>Ve a <b>https://openrouter.ai/</b> y regístrate con Google o tu email.</p>
-            </div>
-
-            <div class="modal-step">
-                <h4><span>2</span> Abre la sección de keys</h4>
-                <p>Una vez dentro, ve a: <code>https://openrouter.ai/keys</code></p>
-            </div>
-
-            <div class="modal-step">
-                <h4><span>3</span> Crea una nueva key</h4>
-                <p>Pulsa <b>Create Key</b>. Ponle un nombre (ej: <code>togi</code>) y confirma.</p>
-            </div>
-
-            <div class="modal-step">
-                <h4><span>4</span> Cópiala y pégala aquí</h4>
-                <p>Te mostrará una key que empieza con <code>sk-or-</code>. Cópiala.</p>
-                <p style="color: #e8b54d; margin-top: 8px;">Solo se muestra una vez. Guárdala bien.</p>
-            </div>
-
-            <a href="https://openrouter.ai/keys" target="_blank" class="external-link">Ir a OpenRouter</a>
+        <div class="modal-step">
+            <h4><span>3</span> Elige Custom Scope Token</h4>
+            <p>Cuando aparezcan las opciones, pulsa <b>Custom Scope Token</b> (no elijas Bot Chat Token, porque no te dejará banear ni crear encuestas).</p>
         </div>
-    </div>
 
-    <!-- ==================== MODAL: AGNES KEY ==================== -->
-    <div id="modalKeyAgnes" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Obtener tu API Key de Agnes</h3>
-                <button class="close-btn" onclick="closeModal('modalKeyAgnes')">&times;</button>
-            </div>
-
-            <div class="alert-box info">
-                Agnes 2.5 Flash es <b>gratis</b> con 1M de tokens de contexto (¡muchísimo!). Perfecto como último respaldo de la cadena.
-            </div>
-
-            <div class="modal-step">
-                <h4><span>1</span> Crea una cuenta</h4>
-                <p>Ve a <b>https://agnes-ai.com/</b> y regístrate con Google o tu email.</p>
-            </div>
-
-            <div class="modal-step">
-                <h4><span>2</span> Abre la sección de API Keys</h4>
-                <p>Una vez dentro, busca <b>API Keys</b> o <b>Developer</b> en el menú.</p>
-                <p>También puedes probar: <code>https://agnes-ai.com/dashboard</code></p>
-            </div>
-
-            <div class="modal-step">
-                <h4><span>3</span> Crea una nueva key</h4>
-                <p>Pulsa <b>Generate new key</b> o similar. Ponle un nombre (ej: <code>togi</code>) y confirma.</p>
-            </div>
-
-            <div class="modal-step">
-                <h4><span>4</span> Cópiala y pégala aquí</h4>
-                <p>Te mostrará una key que suele empezar con <code>sk-</code>. Cópiala.</p>
-                <p style="color: #e8b54d; margin-top: 8px;">Solo se muestra una vez. Guárdala bien.</p>
-            </div>
-
-            <a href="https://agnes-ai.com/" target="_blank" class="external-link" style="background: #d4a017;">Ir a Agnes AI</a>
+        <div class="modal-step">
+            <h4><span>4</span> Marca estos permisos</h4>
+            <ul>
+                <li><code>chat:read</code> y <code>chat:edit</code></li>
+                <li><code>channel:manage:broadcast</code></li>
+                <li><code>channel:manage:polls</code></li>
+                <li><code>channel:manage:predictions</code></li>
+                <li><code>moderator:manage:banned_users</code></li>
+                <li><code>user:read:emotes</code> — para ver emotes nativos de Twitch</li>
+            </ul>
         </div>
-    </div>
 
-    <script>
-        window.addEventListener('load', () => {
-            if (location.hash) {
-                const el = document.querySelector(location.hash);
-                if (el) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
-            }
-        });
-    </script>
+        <div class="modal-step">
+            <h4><span>5</span> Copia tus datos</h4>
+            <p>La página te mostrará dos cosas:</p>
+            <ul>
+                <li><b>Client ID</b> → pégalo en el campo correspondiente.</li>
+                <li><b>Access Token</b> → pégalo en el campo <b>Twitch Token (API)</b>.</li>
+            </ul>
+            <p style="margin-top: 8px; color: #e8b54d;">Copia el <b>Access Token</b>, no el Refresh Token.</p>
+        </div>
+
+        <a href="https://twitchtokengenerator.com/" target="_blank" class="external-link">Ir al generador</a>
+    </div>
+</div>
+
+<!-- MODAL: TWITCH TOKEN -->
+<div id="modalToken" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Generar el Twitch OAuth Token</h3>
+            <button class="close-btn" onclick="closeModal('modalToken')">&times;</button>
+        </div>
+
+        <div class="alert-box info">
+            Todo se saca desde el mismo sitio: <code>twitchtokengenerator.com</code>. Si ya generaste el Client ID ahí, esta vez solo necesitas copiar el <b>Access Token</b>.
+        </div>
+
+        <div class="alert-box">
+            <b>Importante:</b> debes elegir <b>Custom Scope Token</b>. Si eliges Bot Chat Token, no podrás banear ni crear encuestas.
+        </div>
+
+        <div class="modal-step">
+            <h4><span>1</span> Abre el generador</h4>
+            <p>Ve a <b>https://twitchtokengenerator.com/</b> y pulsa <b>Generate Token</b>. Inicia sesión con la cuenta correcta.</p>
+        </div>
+
+        <div class="modal-step">
+            <h4><span>2</span> Elige el tipo correcto</h4>
+            <p>Cuando aparezcan las opciones, pulsa <b>Custom Scope Token</b>.</p>
+        </div>
+
+        <div class="modal-step">
+            <h4><span>3</span> Marca estos permisos</h4>
+            <ul>
+                <li><code>chat:read</code> y <code>chat:edit</code></li>
+                <li><code>channel:manage:broadcast</code></li>
+                <li><code>channel:manage:polls</code></li>
+                <li><code>channel:manage:predictions</code></li>
+                <li><code>moderator:manage:banned_users</code></li>
+                <li><code>user:read:emotes</code> — para ver emotes nativos de Twitch</li>
+            </ul>
+        </div>
+
+        <div class="modal-step">
+            <h4><span>4</span> Copia tu Access Token</h4>
+            <p>Copia el <b>Access Token</b> (empieza sin "oauth:") y pégalo en el campo <b>Twitch Token (API)</b>.</p>
+            <p style="margin-top: 8px; color: #e8b54d;">No copies el Refresh Token ni el Client Secret. Solo el <b>Access Token</b>.</p>
+        </div>
+
+        <a href="https://twitchtokengenerator.com/" target="_blank" class="external-link">Ir al generador de tokens</a>
+    </div>
+</div>
+
+<!-- MODAL: YOUTUBE -->
+<div id="modalYouTube" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Obtener el canal de YouTube</h3>
+            <button class="close-btn" onclick="closeModal('modalYouTube')">&times;</button>
+        </div>
+
+        <div class="alert-box info">
+            No necesitas API Key ni OAuth. Solo el identificador del canal. Tienes tres formas, elige la que prefieras.
+        </div>
+
+        <div class="modal-step">
+            <h4><span>1</span> Forma fácil: el @handle</h4>
+            <p>Abre tu canal en YouTube. En la barra de direcciones verás algo como:</p>
+            <p><code>https://www.youtube.com/@tucanal</code></p>
+            <p>Copia desde la @ hasta el final y pégalo en el campo.</p>
+            <p style="margin-top: 6px; color: #e8b54d;">Si no sabes cuál es tu @handle, ve a <b>https://www.youtube.com/account</b> y aparece ahí.</p>
+        </div>
+
+        <div class="modal-step">
+            <h4><span>2</span> Forma estable: el Channel ID</h4>
+            <p>El @handle puede cambiar, pero el Channel ID nunca cambia. Es más confiable.</p>
+            <p><b>Paso A:</b> Abre tu canal en YouTube y pulsa <code>F12</code> para abrir DevTools.</p>
+            <p><b>Paso B:</b> Ve a la pestaña <code>Console</code> y pega esto:</p>
+            <p><code>document.querySelector('meta[itemprop="channelId"]').content</code></p>
+            <p><b>Paso C:</b> Te devuelve algo como <code>UCq0wtwcAmYtS3VUCgh1BWAg</code>. Copia ese valor.</p>
+        </div>
+
+        <div class="modal-step">
+            <h4><span>3</span> Forma rápida: la URL completa</h4>
+            <p>También puedes pegar la URL completa del canal, el sistema la procesa igual:</p>
+            <p><code>https://www.youtube.com/@tucanal</code></p>
+        </div>
+
+        <div class="modal-step">
+            <h4><span>4</span> ¿Varios canales?</h4>
+            <p>Puedes añadir tantos como quieras con el botón <b>Añadir otro canal de YouTube</b>. Cada uno en su propia línea.</p>
+        </div>
+
+        <a href="https://www.youtube.com/account" target="_blank" class="external-link" style="background: #e56969;">Ver mi cuenta de YouTube</a>
+    </div>
+</div>
+
+<!-- MODAL: GROQ KEY -->
+<div id="modalKeyGroq" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Obtener tu API Key de Groq</h3>
+            <button class="close-btn" onclick="closeModal('modalKeyGroq')">&times;</button>
+        </div>
+
+        <div class="alert-box info">
+            Groq es <b>gratis</b> y muy rápido. Tiene un límite diario muy generoso para responder al chat.
+        </div>
+
+        <div class="modal-step">
+            <h4><span>1</span> Crea una cuenta</h4>
+            <p>Ve a <b>https://console.groq.com/</b> y regístrate con Google o tu email.</p>
+        </div>
+
+        <div class="modal-step">
+            <h4><span>2</span> Abre la sección de keys</h4>
+            <p>Una vez dentro, en el menú lateral pulsa <b>API Keys</b>.</p>
+            <p>O ve directo a: <code>https://console.groq.com/keys</code></p>
+        </div>
+
+        <div class="modal-step">
+            <h4><span>3</span> Crea una nueva key</h4>
+            <p>Pulsa el botón <b>Create API Key</b>. Ponle un nombre (ej: <code>togi</code>) y pulsa <b>Submit</b>.</p>
+        </div>
+
+        <div class="modal-step">
+            <h4><span>4</span> Cópiala y pégala aquí</h4>
+            <p>Te mostrará una key que empieza con <code>gsk_</code>. Cópiala.</p>
+            <p style="color: #e8b54d; margin-top: 8px;"><b>Ojo:</b> solo se muestra una vez. Si la pierdes, tendrás que crear otra.</p>
+        </div>
+
+        <a href="https://console.groq.com/keys" target="_blank" class="external-link">Ir a Groq Console</a>
+    </div>
+</div>
+
+<!-- MODAL: CEREBRAS KEY -->
+<div id="modalKeyCerebras" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Obtener tu API Key de Cerebras</h3>
+            <button class="close-btn" onclick="closeModal('modalKeyCerebras')">&times;</button>
+        </div>
+
+        <div class="alert-box info">
+            Cerebras es <b>gratis</b> y da muchísimo volumen diario. Perfecto como respaldo cuando Groq no responde.
+        </div>
+
+        <div class="modal-step">
+            <h4><span>1</span> Crea una cuenta</h4>
+            <p>Ve a <b>https://cloud.cerebras.ai/</b> y regístrate con Google o tu email.</p>
+        </div>
+
+        <div class="modal-step">
+            <h4><span>2</span> Abre la sección de keys</h4>
+            <p>En el menú lateral pulsa <b>API Keys</b>.</p>
+            <p>O ve directo a: <code>https://cloud.cerebras.ai/platform/api-keys</code></p>
+        </div>
+
+        <div class="modal-step">
+            <h4><span>3</span> Crea una nueva key</h4>
+            <p>Pulsa <b>Create API Key</b>. Ponle un nombre (ej: <code>togi</code>) y confirma.</p>
+        </div>
+
+        <div class="modal-step">
+            <h4><span>4</span> Cópiala y pégala aquí</h4>
+            <p>Te mostrará una key que empieza con <code>csk-</code>. Cópiala.</p>
+            <p style="color: #e8b54d; margin-top: 8px;">Solo se muestra una vez. Guárdala bien.</p>
+        </div>
+
+        <a href="https://cloud.cerebras.ai/platform/api-keys" target="_blank" class="external-link">Ir a Cerebras Cloud</a>
+    </div>
+</div>
+
+<!-- MODAL: OPENROUTER KEY -->
+<div id="modalKeyOpenRouter" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Obtener tu API Key de OpenRouter</h3>
+            <button class="close-btn" onclick="closeModal('modalKeyOpenRouter')">&times;</button>
+        </div>
+
+        <div class="alert-box info">
+            OpenRouter es <b>gratis</b> y da acceso a 20+ modelos. Bueno como último respaldo y para probar modelos distintos.
+        </div>
+
+        <div class="modal-step">
+            <h4><span>1</span> Crea una cuenta</h4>
+            <p>Ve a <b>https://openrouter.ai/</b> y regístrate con Google o tu email.</p>
+        </div>
+
+        <div class="modal-step">
+            <h4><span>2</span> Abre la sección de keys</h4>
+            <p>Una vez dentro, ve a: <code>https://openrouter.ai/keys</code></p>
+        </div>
+
+        <div class="modal-step">
+            <h4><span>3</span> Crea una nueva key</h4>
+            <p>Pulsa <b>Create Key</b>. Ponle un nombre (ej: <code>togi</code>) y confirma.</p>
+        </div>
+
+        <div class="modal-step">
+            <h4><span>4</span> Cópiala y pégala aquí</h4>
+            <p>Te mostrará una key que empieza con <code>sk-or-</code>. Cópiala.</p>
+            <p style="color: #e8b54d; margin-top: 8px;">Solo se muestra una vez. Guárdala bien.</p>
+        </div>
+
+        <a href="https://openrouter.ai/keys" target="_blank" class="external-link">Ir a OpenRouter</a>
+    </div>
+</div>
+
+<!-- MODAL: AGNES KEY -->
+<div id="modalKeyAgnes" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Obtener tu API Key de Agnes</h3>
+            <button class="close-btn" onclick="closeModal('modalKeyAgnes')">&times;</button>
+        </div>
+
+        <div class="alert-box info">
+            Agnes 2.5 Flash es <b>gratis</b> con 1M de tokens de contexto (¡muchísimo!). Perfecto como último respaldo de la cadena.
+        </div>
+
+        <div class="modal-step">
+            <h4><span>1</span> Crea una cuenta</h4>
+            <p>Ve a <b>https://agnes-ai.com/</b> y regístrate con Google o tu email.</p>
+        </div>
+
+        <div class="modal-step">
+            <h4><span>2</span> Abre la sección de API Keys</h4>
+            <p>Una vez dentro, busca <b>API Keys</b> o <b>Developer</b> en el menú.</p>
+            <p>También puedes probar: <code>https://agnes-ai.com/dashboard</code></p>
+        </div>
+
+        <div class="modal-step">
+            <h4><span>3</span> Crea una nueva key</h4>
+            <p>Pulsa <b>Generate new key</b> o similar. Ponle un nombre (ej: <code>togi</code>) y confirma.</p>
+        </div>
+
+        <div class="modal-step">
+            <h4><span>4</span> Cópiala y pégala aquí</h4>
+            <p>Te mostrará una key que suele empezar con <code>sk-</code>. Cópiala.</p>
+            <p style="color: #e8b54d; margin-top: 8px;">Solo se muestra una vez. Guárdala bien.</p>
+        </div>
+
+        <a href="https://agnes-ai.com/" target="_blank" class="external-link" style="background: #d4a017;">Ir a Agnes AI</a>
+    </div>
+</div>
+
+<script>
+    window.addEventListener('load', () => {
+        if (location.hash) {
+            const el = document.querySelector(location.hash);
+            if (el) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+        }
+    });
+</script>
 
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>StreamDeck</title>
+<title>StreamDeck · Toki</title>
 <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
 <link rel="preconnect" href="https://api.fontshare.com">
 <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600,700,800,900&display=swap" rel="stylesheet">
@@ -22,30 +22,33 @@
 <div class="app">
   <aside class="sidebar">
     <div class="sidebar-logo">
-      <div class="logo-mark"><i class="ri-layout-grid-fill"></i></div>
-      <div class="logo-text">StreamDeck</div>
+      <div class="logo-mark"><img src="/img/toki.png" alt="Toki"></div>
+      <div class="logo-text">
+        <div class="logo-name">Toki</div>
+        <div class="logo-sub">StreamDeck</div>
+      </div>
     </div>
 
     <div class="sidebar-title">Vistas</div>
 
-    <div class="nav-item active" data-view="deck">
+    <div class="nav-item active" data-view="deck" data-tip="Deck de control">
       <i class="ri-layout-grid-fill"></i><span>Deck</span>
       <span class="count" id="navDeckCount">0</span>
     </div>
-    <div class="nav-item" data-view="dashboard">
+    <div class="nav-item" data-view="dashboard" data-tip="Dashboard unificado">
       <i class="ri-dashboard-3-line"></i><span>Dashboard</span>
     </div>
-    <div class="nav-item" data-view="stats">
+    <div class="nav-item" data-view="stats" data-tip="Estadísticas en vivo">
       <i class="ri-bar-chart-fill"></i><span>Estadísticas</span>
     </div>
-    <div class="nav-item" data-view="overlays">
+    <div class="nav-item" data-view="overlays" data-tip="Control de overlays">
       <i class="ri-stack-line"></i><span>Overlays</span>
     </div>
-    <div class="nav-item" data-view="aitum">
+    <div class="nav-item" data-view="aitum" data-tip="Aitum Vertical">
       <i class="ri-crop-2-line"></i><span>Aitum Vertical</span>
       <span class="count" id="navAitumScenes">—</span>
     </div>
-    <div class="nav-item" data-view="config">
+    <div class="nav-item" data-view="config" data-tip="Configuración">
       <i class="ri-settings-3-line"></i><span>Configuración</span>
     </div>
 
@@ -56,15 +59,15 @@
     <div id="catNavList"></div>
 
     <div class="sidebar-bottom">
-      <div class="nav-item" id="backToPanelBtn" title="Volver al panel principal">
+      <div class="nav-item" id="backToPanelBtn" title="Volver al panel principal" data-tip="Volver al Panel">
         <i class="ri-arrow-left-line"></i><span>Volver al Panel</span>
       </div>
 
-      <div style="height:1px;background:#1c1b22;margin:8px 0;"></div>
+      <div style="height:1px;background:var(--border);margin:8px 0;"></div>
 
-      <div class="nav-item" id="exportBtn"><i class="ri-download-cloud-2-line"></i><span>Exportar</span></div>
-      <div class="nav-item" id="importBtn"><i class="ri-upload-cloud-2-line"></i><span>Importar</span></div>
-      <div class="nav-item" id="mobileBtn"><i class="ri-qr-code-line"></i><span>Conectar móvil</span></div>
+      <div class="nav-item" id="exportBtn" data-tip="Exportar config"><i class="ri-download-cloud-2-line"></i><span>Exportar</span></div>
+      <div class="nav-item" id="importBtn" data-tip="Importar config"><i class="ri-upload-cloud-2-line"></i><span>Importar</span></div>
+      <div class="nav-item" id="mobileBtn" data-tip="Ver QR para móvil"><i class="ri-qr-code-line"></i><span>Conectar móvil</span></div>
       <input type="file" id="importFile" accept=".json" hidden>
     </div>
   </aside>
@@ -76,15 +79,15 @@
         <p id="viewSubtitle">Pulsa un botón o añade uno nuevo a tu categoría</p>
       </div>
       <div class="topbar-right">
-        <button class="pill ok" id="deckPowerPill" title="Activar/desactivar deck">
+        <button class="pill ok" id="deckPowerPill" title="Activar/desactivar deck" data-tip="Encender o apagar el deck">
           <i class="ri-power-line"></i> <span id="deckPowerText">ON</span>
         </button>
-        <button class="pill" id="obsPill"><i class="ri-wifi-line"></i> <span id="obsPillText">OBS…</span></button>
+        <button class="pill" id="obsPill" data-tip="Estado de OBS"><i class="ri-wifi-line"></i> <span id="obsPillText">OBS…</span></button>
         <button class="pill live" id="livePill" style="display:none"><span class="dot"></span> EN VIVO</button>
-        <button class="pill" id="backToPanelPill" title="Volver al Panel principal">
+        <button class="pill" id="backToPanelPill" title="Volver al Panel principal" data-tip="Volver al Panel">
           <i class="ri-arrow-left-line"></i> <span>Panel</span>
         </button>
-        <button class="pill primary" id="newBtnBtn"><i class="ri-add-line"></i> <span>Nuevo botón</span></button>
+        <button class="pill primary" id="newBtnBtn" data-tip="Crear nuevo botón"><i class="ri-add-line"></i> <span>Nuevo botón</span></button>
       </div>
     </div>
 
@@ -281,7 +284,7 @@
             <div class="aitum-status-pill" id="aitumCurrentPill">
               <i class="ri-live-line"></i> Escena: <span id="aitumCurrent">—</span>
             </div>
-            <button class="pill" id="aitumRefreshBtn" title="Refrescar ahora">
+            <button class="pill" id="aitumRefreshBtn" title="Refrescar ahora" data-tip="Refrescar estado">
               <i class="ri-refresh-line"></i> <span>Refrescar</span>
             </button>
           </div>
@@ -576,10 +579,10 @@
 
 <div class="modal-back" id="deckOffModal" style="background:rgba(0,0,0,0.85);z-index:300">
   <div class="modal" style="max-width:420px;text-align:center;padding:40px 28px">
-    <div style="width:64px;height:64px;border-radius:18px;background:rgba(232,130,90,0.12);border:1px solid rgba(232,130,90,0.3);display:grid;place-items:center;margin:0 auto 18px;font-size:30px;color:var(--primary-soft)">
+    <div style="width:64px;height:64px;border-radius:18px;background:var(--primary-soft-bg);border:1px solid var(--primary-border);display:grid;place-items:center;margin:0 auto 18px;font-size:30px;color:var(--primary)">
       <i class="ri-layout-grid-fill"></i>
     </div>
-    <h3 style="justify-content:center;font-size:20px;margin-bottom:8px">TogiPanel Deck</h3>
+    <h3 style="justify-content:center;font-size:20px;margin-bottom:8px">Toki Deck</h3>
     <p style="font-size:13px;color:var(--text-dim);margin-bottom:26px;line-height:1.6">
       El deck está <b style="color:var(--warning)">desactivado</b>.<br>
       Actívalo para conectar OBS, chat, stats y overlays.

@@ -1,6 +1,6 @@
 // ============================================================
-// autostream.js — Panel Auto-Stream TikTok (v3 · "Broadcast Console")
-// Rediseño: menos efectos, más claridad, flujo guiado 1-2-3
+// autostream.js — Panel Auto-Stream TikTok (v4 · Toki)
+// Rediseño: paleta lima/rosa/cian, flow 1-2-3 guiado
 // ============================================================
 
 (function () {
@@ -11,6 +11,9 @@
   let statusInterval = null;
   let lastState = 'idle';
   let obsInterval = null;
+    // ✨ Claves de localStorage para persistir la elección del usuario
+  const AS_LS_KEY = 'autostream:selectedToken';
+  const AS_LS_KEY_TITLE = 'autostream:title';
 
   // ============================================================
   // 📋 COPIAR AL PORTAPAPELES (3 métodos en cascada)
@@ -47,57 +50,82 @@
   }
 
   // ============================================================
-  // 🎨 CSS — Diseño "Broadcast Console"
-  // Acento: ámbar quemado (#e8825a). Superficies sólidas.
-  // Sin gradientes decorativos, sin glassmorphism.
+  // 🎨 CSS — Toki Broadcast Console
+  // Acento: lima (#b8ff00). Secundario: rosa. Info: cian.
   // ============================================================
   function injectStyles() {
     if (document.getElementById('autostream-styles')) return;
     const style = document.createElement('style');
     style.id = 'autostream-styles';
     style.textContent = `
-      /* Tokens locales del panel (no tocan los globales) */
+      /* Tokens locales del panel */
       #autostream-panel {
-        --as-accent: #e8825a;
-        --as-accent-dim: #b8603c;
-        --as-accent-soft: rgba(232, 130, 90, 0.12);
-        --as-accent-border: rgba(232, 130, 90, 0.4);
-        --as-surface: #16151c;
-        --as-surface-2: #1c1b23;
-        --as-surface-3: #22212b;
-        --as-line: #2a2933;
-        --as-line-strong: #3a3846;
-        --as-text: #e8e6f0;
-        --as-text-2: #a8a5b5;
+        --as-accent:        #b8ff00;
+        --as-accent-hover:  #a3e600;
+        --as-accent-soft:   rgba(184, 255, 0, 0.12);
+        --as-accent-border: rgba(184, 255, 0, 0.35);
+
+        --as-pink:        #ff0080;
+        --as-pink-soft:   rgba(255, 0, 128, 0.12);
+        --as-pink-border: rgba(255, 0, 128, 0.35);
+
+        --as-cyan:        #00d9ff;
+        --as-cyan-soft:   rgba(0, 217, 255, 0.10);
+        --as-cyan-border: rgba(0, 217, 255, 0.35);
+
+        --as-surface:   #0e0e15;
+        --as-surface-2: #12121b;
+        --as-surface-3: #181824;
+        --as-line:      rgba(255, 255, 255, 0.06);
+        --as-line-strong: rgba(255, 255, 255, 0.12);
+
+        --as-text:   #f0edf9;
+        --as-text-2: #a8a4b8;
         --as-text-3: #6f6c80;
-        --as-ok: #6dd58c;
-        --as-warn: #e8b54d;
-        --as-err: #e56969;
+
+        --as-ok:   #b8ff00;
+        --as-warn: #fbbf24;
+        --as-err:  #f87171;
 
         position: relative;
-        background: var(--as-surface);
+        background:
+          radial-gradient(ellipse at top left, rgba(184,255,0,0.04), transparent 45%),
+          radial-gradient(ellipse at bottom right, rgba(255,0,128,0.03), transparent 50%),
+          var(--as-surface);
         border: 1px solid var(--as-line);
-        border-radius: 12px;
-        padding: 20px 22px 22px;
+        border-radius: 16px;
+        padding: 22px 24px 24px;
         margin-bottom: 22px;
         display: none;
         overflow: hidden;
         font-family: 'Satoshi', system-ui, sans-serif;
+        color: var(--as-text);
       }
-      #autostream-panel.open { display: block; }
+      #autostream-panel.open { display: block; animation: asPanelIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+      @keyframes asPanelIn {
+        from { opacity: 0; transform: translateY(-6px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
 
-      /* Borde superior como "tira de estado" del panel */
+      /* Borde superior = barra de estado */
       #autostream-panel::before {
         content: '';
         position: absolute;
         top: 0; left: 0; right: 0;
-        height: 2px;
-        background: var(--as-line);
-        transition: background 0.3s;
+        height: 3px;
+        background: linear-gradient(90deg, transparent, var(--as-line-strong), transparent);
+        transition: background 0.3s ease;
       }
-      #autostream-panel[data-status="streaming"]::before { background: var(--as-accent); }
-      #autostream-panel[data-status="waiting"]::before   { background: var(--as-warn); }
-      #autostream-panel[data-status="error"]::before     { background: var(--as-err); }
+      #autostream-panel[data-status="streaming"]::before {
+        background: linear-gradient(90deg, transparent, var(--as-accent), var(--as-pink), transparent);
+        opacity: 0.9;
+      }
+      #autostream-panel[data-status="waiting"]::before {
+        background: linear-gradient(90deg, transparent, var(--as-warn), transparent);
+      }
+      #autostream-panel[data-status="error"]::before {
+        background: linear-gradient(90deg, transparent, var(--as-err), transparent);
+      }
 
       /* ─── HEADER ─── */
       #autostream-panel .as-head {
@@ -107,38 +135,42 @@
         border-bottom: 1px solid var(--as-line);
       }
       #autostream-panel .as-head-icon {
-        width: 40px; height: 40px; border-radius: 10px;
+        width: 44px; height: 44px; border-radius: 12px;
         display: flex; align-items: center; justify-content: center;
         background: var(--as-surface-3);
         border: 1px solid var(--as-line-strong);
-        color: var(--as-accent); font-size: 20px;
+        color: var(--as-accent);
+        font-size: 22px;
         flex-shrink: 0;
-        transition: all 0.3s;
+        transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
       }
       #autostream-panel[data-status="streaming"] .as-head-icon {
-        background: var(--as-accent-soft);
-        border-color: var(--as-accent-border);
-        box-shadow: 0 0 0 4px rgba(232, 130, 90, 0.06);
+        background: linear-gradient(135deg, var(--as-accent) 0%, #8ce600 100%);
+        color: #07070c;
+        border-color: transparent;
+        box-shadow: 0 0 0 4px var(--as-accent-soft), 0 4px 16px rgba(184, 255, 0, 0.35);
+        transform: rotate(-3deg);
       }
-      #autostream-panel .as-head-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+      #autostream-panel .as-head-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
       #autostream-panel .as-head-title {
-        font-size: 15px; font-weight: 700; color: var(--as-text);
-        letter-spacing: -0.015em;
+        font-size: 16px; font-weight: 800; color: var(--as-text);
+        letter-spacing: -0.02em;
       }
       #autostream-panel .as-head-sub {
-        font-size: 11.5px; color: var(--as-text-3);
+        font-size: 11px; color: var(--as-text-3);
         font-family: 'JetBrains Mono', monospace;
+        letter-spacing: -0.01em;
       }
       #autostream-panel .as-head-badge {
         font-size: 10.5px; font-weight: 700;
-        padding: 5px 11px; border-radius: 6px;
+        padding: 6px 12px; border-radius: 999px;
         background: var(--as-surface-3);
         color: var(--as-text-2);
         border: 1px solid var(--as-line-strong);
-        display: inline-flex; align-items: center; gap: 6px;
-        text-transform: uppercase; letter-spacing: 0.08em;
+        display: inline-flex; align-items: center; gap: 7px;
+        text-transform: uppercase; letter-spacing: 0.1em;
         font-family: 'JetBrains Mono', monospace;
-        transition: all 0.25s;
+        transition: all 0.3s ease;
         flex-shrink: 0;
       }
       #autostream-panel .as-head-badge .badge-dot {
@@ -147,7 +179,8 @@
       }
       #autostream-panel .as-head-badge.waiting {
         color: var(--as-warn);
-        border-color: rgba(232, 181, 77, 0.35);
+        border-color: rgba(251, 191, 36, 0.35);
+        background: rgba(251, 191, 36, 0.08);
       }
       #autostream-panel .as-head-badge.streaming {
         color: var(--as-accent);
@@ -155,11 +188,13 @@
         background: var(--as-accent-soft);
       }
       #autostream-panel .as-head-badge.streaming .badge-dot {
-        animation: asDotPulse 1.8s ease-in-out infinite;
+        animation: asDotPulse 1.6s ease-in-out infinite;
+        box-shadow: 0 0 8px currentColor;
       }
       #autostream-panel .as-head-badge.error {
         color: var(--as-err);
-        border-color: rgba(229, 105, 105, 0.35);
+        border-color: rgba(248, 113, 113, 0.35);
+        background: rgba(248, 113, 113, 0.08);
       }
       @keyframes asDotPulse {
         0%, 100% { opacity: 1; }
@@ -175,36 +210,32 @@
       @media (max-width: 900px) { .as-grid { grid-template-columns: 1fr; } }
       .as-col { display: flex; flex-direction: column; gap: 14px; }
 
-      /* ─── PASOS GUIADOS (1-2-3) ─── */
+      /* ─── PASOS GUIADOS ─── */
       .as-step {
-        background: var(--as-surface-2);
+        background: linear-gradient(180deg, var(--as-surface-2) 0%, #0a0a10 100%);
         border: 1px solid var(--as-line);
-        border-radius: 10px;
-        padding: 14px 16px 16px;
-        transition: all 0.2s;
+        border-radius: 12px;
+        padding: 16px 18px 18px;
+        transition: all 0.25s ease;
         position: relative;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+      }
+      .as-step:hover {
+        border-color: var(--as-line-strong);
+        transform: translateY(-1px);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 4px 16px rgba(0,0,0,0.2);
       }
       .as-step.done {
-        border-color: var(--as-line-strong);
+        border-color: var(--as-accent-border);
+        background: linear-gradient(180deg, rgba(184,255,0,0.03) 0%, #0a0a10 100%);
       }
-      .as-step.done .as-step-num {
-        background: var(--as-accent);
-        color: #0f0e13;
-        border-color: var(--as-accent);
-      }
-      .as-step.done .as-step-num::before {
-        content: '✓';
-        font-size: 12px;
-        font-weight: 900;
-      }
-      .as-step.done .as-step-num > span { display: none; }
 
       .as-step-head {
         display: flex; align-items: center; gap: 10px;
         margin-bottom: 12px;
       }
       .as-step-num {
-        width: 22px; height: 22px; border-radius: 50%;
+        width: 24px; height: 24px; border-radius: 50%;
         background: var(--as-surface-3);
         border: 1px solid var(--as-line-strong);
         color: var(--as-text-3);
@@ -212,12 +243,26 @@
         font-size: 11px; font-weight: 800;
         font-family: 'JetBrains Mono', monospace;
         flex-shrink: 0;
-        transition: all 0.25s;
+        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
       }
+      .as-step.done .as-step-num {
+        background: linear-gradient(135deg, var(--as-accent) 0%, #8ce600 100%);
+        color: #07070c;
+        border-color: transparent;
+        box-shadow: 0 0 12px rgba(184, 255, 0, 0.35);
+        transform: scale(1.05);
+      }
+      .as-step.done .as-step-num::before {
+        content: '✓';
+        font-size: 13px;
+        font-weight: 900;
+      }
+      .as-step.done .as-step-num > span { display: none; }
+
       .as-step-title {
-        font-size: 12px; font-weight: 700;
+        font-size: 11.5px; font-weight: 800;
         color: var(--as-text);
-        text-transform: uppercase; letter-spacing: 0.06em;
+        text-transform: uppercase; letter-spacing: 0.08em;
       }
       .as-step-hint {
         font-size: 11px; color: var(--as-text-3);
@@ -231,118 +276,143 @@
         width: 100%;
         background: var(--as-surface);
         border: 1px solid var(--as-line);
-        border-radius: 7px;
-        padding: 10px 12px;
+        border-radius: 9px;
+        padding: 11px 13px;
         color: var(--as-text);
         font-size: 12.5px;
         font-family: inherit;
         outline: none;
-        transition: border-color 0.15s, box-shadow 0.15s;
+        transition: all 0.18s ease;
+      }
+      #autostream-panel input[type="text"]:hover,
+      #autostream-panel select:hover {
+        border-color: var(--as-line-strong);
       }
       #autostream-panel input[type="text"]:focus,
       #autostream-panel select:focus {
         border-color: var(--as-accent);
-        box-shadow: 0 0 0 3px rgba(232, 130, 90, 0.1);
+        background: var(--as-surface-2);
+        box-shadow: 0 0 0 3px var(--as-accent-soft);
       }
       #autostream-panel input::placeholder { color: var(--as-text-3); }
       #autostream-panel select option { background: var(--as-surface-2); color: var(--as-text); }
+      #autostream-panel select option:disabled {
+        color: var(--as-text-3);
+        opacity: 0.7;
+        font-style: italic;
+      }
 
       /* ─── BOTONES ─── */
       .as-btn {
         display: inline-flex; align-items: center; justify-content: center;
         gap: 8px; padding: 12px 16px;
-        border-radius: 8px;
-        font-weight: 600; font-size: 12.5px; cursor: pointer;
+        border-radius: 10px;
+        font-weight: 700; font-size: 12.5px; cursor: pointer;
         font-family: inherit;
-        transition: all 0.15s;
+        transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
         border: 1px solid transparent;
         letter-spacing: -0.005em;
+        position: relative;
+        overflow: hidden;
       }
       .as-btn:disabled { opacity: 0.4; cursor: not-allowed; }
       .as-btn i { font-size: 15px; }
 
-      /* Primario: acento sólido (no gradiente) */
+      /* Primario: gradiente lima */
       .as-btn-primary {
-        background: var(--as-accent);
-        color: #0f0e13;
-        border-color: var(--as-accent);
-        font-weight: 700;
+        background: linear-gradient(135deg, var(--as-accent) 0%, #8ce600 100%);
+        color: #07070c;
+        border-color: transparent;
+        box-shadow: 0 2px 12px rgba(184, 255, 0, 0.25);
       }
       .as-btn-primary:hover:not(:disabled) {
-        background: #f0926a;
-        border-color: #f0926a;
+        box-shadow: 0 4px 20px rgba(184, 255, 0, 0.4);
+        transform: translateY(-1px);
       }
       .as-btn-primary:active:not(:disabled) {
         transform: translateY(1px);
+        box-shadow: 0 1px 6px rgba(184, 255, 0, 0.3);
       }
 
-      /* Peligro: outline, no relleno (más sobrio) */
+      /* Peligro: outline rojo */
       .as-btn-danger {
         background: transparent;
         color: var(--as-err);
-        border-color: rgba(229, 105, 105, 0.3);
+        border-color: rgba(248, 113, 113, 0.3);
       }
       .as-btn-danger:hover:not(:disabled) {
-        background: rgba(229, 105, 105, 0.08);
-        border-color: rgba(229, 105, 105, 0.55);
+        background: rgba(248, 113, 113, 0.08);
+        border-color: rgba(248, 113, 113, 0.55);
+        transform: translateY(-1px);
       }
 
-      /* Warning: outline */
+      /* Warning: outline ámbar */
       .as-btn-warning {
         background: transparent;
         color: var(--as-warn);
-        border-color: rgba(232, 181, 77, 0.3);
+        border-color: rgba(251, 191, 36, 0.3);
       }
       .as-btn-warning:hover:not(:disabled) {
-        background: rgba(232, 181, 77, 0.08);
-        border-color: rgba(232, 181, 77, 0.55);
+        background: rgba(251, 191, 36, 0.08);
+        border-color: rgba(251, 191, 36, 0.55);
+        transform: translateY(-1px);
       }
 
       .as-row-actions {
         display: grid; grid-template-columns: 2fr 1fr; gap: 8px;
       }
 
-      /* ─── PANEL OBS (colapsable) ─── */
+      /* ─── PANEL OBS ─── */
       .as-obs-panel {
-        background: var(--as-surface-2);
+        background: linear-gradient(180deg, var(--as-surface-2) 0%, #0a0a10 100%);
         border: 1px solid var(--as-line);
-        border-radius: 10px;
+        border-radius: 12px;
         overflow: hidden;
-        transition: all 0.2s;
+        transition: all 0.2s ease;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+      }
+      .as-obs-panel[open] {
+        border-color: var(--as-line-strong);
       }
       .as-obs-panel summary {
         list-style: none;
-        padding: 12px 16px;
+        padding: 14px 16px;
         cursor: pointer;
         display: flex; align-items: center; gap: 10px;
-        font-size: 12px; font-weight: 700;
+        font-size: 11.5px; font-weight: 800;
         color: var(--as-text);
-        text-transform: uppercase; letter-spacing: 0.06em;
+        text-transform: uppercase; letter-spacing: 0.08em;
         user-select: none;
-        transition: background 0.15s;
+        transition: background 0.15s ease;
       }
       .as-obs-panel summary::-webkit-details-marker { display: none; }
-      .as-obs-panel summary:hover { background: var(--as-surface-3); }
+      .as-obs-panel summary:hover { background: rgba(255,255,255,0.02); }
       .as-obs-panel summary > i:first-child {
-        color: var(--as-accent); font-size: 15px;
+        color: var(--as-accent);
+        font-size: 16px;
       }
       .as-obs-panel summary .caret {
-        margin-left: auto; font-size: 14px;
-        transition: transform 0.2s;
+        margin-left: auto; font-size: 15px;
+        transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
         color: var(--as-text-3);
       }
-      .as-obs-panel[open] summary .caret { transform: rotate(180deg); }
+      .as-obs-panel[open] summary .caret { transform: rotate(180deg); color: var(--as-accent); }
       .as-obs-body {
         padding: 4px 16px 16px;
         display: flex; flex-direction: column; gap: 12px;
+        animation: asSlideIn 0.25s ease;
+      }
+      @keyframes asSlideIn {
+        from { opacity: 0; transform: translateY(-4px); }
+        to   { opacity: 1; transform: translateY(0); }
       }
 
       /* ─── FILAS OBS ─── */
-      .as-obs-row { display: flex; flex-direction: column; gap: 5px; }
+      .as-obs-row { display: flex; flex-direction: column; gap: 6px; }
       .as-obs-key {
         font-size: 10px; color: var(--as-text-3);
-        text-transform: uppercase; letter-spacing: 0.08em;
-        font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.1em;
+        font-weight: 800;
         font-family: 'JetBrains Mono', monospace;
       }
       .as-obs-val {
@@ -350,11 +420,13 @@
         font-size: 11.5px; color: var(--as-text);
         background: var(--as-surface);
         border: 1px solid var(--as-line);
-        padding: 9px 11px;
-        border-radius: 6px;
+        padding: 10px 12px;
+        border-radius: 8px;
         display: flex; align-items: center; justify-content: space-between;
         gap: 8px;
+        transition: border-color 0.15s ease;
       }
+      .as-obs-val:hover { border-color: var(--as-line-strong); }
       .as-obs-val > span {
         overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
         flex: 1;
@@ -364,21 +436,23 @@
         background: transparent;
         border: 1px solid var(--as-line-strong);
         color: var(--as-text-3);
-        border-radius: 5px;
-        padding: 3px 8px;
+        border-radius: 6px;
+        padding: 4px 9px;
         font-size: 10px; cursor: pointer;
         flex-shrink: 0;
         font-family: 'JetBrains Mono', monospace;
         font-weight: 700;
-        transition: all 0.15s;
+        transition: all 0.15s ease;
         display: inline-flex; align-items: center; gap: 4px;
-        letter-spacing: 0.03em;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
       }
       .as-copy-btn:hover {
         color: var(--as-accent);
         border-color: var(--as-accent-border);
+        background: var(--as-accent-soft);
       }
-      .as-copy-btn:active { transform: scale(0.96); }
+      .as-copy-btn:active { transform: scale(0.95); }
 
       /* ─── QR ─── */
       .as-qr-row {
@@ -390,11 +464,14 @@
       }
       .as-qr-frame {
         background: #ffffff;
-        border-radius: 6px;
-        padding: 6px;
+        border-radius: 8px;
+        padding: 8px;
         flex-shrink: 0;
         line-height: 0;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        transition: transform 0.2s ease;
       }
+      .as-qr-frame:hover { transform: scale(1.03); }
       .as-qr-frame canvas { display: block; }
       .as-qr-hint {
         font-size: 11.5px; color: var(--as-text-2);
@@ -402,7 +479,7 @@
       }
       .as-qr-hint b {
         color: var(--as-text);
-        font-weight: 700;
+        font-weight: 800;
         display: block;
         margin-bottom: 4px;
       }
@@ -411,120 +488,176 @@
         font-size: 10.5px;
         color: var(--as-accent);
         background: var(--as-accent-soft);
-        padding: 1px 5px;
-        border-radius: 3px;
+        padding: 2px 6px;
+        border-radius: 4px;
+        border: 1px solid var(--as-accent-border);
       }
 
       /* ─── STATUS BOX ─── */
       .as-status-box {
         display: flex; align-items: center; gap: 12px;
-        padding: 12px 14px;
-        border-radius: 9px;
-        background: var(--as-surface-2);
+        padding: 13px 16px;
+        border-radius: 11px;
+        background: linear-gradient(180deg, var(--as-surface-2) 0%, #0a0a10 100%);
         border: 1px solid var(--as-line);
         font-size: 12.5px;
+        transition: all 0.25s ease;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
       }
       .as-status-box .status-dot {
-        width: 8px; height: 8px; border-radius: 50%;
+        width: 9px; height: 9px; border-radius: 50%;
         background: var(--as-text-3);
         flex-shrink: 0;
-        transition: background 0.2s;
+        transition: all 0.25s ease;
       }
-      .as-status-box[data-state="waiting"] .status-dot  { background: var(--as-warn); animation: asDotPulse 1.4s infinite; }
-      .as-status-box[data-state="streaming"] .status-dot { background: var(--as-accent); animation: asDotPulse 1.4s infinite; }
-      .as-status-box[data-state="error"] .status-dot     { background: var(--as-err); }
+      .as-status-box[data-state="waiting"] .status-dot {
+        background: var(--as-warn);
+        animation: asDotPulse 1.4s ease-in-out infinite;
+        box-shadow: 0 0 8px var(--as-warn);
+      }
+      .as-status-box[data-state="streaming"] .status-dot {
+        background: var(--as-accent);
+        animation: asDotPulse 1.4s ease-in-out infinite;
+        box-shadow: 0 0 10px var(--as-accent);
+      }
+      .as-status-box[data-state="error"] .status-dot {
+        background: var(--as-err);
+        box-shadow: 0 0 8px var(--as-err);
+      }
       .as-status-box .status-label {
-        color: var(--as-text-3); font-size: 11px;
-        text-transform: uppercase; letter-spacing: 0.08em;
-        font-weight: 700;
+        color: var(--as-text-3); font-size: 10.5px;
+        text-transform: uppercase; letter-spacing: 0.1em;
+        font-weight: 800;
         font-family: 'JetBrains Mono', monospace;
       }
       .as-status-box .status-value {
         margin-left: auto;
-        color: var(--as-text); font-weight: 700;
-        font-size: 12px;
+        color: var(--as-text); font-weight: 800;
+        font-size: 12.5px;
+      }
+      .as-status-box[data-state="streaming"] {
+        border-color: var(--as-accent-border);
+        background: linear-gradient(180deg, rgba(184,255,0,0.04) 0%, #0a0a10 100%);
       }
       .as-status-box[data-state="streaming"] .status-value { color: var(--as-accent); }
+      .as-status-box[data-state="error"] {
+        border-color: rgba(248,113,113,0.35);
+      }
+      .as-status-box[data-state="error"] .status-value { color: var(--as-err); }
 
       /* ─── ERROR ─── */
       .as-error {
-        background: rgba(229, 105, 105, 0.06);
-        border: 1px solid rgba(229, 105, 105, 0.3);
-        border-radius: 9px;
-        padding: 11px 13px;
+        background: rgba(248, 113, 113, 0.06);
+        border: 1px solid rgba(248, 113, 113, 0.3);
+        border-left: 3px solid var(--as-err);
+        border-radius: 10px;
+        padding: 12px 14px;
         font-size: 12px; color: #f0b8b8;
         display: none; gap: 10px; align-items: flex-start;
+        line-height: 1.55;
+        animation: asSlideIn 0.25s ease;
       }
       .as-error.show { display: flex; }
-      .as-error i { font-size: 15px; flex-shrink: 0; margin-top: 1px; color: var(--as-err); }
+      .as-error i {
+        font-size: 16px; flex-shrink: 0; margin-top: 1px;
+        color: var(--as-err);
+      }
 
       /* ─── META ─── */
       .as-meta {
         font-size: 11px; color: var(--as-text-3);
         display: flex; gap: 16px; flex-wrap: wrap;
-        padding: 6px 2px;
+        padding: 8px 4px;
         font-family: 'JetBrains Mono', monospace;
       }
-      .as-meta b { color: var(--as-text-2); font-weight: 600; }
+      .as-meta b { color: var(--as-text-2); font-weight: 700; }
 
-      /* ─── HINT (info card) ─── */
+      /* ─── HINT ─── */
       .as-hint {
-        background: var(--as-surface-2);
+        background: linear-gradient(180deg, var(--as-surface-2) 0%, #0a0a10 100%);
         border: 1px solid var(--as-line);
-        border-left: 3px solid var(--as-accent);
-        border-radius: 8px;
-        padding: 12px 14px;
+        border-left: 3px solid var(--as-cyan);
+        border-radius: 10px;
+        padding: 14px 16px;
         font-size: 11.5px;
         color: var(--as-text-2);
-        line-height: 1.6;
+        line-height: 1.65;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
       }
-      .as-hint b { color: var(--as-text); font-weight: 700; }
+      .as-hint b {
+        color: var(--as-cyan);
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-size: 10.5px;
+        font-family: 'JetBrains Mono', monospace;
+      }
 
       /* ─── REFRESH BTN ─── */
       .as-refresh-btn {
         background: transparent;
         border: 1px solid var(--as-line);
         color: var(--as-text-3);
-        padding: 4px 9px; border-radius: 5px;
+        padding: 5px 10px; border-radius: 6px;
         font-size: 10.5px; cursor: pointer;
         font-family: 'JetBrains Mono', monospace;
-        font-weight: 700;
+        font-weight: 800;
         display: inline-flex; align-items: center; gap: 5px;
-        transition: all 0.15s;
-        letter-spacing: 0.03em;
+        transition: all 0.15s ease;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
       }
       .as-refresh-btn:hover {
         color: var(--as-accent);
         border-color: var(--as-accent-border);
+        background: var(--as-accent-soft);
       }
       .as-refresh-btn.spinning i { animation: asSpin 0.8s linear infinite; }
       @keyframes asSpin { to { transform: rotate(360deg); } }
 
-      /* Proxy status pill */
+      /* ─── PROXY PILL ─── */
       .as-proxy-pill {
         display: inline-flex; align-items: center; gap: 6px;
         font-size: 10.5px;
         font-family: 'JetBrains Mono', monospace;
-        font-weight: 700;
+        font-weight: 800;
         color: var(--as-text-2);
-        padding: 2px 8px;
-        border-radius: 4px;
+        padding: 3px 9px;
+        border-radius: 5px;
         background: var(--as-surface);
         border: 1px solid var(--as-line);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
       }
       .as-proxy-pill::before {
         content: '';
         width: 5px; height: 5px; border-radius: 50%;
         background: var(--as-text-3);
       }
-      .as-proxy-pill.ok::before { background: var(--as-ok); }
-      .as-proxy-pill.err::before { background: var(--as-err); }
+      .as-proxy-pill.ok::before {
+        background: var(--as-accent);
+        box-shadow: 0 0 6px var(--as-accent);
+      }
+      .as-proxy-pill.err::before {
+        background: var(--as-err);
+        box-shadow: 0 0 6px var(--as-err);
+      }
+
+      /* ─── ACCESIBILIDAD ─── */
+      @media (prefers-reduced-motion: reduce) {
+        #autostream-panel *,
+        #autostream-panel *::before,
+        #autostream-panel *::after {
+          animation-duration: 0.01ms !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
     `;
     document.head.appendChild(style);
   }
 
   // ============================================================
-  // 🏗️ CONSTRUIR HTML DEL PANEL (nueva estructura 1-2-3)
+  // 🏗️ CONSTRUIR HTML DEL PANEL
   // ============================================================
   function buildPanel() {
     if (document.getElementById('autostream-panel')) return;
@@ -611,7 +744,7 @@
         <!-- ══════════ COLUMNA DERECHA: CONFIG OBS ══════════ -->
         <div class="as-col">
 
-          <!-- OBS panel colapsable: esta PC -->
+          <!-- OBS panel: esta PC -->
           <details class="as-obs-panel" open>
             <summary>
               <i class="ri-computer-line"></i>
@@ -640,7 +773,7 @@
             </div>
           </details>
 
-          <!-- OBS panel colapsable: otra PC -->
+          <!-- OBS panel: otra PC -->
           <details class="as-obs-panel">
             <summary>
               <i class="ri-router-line"></i>
@@ -709,14 +842,23 @@
     document.getElementById('as-stop').addEventListener('click', stopStream);
     document.getElementById('as-renew').addEventListener('click', renewStream);
 
-    // ── CAMBIO CLAVE: al cambiar de cuenta en el desplegable,
-    //    actualizamos `selectedToken` con el valor elegido.
+        // ✨ Al cambiar de cuenta, guardar en localStorage
     document.getElementById('as-account').addEventListener('change', (e) => {
       selectedToken = e.target.value;
+      try {
+        if (selectedToken) {
+          localStorage.setItem(AS_LS_KEY, selectedToken);
+          console.log('💾 Cuenta guardada:', selectedToken.slice(0, 20) + '...');
+        }
+      } catch (err) {}
       updateSteps();
     });
 
-    document.getElementById('as-title').addEventListener('input', updateSteps);
+    // ✨ Al escribir título, guardar en localStorage
+    document.getElementById('as-title').addEventListener('input', (e) => {
+      try { localStorage.setItem(AS_LS_KEY_TITLE, e.target.value); } catch (err) {}
+      updateSteps();
+    });
 
     // Copy buttons
     panel.addEventListener('click', async (e) => {
@@ -730,7 +872,7 @@
         ? '<i class="ri-check-line"></i> ok'
         : '<i class="ri-close-line"></i> error';
       btn.style.color = ok ? 'var(--as-ok)' : 'var(--as-err)';
-      btn.style.borderColor = ok ? 'rgba(109,213,140,0.4)' : 'rgba(229,105,105,0.4)';
+      btn.style.borderColor = ok ? 'rgba(184,255,0,0.4)' : 'rgba(248,113,113,0.4)';
       setTimeout(() => {
         btn.innerHTML = originalHTML;
         btn.style.color = '';
@@ -738,12 +880,23 @@
       }, 1400);
     });
 
-    // Actualizar pasos al inicio
+    // ✨ Restaurar título guardado al construir el panel
+    try {
+      const tGuardado = localStorage.getItem(AS_LS_KEY_TITLE);
+      const inputTitle = document.getElementById('as-title');
+      if (tGuardado && inputTitle) {
+        inputTitle.value = tGuardado;
+      }
+    } catch (err) {}
+
+    // ✨ Arrancar auto-guardado desde el inicio
+    iniciarAutoGuardado();
+
     updateSteps();
   }
 
   // ============================================================
-  // ✅ ACTUALIZAR ESTADO VISUAL DE LOS PASOS 1-2-3
+  // ✅ ACTUALIZAR ESTADO VISUAL DE LOS PASOS
   // ============================================================
   function updateSteps() {
     const acc = document.getElementById('as-account');
@@ -759,7 +912,6 @@
     step1.classList.toggle('done', hasAccount);
     step2.classList.toggle('done', hasTitle);
 
-    // El paso 3 solo se marca como "done" cuando está emitiendo
     const status = document.getElementById('as-status-box')?.getAttribute('data-state');
     step3.classList.toggle('done', status === 'streaming');
   }
@@ -781,12 +933,11 @@
         return;
       }
 
-      // Mostrar TODAS las cuentas detectadas, marcando las inválidas
       const todas = Array.isArray(data.accounts) ? data.accounts : [];
       const validas = todas.filter(a => a.canBeLive && !a.invalid);
       const invalidas = todas.filter(a => !a.canBeLive || a.invalid);
 
-      accounts = todas;   // guardamos todas
+      accounts = todas;
 
       if (todas.length === 0) {
         select.innerHTML = '<option value="">Sin cuentas detectadas</option>';
@@ -798,7 +949,6 @@
       hideError();
       select.innerHTML = '';
 
-      // 1) Las que pueden emitir (elegibles)
       validas.forEach((a, i) => {
         const opt = document.createElement('option');
         opt.value = a.apiToken;
@@ -808,10 +958,9 @@
         select.appendChild(opt);
       });
 
-      // 2) Las que NO pueden emitir (marcadas, deshabilitadas)
       invalidas.forEach((a, i) => {
         const opt = document.createElement('option');
-        opt.value = '';   // ← vacío para inválidas
+        opt.value = '';
         opt.disabled = true;
         const realName = a.nickname || a.username || a.displayName || a.name || `Cuenta ${i + 1}`;
         const motivo = a.error
@@ -821,10 +970,17 @@
         select.appendChild(opt);
       });
 
-      // 3) Seleccionar la primera VÁLIDA automáticamente
+            // ✨ Restaurar la cuenta guardada (si existe y es válida)
       if (validas.length > 0) {
-        selectedToken = validas[0].apiToken;
+        let tokenRestaurar = null;
+        try { tokenRestaurar = localStorage.getItem(AS_LS_KEY); } catch (e) {}
+
+        const existeEnLista = tokenRestaurar && validas.some(a => a.apiToken === tokenRestaurar);
+
+        selectedToken = existeEnLista ? tokenRestaurar : validas[0].apiToken;
         select.value = selectedToken;
+
+        console.log('🔄 Cuenta seleccionada:', existeEnLista ? 'restaurada' : 'por defecto (primera)');
       } else {
         selectedToken = null;
         showError('Ninguna cuenta puede emitir. Revisa Streamlabs Desktop.');
@@ -842,12 +998,18 @@
   // ============================================================
   // ▶️ INICIAR / DETENER / RENOVAR
   // ============================================================
-  async function startStream() {
+    async function startStream() {
     const title = document.getElementById('as-title').value.trim() || 'TogiPanel Stream';
 
-    // 🔥 FIX: leer el token DIRECTAMENTE del <select> al pulsar INICIAR
     const sel = document.getElementById('as-account');
     const tokenDelSelect = sel ? sel.value : '';
+
+    // ✨ Guardar antes de iniciar (redundancia)
+    try {
+      if (tokenDelSelect) localStorage.setItem(AS_LS_KEY, tokenDelSelect);
+      if (title) localStorage.setItem(AS_LS_KEY_TITLE, title);
+      console.log('💾 Guardado antes de iniciar:', tokenDelSelect.slice(0, 20) + '...');
+    } catch (e) {}
 
     console.log('=== INICIAR STREAM ===');
     console.log('tokenDelSelect:', tokenDelSelect ? tokenDelSelect.slice(0, 20) + '...' : '(vacío)');
@@ -1050,6 +1212,44 @@
   // ============================================================
   // 🎛️ TOGGLE DEL PANEL
   // ============================================================
+    // ✨ Auto-guardado periódico (por si el listener change falla)
+  let __autoGuardadoTimer = null;
+  let __ultimoTokenGuardado = null;
+
+  function iniciarAutoGuardado() {
+    detenerAutoGuardado();
+    __autoGuardadoTimer = setInterval(() => {
+      try {
+        const sel = document.getElementById('as-account');
+        const input = document.getElementById('as-title');
+        if (!sel) return;
+
+        const tokenActual = sel.value || '';
+        if (tokenActual && tokenActual !== __ultimoTokenGuardado) {
+          localStorage.setItem(AS_LS_KEY, tokenActual);
+          __ultimoTokenGuardado = tokenActual;
+          console.log('💾 Auto-guardado cuenta:', tokenActual.slice(0, 20) + '...');
+        }
+
+        if (input) {
+          const tituloActual = input.value || '';
+          if (tituloActual) {
+            localStorage.setItem(AS_LS_KEY_TITLE, tituloActual);
+          }
+        }
+      } catch (e) {
+        console.warn('⚠️ Auto-guardado falló:', e.message);
+      }
+    }, 2000);
+  }
+
+  function detenerAutoGuardado() {
+    if (__autoGuardadoTimer) {
+      clearInterval(__autoGuardadoTimer);
+      __autoGuardadoTimer = null;
+    }
+  }
+
   function togglePanel() {
     const panel = document.getElementById('autostream-panel');
     if (!panel) return;
@@ -1058,8 +1258,10 @@
       loadAccounts();
       actualizarEstado();
       startObsPolling();
+      iniciarAutoGuardado();
     } else {
       stopObsPolling();
+      detenerAutoGuardado();
     }
   }
 
@@ -1075,7 +1277,7 @@
       const btn = document.createElement('button');
       btn.className = 'toggle-right-btn';
       btn.id = 'toggle-autostream-btn';
-      btn.style.cssText = 'color: var(--secondary); border-color: rgba(214,123,168,0.3);';
+      btn.style.cssText = 'color: #ff0080; border-color: rgba(255,0,128,0.35);';
       btn.innerHTML = '<i class="ri-live-fill"></i> <span>Auto-Stream</span>';
       btn.addEventListener('click', togglePanel);
       headerRight.insertBefore(btn, headerRight.firstChild);
@@ -1087,7 +1289,7 @@
       link.className = 'sidebar-item';
       link.href = '#';
       link.setAttribute('data-autostream', '1');
-      link.innerHTML = '<i class="ri-live-fill"></i><span>Auto-Stream</span>';
+      link.innerHTML = '<i class="ri-live-fill" style="color:#ff0080"></i><span>Auto-Stream</span>';
       link.addEventListener('click', (e) => {
         e.preventDefault();
         const panel = document.getElementById('autostream-panel');

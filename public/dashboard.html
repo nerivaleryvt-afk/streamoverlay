@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard de Lives</title>
+  <title>Dashboard · Toki</title>
   <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
   <link rel="preconnect" href="https://api.fontshare.com">
   <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600,700,900&display=swap" rel="stylesheet">
@@ -19,8 +19,11 @@
 
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-logo">
-        <div class="logo-icon"><i class="ri-live-line"></i></div>
-        <span>Dashboard</span>
+        <div class="logo-icon"><img src="/img/toki.png" alt="Toki"></div>
+        <div class="logo-text">
+          <span class="logo-name">Toki</span>
+          <span class="logo-sub">Dashboard</span>
+        </div>
       </div>
 
       <div class="sidebar-section-title">Vistas</div>
@@ -84,221 +87,221 @@
 
     <main class="main-content">
 
-  <div class="header">
-    <div class="header-left">
-      <h1>Dashboard</h1>
-      <p>moderación · encuestas · stats en vivo</p>
-    </div>
-    <div class="header-right">
-
-      <div class="tiktok-view-selector" id="tiktokViewSelector">
-        <button class="tiktok-view-btn" onclick="toggleTikTokDropdown(event)" title="Seleccionar cuenta de TikTok Live Center">
-          <i class="ri-tiktok-fill tk-icon"></i>
-          <span id="tiktokViewLabel">TikTok</span>
-          <i class="ri-arrow-down-s-line tk-caret"></i>
-        </button>
-        <button class="tiktok-eye-btn" onclick="toggleTikTokColumn()" id="toggleTikTokBtn" title="Mostrar/Ocultar panel TikTok">
-          <i class="ri-eye-line" id="toggleTikTokIcon"></i>
-        </button>
-
-        <div class="tiktok-view-dropdown" id="tiktokViewDropdown"></div>
-      </div>
-
-      <button class="toggle-right-btn youtube-btn" onclick="toggleYouTubeStats()" id="toggleYouTubeBtn">
-        <i class="ri-youtube-fill"></i>
-        <span id="toggleYouTubeText">Ocultar YouTube</span>
-      </button>
-      <button class="toggle-right-btn" onclick="toggleRightColumn()" id="toggleBtn">
-        <i class="ri-layout-right-line" id="toggleIcon"></i>
-        <span id="toggleText">Ocultar Panel</span>
-      </button>
-      <div class="status-badge" id="connectionStatus">
-        <span class="status-dot"></span>
-        <span class="status-text">Conectado</span>
-      </div>
-    </div>
-  </div>
-
-  <div class="stats-bar" id="section-overview">
-    <div class="stat-item"><div class="stat-value" id="totalMessages">0</div><div class="stat-label">Mensajes</div></div>
-    <div class="stat-item"><div class="stat-value" id="totalBans">0</div><div class="stat-label">Baneos</div></div>
-    <div class="stat-item"><div class="stat-value" id="totalBits">0</div><div class="stat-label">Bits</div></div>
-    <div class="stat-item"><div class="stat-value" id="totalActions">0</div><div class="stat-label">Acciones</div></div>
-  </div>
-
-  <div class="main-layout" id="mainLayout">
-    <div class="chat-panel" id="section-chat">
-      <div class="chat-panel-header"><i class="ri-chat-3-line"></i><span>Mi Chat Multiplataforma</span></div>
-      <div class="chat-messages" id="liveChat"></div>
-    </div>
-
-    <div class="tiktok-view-container" id="tiktokViewContainer">
-      <h2>
-        <span>
-          <i class="ri-tiktok-fill"></i> TikTok Live Center
-          <span class="tk-current-view" id="tkCurrentViewBadge">—</span>
-        </span>
-        <span style="display:flex; gap:6px; align-items:center;">
-          <button class="open-native-btn" onclick="refreshTikTokView()" id="refreshTikTokBtn" title="Recargar vista TikTok (F5)">
-            <i class="ri-refresh-line"></i> Refresh
-          </button>
-          <button class="open-native-btn" onclick="openTikTokNative()"><i class="ri-external-link-line"></i> Ventana externa</button>
-        </span>
-      </h2>
-      <webview id="tiktokView" src="about:blank" partition="persist:tiktok-session"></webview>
-    </div>
-
-    <div class="right-column" id="rightColumn">
-      <div class="moderation-box" id="section-moderation">
-        <h2><i class="ri-shield-check-line"></i> Moderación</h2>
-        <div class="input-group"><select id="actionChannelSelect"></select></div>
-        <div class="input-group">
-          <input type="text" id="username" placeholder="Usuario...">
-          <input type="text" id="reason" placeholder="Razón...">
+      <div class="header">
+        <div class="header-left">
+          <h1>Dashboard</h1>
+          <p>moderación · encuestas · stats en vivo</p>
         </div>
-        <div class="action-buttons">
-          <button class="btn btn-danger" onclick="banUser()"><i class="ri-forbid-2-line"></i> Banear</button>
-          <button class="btn btn-success" onclick="unbanUser()"><i class="ri-checkbox-circle-line"></i> Desbanear</button>
-          <button class="btn btn-warning" onclick="timeoutUser()"><i class="ri-time-line"></i> Timeout</button>
-          <button class="btn btn-info" onclick="warnUser()"><i class="ri-alert-line"></i> Advertir</button>
-        </div>
-      </div>
+        <div class="header-right">
 
-      <div class="poll-panel" id="section-polls">
-        <h2><i class="ri-bar-chart-box-line"></i> Encuestas y Predicciones</h2>
-        <div class="input-group"><select id="pollChannelSelect"></select></div>
-        <div class="input-group"><input type="text" id="nativePollQuestion" placeholder="Pregunta..."></div>
-        <div class="option-inputs" id="nativePollOptions">
-          <div class="input-group" style="margin-bottom:5px;"><input type="text" class="native-option-input" placeholder="Opción 1"></div>
-          <div class="input-group" style="margin-bottom:5px;"><input type="text" class="native-option-input" placeholder="Opción 2"><button class="remove-option-btn" onclick="removeNativeOption(this)"><i class="ri-close-line"></i></button></div>
-        </div>
-        <button class="add-option-btn" onclick="addNativeOption()" style="margin-bottom:8px;">+ Añadir opción</button>
-        <div class="action-buttons"><button class="btn btn-success" onclick="createNativePoll()">Crear Encuesta</button></div>
-        <div id="nativePollDisplay" style="margin-top: 10px;"></div>
-
-        <div style="margin-top: 20px;">
-          <div class="input-group"><select id="predictionChannelSelect"></select></div>
-          <div class="input-group"><input type="text" id="predictionQuestion" placeholder="Pregunta..."></div>
-          <div class="input-group"><input type="text" id="predictionOption1" placeholder="Opción 1"><input type="text" id="predictionOption2" placeholder="Opción 2"></div>
-          <div class="action-buttons"><button class="btn btn-success" onclick="createNativePrediction()">Crear Predicción</button></div>
-          <div id="predictionDisplay" style="margin-top: 10px;"></div>
-        </div>
-      </div>
-
-      <div class="title-category-panel" id="section-title-category">
-        <h2><i class="ri-edit-2-line"></i> Título y Categoría</h2>
-
-        <div class="input-group">
-          <select id="titleChannelSelect" onchange="onTitleCategoryChannelChange()"></select>
-        </div>
-
-        <div class="stream-info-box" id="streamInfoBox">
-          <div class="stream-info-row">
-            <span class="stream-info-label">Título actual</span>
-            <span class="stream-info-value" id="currentTitle">—</span>
-          </div>
-          <div class="stream-info-row">
-            <span class="stream-info-label">Categoría actual</span>
-            <span class="stream-info-value" id="currentCategory">—</span>
-          </div>
-        </div>
-
-        <div class="input-group" style="margin-top: 12px;">
-          <input type="text" id="streamTitle" placeholder="Nuevo título..." onkeydown="if(event.key==='Enter') changeTitle()">
-          <button class="icon-action-btn" onclick="changeTitle()" title="Cambiar título">
-            <i class="ri-arrow-right-line"></i>
-          </button>
-        </div>
-        <div id="titleResult" class="action-result"></div>
-
-        <div style="margin-top: 15px; position: relative;">
-          <div class="input-group">
-            <input type="text" id="categorySearch" placeholder="Buscar categoría..." autocomplete="off"
-                   oninput="onCategorySearchInput()"
-                   onkeydown="if(event.key==='Enter'){event.preventDefault();selectFirstCategory();}"
-                   onfocus="onCategorySearchFocus()">
-            <button class="icon-action-btn" onclick="changeSelectedCategory()" title="Cambiar categoría">
-              <i class="ri-check-line"></i>
+          <div class="tiktok-view-selector" id="tiktokViewSelector">
+            <button class="tiktok-view-btn" onclick="toggleTikTokDropdown(event)" title="Seleccionar cuenta de TikTok Live Center">
+              <i class="ri-tiktok-fill tk-icon"></i>
+              <span id="tiktokViewLabel">TikTok</span>
+              <i class="ri-arrow-down-s-line tk-caret"></i>
             </button>
+            <button class="tiktok-eye-btn" onclick="toggleTikTokColumn()" id="toggleTikTokBtn" title="Mostrar/Ocultar panel TikTok">
+              <i class="ri-eye-line" id="toggleTikTokIcon"></i>
+            </button>
+
+            <div class="tiktok-view-dropdown" id="tiktokViewDropdown"></div>
           </div>
-          <div class="category-dropdown" id="categoryDropdown"></div>
-          <input type="hidden" id="selectedCategoryId">
-          <input type="hidden" id="selectedCategoryName">
+
+          <button class="toggle-right-btn youtube-btn" onclick="toggleYouTubeStats()" id="toggleYouTubeBtn">
+            <i class="ri-youtube-fill"></i>
+            <span id="toggleYouTubeText">Ocultar YouTube</span>
+          </button>
+          <button class="toggle-right-btn" onclick="toggleRightColumn()" id="toggleBtn">
+            <i class="ri-layout-right-line" id="toggleIcon"></i>
+            <span id="toggleText">Ocultar Panel</span>
+          </button>
+          <div class="status-badge" id="connectionStatus">
+            <span class="status-dot"></span>
+            <span class="status-text">Conectado</span>
+          </div>
         </div>
-        <div id="categoryResult" class="action-result"></div>
       </div>
-    </div>
-  </div>
 
-  <div class="stats-section" id="section-stats-tiktok">
-    <div class="section-title tiktok">
-      <i class="ri-tiktok-fill"></i>
-      <span>Estadísticas TikTok en Vivo</span>
-    </div>
+      <div class="stats-bar" id="section-overview">
+        <div class="stat-item"><div class="stat-value" id="totalMessages">0</div><div class="stat-label">Mensajes</div></div>
+        <div class="stat-item"><div class="stat-value" id="totalBans">0</div><div class="stat-label">Baneos</div></div>
+        <div class="stat-item"><div class="stat-value" id="totalBits">0</div><div class="stat-label">Bits</div></div>
+        <div class="stat-item"><div class="stat-value" id="totalActions">0</div><div class="stat-label">Acciones</div></div>
+      </div>
 
-    <div class="mini-stats-row">
-      <div class="mini-stat tiktok"><div class="mini-stat-value" id="tkLikes">0</div><div class="mini-stat-label">Likes</div></div>
-      <div class="mini-stat tiktok"><div class="mini-stat-value" id="tkFollows">0</div><div class="mini-stat-label">Follows</div></div>
-      <div class="mini-stat tiktok"><div class="mini-stat-value" id="tkShares">0</div><div class="mini-stat-label">Shares</div></div>
-      <div class="mini-stat tiktok"><div class="mini-stat-value" id="tkDiamonds">0</div><div class="mini-stat-label">Diamantes</div></div>
-      <div class="mini-stat tiktok"><div class="mini-stat-value" id="tkViewers">0</div><div class="mini-stat-label">Viewers</div></div>
-    </div>
+      <div class="main-layout" id="mainLayout">
+        <div class="chat-panel" id="section-chat">
+          <div class="chat-panel-header"><i class="ri-chat-3-line"></i><span>Mi Chat Multiplataforma</span></div>
+          <div class="chat-messages" id="liveChat"></div>
+        </div>
 
-    <div class="stats-tables-row">
-      <div class="stats-table-box">
-        <h3><span><i class="ri-vip-diamond-fill"></i> Top Donadores</span><button class="reset-btn" onclick="resetTikTokStats()">Reset</button></h3>
-        <table class="stats-table"><thead><tr><th>#</th><th>Usuario</th><th><i class="ri-vip-diamond-fill"></i></th></tr></thead>
-        <tbody id="topGiftersTable"><tr><td colspan="3" class="empty">Sin datos todavía</td></tr></tbody></table>
-      </div>
-      <div class="stats-table-box">
-        <h3><span><i class="ri-heart-3-fill"></i> Top Likes</span></h3>
-        <table class="stats-table"><thead><tr><th>#</th><th>Usuario</th><th><i class="ri-heart-3-fill"></i></th></tr></thead>
-        <tbody id="topLikersTable"><tr><td colspan="3" class="empty">Sin datos todavía</td></tr></tbody></table>
-      </div>
-      <div class="stats-table-box">
-        <h3><span><i class="ri-share-forward-fill"></i> Top Compartidos</span></h3>
-        <table class="stats-table"><thead><tr><th>#</th><th>Usuario</th><th><i class="ri-share-forward-fill"></i></th></tr></thead>
-        <tbody id="topSharersTable"><tr><td colspan="3" class="empty">Sin datos todavía</td></tr></tbody></table>
-      </div>
-    </div>
-  </div>
+        <div class="tiktok-view-container" id="tiktokViewContainer">
+          <h2>
+            <span>
+              <i class="ri-tiktok-fill"></i> TikTok Live Center
+              <span class="tk-current-view" id="tkCurrentViewBadge">—</span>
+            </span>
+            <span style="display:flex; gap:6px; align-items:center;">
+              <button class="open-native-btn" onclick="refreshTikTokView()" id="refreshTikTokBtn" title="Recargar vista TikTok (F5)">
+                <i class="ri-refresh-line"></i> Refresh
+              </button>
+              <button class="open-native-btn" onclick="openTikTokNative()"><i class="ri-external-link-line"></i> Ventana externa</button>
+            </span>
+          </h2>
+          <webview id="tiktokView" src="about:blank" partition="persist:tiktok-session"></webview>
+        </div>
 
-  <div class="stats-section youtube-section" id="section-stats-youtube">
-    <div class="section-title youtube">
-      <i class="ri-youtube-fill"></i>
-      <span>Estadísticas YouTube en Vivo</span>
-    </div>
+        <div class="right-column" id="rightColumn">
+          <div class="moderation-box" id="section-moderation">
+            <h2><i class="ri-shield-check-line"></i> Moderación</h2>
+            <div class="input-group"><select id="actionChannelSelect"></select></div>
+            <div class="input-group">
+              <input type="text" id="username" placeholder="Usuario...">
+              <input type="text" id="reason" placeholder="Razón...">
+            </div>
+            <div class="action-buttons">
+              <button class="btn btn-danger" onclick="banUser()"><i class="ri-forbid-2-line"></i> Banear</button>
+              <button class="btn btn-success" onclick="unbanUser()"><i class="ri-checkbox-circle-line"></i> Desbanear</button>
+              <button class="btn btn-warning" onclick="timeoutUser()"><i class="ri-time-line"></i> Timeout</button>
+              <button class="btn btn-info" onclick="warnUser()"><i class="ri-alert-line"></i> Advertir</button>
+            </div>
+          </div>
 
-    <div class="mini-stats-row youtube-row">
-      <div class="mini-stat youtube"><div class="mini-stat-value" id="ytSuperchats">0</div><div class="mini-stat-label">Super Chats</div></div>
-      <div class="mini-stat youtube"><div class="mini-stat-value" id="ytSuperchatAmount">$0</div><div class="mini-stat-label">Total donado</div></div>
-      <div class="mini-stat youtube"><div class="mini-stat-value" id="ytMembers">0</div><div class="mini-stat-label">Miembros</div></div>
-      <div class="mini-stat youtube"><div class="mini-stat-value" id="ytMessages">0</div><div class="mini-stat-label">Mensajes</div></div>
-    </div>
+          <div class="poll-panel" id="section-polls">
+            <h2><i class="ri-bar-chart-box-line"></i> Encuestas y Predicciones</h2>
+            <div class="input-group"><select id="pollChannelSelect"></select></div>
+            <div class="input-group"><input type="text" id="nativePollQuestion" placeholder="Pregunta..."></div>
+            <div class="option-inputs" id="nativePollOptions">
+              <div class="input-group" style="margin-bottom:5px;"><input type="text" class="native-option-input" placeholder="Opción 1"></div>
+              <div class="input-group" style="margin-bottom:5px;"><input type="text" class="native-option-input" placeholder="Opción 2"><button class="remove-option-btn" onclick="removeNativeOption(this)"><i class="ri-close-line"></i></button></div>
+            </div>
+            <button class="add-option-btn" onclick="addNativeOption()" style="margin-bottom:8px;">+ Añadir opción</button>
+            <div class="action-buttons"><button class="btn btn-success" onclick="createNativePoll()">Crear Encuesta</button></div>
+            <div id="nativePollDisplay" style="margin-top: 10px;"></div>
 
-    <div class="stats-tables-row">
-      <div class="stats-table-box youtube">
-        <h3><span><i class="ri-vip-diamond-fill"></i> Top Super Chats</span><button class="reset-btn" onclick="resetYouTubeStats()">Reset</button></h3>
-        <table class="stats-table"><thead><tr><th>#</th><th>Usuario</th><th><i class="ri-money-dollar-circle-fill"></i></th></tr></thead>
-        <tbody id="topSuperchattersTable"><tr><td colspan="3" class="empty">Sin datos todavía</td></tr></tbody></table>
+            <div style="margin-top: 20px;">
+              <div class="input-group"><select id="predictionChannelSelect"></select></div>
+              <div class="input-group"><input type="text" id="predictionQuestion" placeholder="Pregunta..."></div>
+              <div class="input-group"><input type="text" id="predictionOption1" placeholder="Opción 1"><input type="text" id="predictionOption2" placeholder="Opción 2"></div>
+              <div class="action-buttons"><button class="btn btn-success" onclick="createNativePrediction()">Crear Predicción</button></div>
+              <div id="predictionDisplay" style="margin-top: 10px;"></div>
+            </div>
+          </div>
+
+          <div class="title-category-panel" id="section-title-category">
+            <h2><i class="ri-edit-2-line"></i> Título y Categoría</h2>
+
+            <div class="input-group">
+              <select id="titleChannelSelect" onchange="onTitleCategoryChannelChange()"></select>
+            </div>
+
+            <div class="stream-info-box" id="streamInfoBox">
+              <div class="stream-info-row">
+                <span class="stream-info-label">Título actual</span>
+                <span class="stream-info-value" id="currentTitle">—</span>
+              </div>
+              <div class="stream-info-row">
+                <span class="stream-info-label">Categoría actual</span>
+                <span class="stream-info-value" id="currentCategory">—</span>
+              </div>
+            </div>
+
+            <div class="input-group" style="margin-top: 12px;">
+              <input type="text" id="streamTitle" placeholder="Nuevo título..." onkeydown="if(event.key==='Enter') changeTitle()">
+              <button class="icon-action-btn" onclick="changeTitle()" title="Cambiar título">
+                <i class="ri-arrow-right-line"></i>
+              </button>
+            </div>
+            <div id="titleResult" class="action-result"></div>
+
+            <div style="margin-top: 15px; position: relative;">
+              <div class="input-group">
+                <input type="text" id="categorySearch" placeholder="Buscar categoría..." autocomplete="off"
+                       oninput="onCategorySearchInput()"
+                       onkeydown="if(event.key==='Enter'){event.preventDefault();selectFirstCategory();}"
+                       onfocus="onCategorySearchFocus()">
+                <button class="icon-action-btn" onclick="changeSelectedCategory()" title="Cambiar categoría">
+                  <i class="ri-check-line"></i>
+                </button>
+              </div>
+              <div class="category-dropdown" id="categoryDropdown"></div>
+              <input type="hidden" id="selectedCategoryId">
+              <input type="hidden" id="selectedCategoryName">
+            </div>
+            <div id="categoryResult" class="action-result"></div>
+          </div>
+        </div>
       </div>
-      <div class="stats-table-box youtube">
-        <h3><span><i class="ri-star-fill"></i> Miembros</span></h3>
-        <table class="stats-table"><thead><tr><th>#</th><th>Usuario</th><th><i class="ri-star-fill"></i></th></tr></thead>
-        <tbody id="topMembersTable"><tr><td colspan="3" class="empty">Sin datos todavía</td></tr></tbody></table>
+
+      <div class="stats-section" id="section-stats-tiktok">
+        <div class="section-title tiktok">
+          <i class="ri-tiktok-fill"></i>
+          <span>Estadísticas TikTok en Vivo</span>
+        </div>
+
+        <div class="mini-stats-row">
+          <div class="mini-stat tiktok"><div class="mini-stat-value" id="tkLikes">0</div><div class="mini-stat-label">Likes</div></div>
+          <div class="mini-stat tiktok"><div class="mini-stat-value" id="tkFollows">0</div><div class="mini-stat-label">Follows</div></div>
+          <div class="mini-stat tiktok"><div class="mini-stat-value" id="tkShares">0</div><div class="mini-stat-label">Shares</div></div>
+          <div class="mini-stat tiktok"><div class="mini-stat-value" id="tkDiamonds">0</div><div class="mini-stat-label">Diamantes</div></div>
+          <div class="mini-stat tiktok"><div class="mini-stat-value" id="tkViewers">0</div><div class="mini-stat-label">Viewers</div></div>
+        </div>
+
+        <div class="stats-tables-row">
+          <div class="stats-table-box">
+            <h3><span><i class="ri-vip-diamond-fill"></i> Top Donadores</span><button class="reset-btn" onclick="resetTikTokStats()">Reset</button></h3>
+            <table class="stats-table"><thead><tr><th>#</th><th>Usuario</th><th><i class="ri-vip-diamond-fill"></i></th></tr></thead>
+            <tbody id="topGiftersTable"><tr><td colspan="3" class="empty">Sin datos todavía</td></tr></tbody></table>
+          </div>
+          <div class="stats-table-box">
+            <h3><span><i class="ri-heart-3-fill"></i> Top Likes</span></h3>
+            <table class="stats-table"><thead><tr><th>#</th><th>Usuario</th><th><i class="ri-heart-3-fill"></i></th></tr></thead>
+            <tbody id="topLikersTable"><tr><td colspan="3" class="empty">Sin datos todavía</td></tr></tbody></table>
+          </div>
+          <div class="stats-table-box">
+            <h3><span><i class="ri-share-forward-fill"></i> Top Compartidos</span></h3>
+            <table class="stats-table"><thead><tr><th>#</th><th>Usuario</th><th><i class="ri-share-forward-fill"></i></th></tr></thead>
+            <tbody id="topSharersTable"><tr><td colspan="3" class="empty">Sin datos todavía</td></tr></tbody></table>
+          </div>
+        </div>
       </div>
-      <div class="stats-table-box youtube">
-        <h3><span><i class="ri-chat-3-line"></i> Chat más activo</span></h3>
-        <table class="stats-table"><thead><tr><th>#</th><th>Usuario</th><th><i class="ri-chat-3-fill"></i></th></tr></thead>
-        <tbody id="topChattersTable"><tr><td colspan="3" class="empty">Sin datos todavía</td></tr></tbody></table>
+
+      <div class="stats-section youtube-section" id="section-stats-youtube">
+        <div class="section-title youtube">
+          <i class="ri-youtube-fill"></i>
+          <span>Estadísticas YouTube en Vivo</span>
+        </div>
+
+        <div class="mini-stats-row youtube-row">
+          <div class="mini-stat youtube"><div class="mini-stat-value" id="ytSuperchats">0</div><div class="mini-stat-label">Super Chats</div></div>
+          <div class="mini-stat youtube"><div class="mini-stat-value" id="ytSuperchatAmount">$0</div><div class="mini-stat-label">Total donado</div></div>
+          <div class="mini-stat youtube"><div class="mini-stat-value" id="ytMembers">0</div><div class="mini-stat-label">Miembros</div></div>
+          <div class="mini-stat youtube"><div class="mini-stat-value" id="ytMessages">0</div><div class="mini-stat-label">Mensajes</div></div>
+        </div>
+
+        <div class="stats-tables-row">
+          <div class="stats-table-box youtube">
+            <h3><span><i class="ri-vip-diamond-fill"></i> Top Super Chats</span><button class="reset-btn" onclick="resetYouTubeStats()">Reset</button></h3>
+            <table class="stats-table"><thead><tr><th>#</th><th>Usuario</th><th><i class="ri-money-dollar-circle-fill"></i></th></tr></thead>
+            <tbody id="topSuperchattersTable"><tr><td colspan="3" class="empty">Sin datos todavía</td></tr></tbody></table>
+          </div>
+          <div class="stats-table-box youtube">
+            <h3><span><i class="ri-star-fill"></i> Miembros</span></h3>
+            <table class="stats-table"><thead><tr><th>#</th><th>Usuario</th><th><i class="ri-star-fill"></i></th></tr></thead>
+            <tbody id="topMembersTable"><tr><td colspan="3" class="empty">Sin datos todavía</td></tr></tbody></table>
+          </div>
+          <div class="stats-table-box youtube">
+            <h3><span><i class="ri-chat-3-line"></i> Chat más activo</span></h3>
+            <table class="stats-table"><thead><tr><th>#</th><th>Usuario</th><th><i class="ri-chat-3-fill"></i></th></tr></thead>
+            <tbody id="topChattersTable"><tr><td colspan="3" class="empty">Sin datos todavía</td></tr></tbody></table>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
 
     </main>
   </div>
 
   <script src="/js/dashboard.js" defer></script>
-  <script src="/js/autostream.js" defer></script>
+  <script src="/js/autostream.js?v=2026-01-15" defer></script>
 </body>
 </html>

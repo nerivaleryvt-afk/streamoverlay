@@ -1,6 +1,5 @@
 // ═══════════════════════════════════════════════════════════════
 //  overlays.js — Lógica de la galería de overlays
-//  Separado de overlays.html para mantener el HTML limpio
 // ═══════════════════════════════════════════════════════════════
 
 const OVERLAY_CONFIGS = {
@@ -237,49 +236,56 @@ async function copiarUrl(path) {
   }
 }
 
-// ─── PREVIEWS (ARREGLADO) ───
-function ajustarProporcionesYEscala() {
-  document.querySelectorAll('.preview-box').forEach(box => {
-    const w = parseInt(box.dataset.w, 10) || 380;
-    const h = parseInt(box.dataset.h, 10) || 620;
+// ═══════════════════════════════════════════════════════════════
+//  PREVIEWS — Thumbnails estáticos
+//  No cargamos iframes. Cada card tiene un thumbnail con icono
+//  de categoría + URL. Click → abre overlay real en pestaña nueva.
+// ═══════════════════════════════════════════════════════════════
 
-    box.style.setProperty('--aspect', `${w} / ${h}`);
+function renderizarThumbnails() {
+  document.querySelectorAll('.overlay-card').forEach(card => {
+    const previewBox = card.querySelector('.preview-box');
+    if (!previewBox) return;
 
-    const boxW = box.clientWidth;
-    const boxH = box.clientHeight;
+    // Si ya tiene un placeholder propio (TTS) lo dejamos tal cual
+    if (previewBox.querySelector('.preview-placeholder')) return;
 
-    const frame = box.querySelector('.preview-frame');
-    if (!frame) return;
+    // Icono del card
+    const iconoEl = card.querySelector('.card-icon i');
+    const iconoClase = iconoEl ? iconoEl.className : 'ri-apps-2-line';
 
-    const scale = Math.max(boxW / w, boxH / h);
-    frame.style.width  = w + 'px';
-    frame.style.height = h + 'px';
-    frame.style.transform = `scale(${scale})`;
+    // URL del overlay
+    const path = card.dataset.path
+      || previewBox.querySelector('.url-text')?.textContent
+      || '';
+
+    // Limpiar contenido antiguo (iframes, hints, footers)
+    previewBox
+      .querySelectorAll('iframe, .preview-frame, .preview-empty-hint, .preview-footer')
+      .forEach(el => el.remove());
+
+    // Crear thumbnail
+    const thumb = document.createElement('div');
+    thumb.className = 'preview-thumb';
+    thumb.innerHTML = `
+      <div class="preview-thumb-icon"><i class="${iconoClase}"></i></div>
+      <div class="preview-thumb-path">${path}</div>
+      <div class="preview-thumb-play">
+        <i class="ri-play-circle-fill"></i> Ver en vivo
+      </div>
+    `;
+    previewBox.appendChild(thumb);
+
+    // Click → abrir overlay
+    previewBox.onclick = (e) => {
+      e.stopPropagation();
+      if (path) window.open(path, '_blank');
+    };
   });
 }
 
-function cargarPreviewsDiferido() {
-  ajustarProporcionesYEscala();
-  const iframes = document.querySelectorAll('.preview-box iframe[data-src]');
-  iframes.forEach((iframe, i) => {
-    setTimeout(() => {
-      const src = iframe.dataset.src;
-      if (src && !iframe.src) {
-        iframe.src = src;
-        iframe.removeAttribute('data-src');
-      }
-      setTimeout(ajustarProporcionesYEscala, 50);
-    }, i * 400);
-  });
-}
-
-window.addEventListener('resize', () => {
-  clearTimeout(window.__previewResizeTimer);
-  window.__previewResizeTimer = setTimeout(ajustarProporcionesYEscala, 120);
-});
-
-document.addEventListener('DOMContentLoaded', cargarPreviewsDiferido);
-if (document.readyState !== 'loading') cargarPreviewsDiferido();
+document.addEventListener('DOMContentLoaded', renderizarThumbnails);
+if (document.readyState !== 'loading') renderizarThumbnails();
 
 // ─── DRAWER GENÉRICO ───
 async function abrirConfig(overlayKey, titulo) {
@@ -1385,8 +1391,7 @@ async function cargarInfoCustomOverlay() {
 }
 
 function recargarPreviewCustomOverlay() {
-  const iframe = document.querySelector('iframe[src*="/overlay-custom"]');
-  if (iframe) iframe.src = '/overlay-custom?preview=1&t=' + Date.now();
+  // Ya no hay iframes de preview. No-op.
 }
 
 async function subirCustomOverlay(file) {
@@ -1403,7 +1408,6 @@ async function subirCustomOverlay(file) {
     if (data.ok) {
       mostrarToast(`Widget subido (${data.written.length} archivos)`);
       await cargarInfoCustomOverlay();
-      recargarPreviewCustomOverlay();
     } else {
       mostrarToast('Error: ' + (data.error || 'desconocido'));
     }
@@ -1420,7 +1424,6 @@ async function borrarCustomOverlay() {
     if (data.ok) {
       mostrarToast('Overlay eliminado');
       await cargarInfoCustomOverlay();
-      recargarPreviewCustomOverlay();
     }
   } catch (e) { mostrarToast('Error al eliminar'); }
 }

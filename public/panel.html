@@ -3,61 +3,53 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Panel de Control</title>
+  <title>Toki · Panel</title>
   <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
   <link rel="preconnect" href="https://api.fontshare.com">
-  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600,700,900&display=swap" rel="stylesheet">
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600,700,800,900&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="/js/server-url.js"></script>
   <style>
-    /* ═══════════════════════════════════════════════════
-       TOKENS & BASE
-       ═══════════════════════════════════════════════════ */
     :root {
-      --bg: #08070c;
-      --surface: #121118;
-      --surface-hover: #181720;
-      --surface-2: #191822;
-      --line: rgba(255, 255, 255, 0.06);
-      --line-strong: rgba(255, 255, 255, 0.12);
-
-      --accent: #e8825a;
-      --accent-hover: #f0926a;
-      --accent-soft: rgba(232, 130, 90, 0.12);
-      --accent-border: rgba(232, 130, 90, 0.35);
-
+      --lima: #b8ff00;
+      --lima-hover: #c9ff2e;
+      --lima-soft: rgba(184, 255, 0, 0.10);
+      --lima-border: rgba(184, 255, 0, 0.32);
+      --rosa: #ff0080;
+      --rosa-soft: rgba(255, 0, 128, 0.10);
+      --rosa-border: rgba(255, 0, 128, 0.32);
+      --cian: #00d9ff;
+      --cian-soft: rgba(0, 217, 255, 0.10);
+      --cian-border: rgba(0, 217, 255, 0.32);
+      --bg: #07070c;
+      --bg-2: #0a0a11;
+      --surface: #101018;
+      --surface-2: #15151f;
+      --surface-3: #1a1a25;
+      --line: rgba(255, 255, 255, 0.05);
+      --line-strong: rgba(255, 255, 255, 0.10);
       --ok: #4ede80;
-      --ok-soft: rgba(78, 222, 128, 0.08);
+      --ok-soft: rgba(78, 222, 128, 0.10);
       --warn: #fbbf24;
+      --warn-soft: rgba(251, 191, 36, 0.10);
       --err: #f87171;
-      --info: #38bdf8;
-
-      --text: #f0edf9;
+      --text: #f4f1fb;
       --text-2: #9a96a8;
       --text-3: #5d5a6b;
-
       --r-xs: 4px;
       --r-sm: 8px;
-      --r-md: 12px;
-      --r-lg: 18px;
+      --r-md: 14px;
+      --r-lg: 20px;
       --r-pill: 999px;
-
       --font-ui: 'Satoshi', -apple-system, BlinkMacSystemFont, sans-serif;
       --font-mono: 'JetBrains Mono', monospace;
     }
-
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { height: 100%; }
 
     body {
       font-family: var(--font-ui);
       background: var(--bg);
-      background-image:
-        radial-gradient(circle at 10% 0%, rgba(232, 130, 90, 0.06), transparent 400px),
-        linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
-      background-size: 100% 100%, 48px 48px, 48px 48px;
-      background-attachment: fixed;
       color: var(--text);
       display: flex;
       height: 100vh;
@@ -66,58 +58,119 @@
       line-height: 1.5;
       -webkit-font-smoothing: antialiased;
     }
+    ::selection { background: var(--lima); color: #0a0a0f; }
 
-    ::selection { background: var(--accent); color: #08070c; }
-
-    /* ═══════════════════════════════════════════════════
-       SIDEBAR
-       ═══════════════════════════════════════════════════ */
-    .sidebar {
-      width: 220px;
-      background: #050408;
+    /* ═══ RAIL IZQUIERDO ═══ */
+    .rail {
+      width: 300px;
+      background: linear-gradient(180deg, #0a0a12 0%, #08070d 100%);
       border-right: 1px solid var(--line);
       display: flex;
       flex-direction: column;
-      padding: 24px 14px;
       flex-shrink: 0;
+      overflow-y: auto;
+      position: relative;
     }
+    .rail::-webkit-scrollbar { width: 4px; }
+    .rail::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
 
-    .sidebar-logo {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 0 8px 20px;
+    .rail-toki {
+      padding: 26px 22px 20px;
+      text-align: center;
+      position: relative;
       border-bottom: 1px solid var(--line);
-      margin-bottom: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
     }
-    .logo-mark {
-      width: 34px; height: 34px;
-      border-radius: var(--r-sm);
-      background: var(--accent);
-      display: flex; align-items: center; justify-content: center;
-      color: #08070c; font-size: 18px;
-      font-weight: 900;
-      flex-shrink: 0;
-      box-shadow: 0 0 20px rgba(232, 130, 90, 0.3);
+    .rail-toki::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 100px;
+      background: radial-gradient(ellipse at 50% 0%, rgba(184, 255, 0, 0.08), transparent 70%);
+      pointer-events: none;
     }
-    .logo-text {
-      font-size: 15px;
+    .toki-frame {
+      width: 110px;
+      height: 110px;
+      margin: 0 0 14px 0;
+      border-radius: 50%;
+      background: var(--surface-2);
+      border: 2px solid var(--lima-border);
+      overflow: hidden;
+      box-shadow: 0 0 40px rgba(184, 255, 0, 0.18);
+      position: relative;
+      z-index: 1;
+      transition: all 0.3s;
+    }
+    .toki-frame img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      object-position: center 30%;
+    }
+    .toki-frame:hover {
+      box-shadow: 0 0 60px rgba(184, 255, 0, 0.32);
+      transform: scale(1.03);
+    }
+    .rail-toki-name {
+      font-size: 20px;
       font-weight: 900;
-      color: var(--text);
       letter-spacing: -0.03em;
+      line-height: 1;
+      background: linear-gradient(90deg, var(--lima), var(--rosa));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      position: relative;
+      z-index: 1;
     }
-
-    .sidebar-section-title {
+    .rail-toki-sub {
       font-size: 10px;
+      font-weight: 700;
+      color: var(--text-3);
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      font-family: var(--font-mono);
+      margin-top: 6px;
+      position: relative;
+      z-index: 1;
+    }
+    .rail-toki-msg {
+      font-size: 12px;
+      color: var(--text-2);
+      margin-top: 14px;
+      padding: 10px 12px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--r-sm);
+      text-align: center;
+      line-height: 1.45;
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 240px;
+    }
+    .rail-toki-msg b { color: var(--lima); }
+
+    .rail-nav {
+      padding: 18px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      flex: 1;
+    }
+    .rail-section-title {
+      font-size: 9.5px;
       color: var(--text-3);
       text-transform: uppercase;
-      letter-spacing: 0.18em;
+      letter-spacing: 0.22em;
       font-weight: 800;
-      padding: 0 10px;
-      margin-bottom: 10px;
+      padding: 12px 12px 8px;
+      font-family: var(--font-mono);
     }
-
-    .sidebar-item {
+    .rail-nav-item {
       display: flex;
       align-items: center;
       gap: 12px;
@@ -129,499 +182,728 @@
       cursor: pointer;
       transition: all 0.15s ease;
       text-decoration: none;
-      margin-bottom: 4px;
       position: relative;
       user-select: none;
     }
-    .sidebar-item:hover {
-      background: var(--surface);
-      color: var(--text);
-    }
-    .sidebar-item.active {
+    .rail-nav-item:hover { background: var(--surface); color: var(--text); }
+    .rail-nav-item.active {
       background: var(--surface);
       color: var(--text);
       font-weight: 700;
     }
-    .sidebar-item.active::before {
+    .rail-nav-item.active::before {
       content: '';
       position: absolute;
-      left: 0; top: 20%; bottom: 20%;
+      left: 0; top: 22%; bottom: 22%;
       width: 3px;
-      background: var(--accent);
+      background: var(--lima);
       border-radius: 0 4px 4px 0;
-      box-shadow: 2px 0 10px var(--accent);
+      box-shadow: 2px 0 12px var(--lima);
     }
-    .sidebar-item i {
+    .rail-nav-item i {
       font-size: 17px;
       color: var(--text-3);
       transition: color 0.15s;
     }
-    .sidebar-item:hover i, .sidebar-item.active i { color: var(--accent); }
+    .rail-nav-item:hover i, .rail-nav-item.active i { color: var(--lima); }
 
-    .sidebar-spacer { flex: 1; }
-
-    /* ═══════════════════════════════════════════════════
-       MAIN CONTENT
-       ═══════════════════════════════════════════════════ */
-    .main-content {
-      flex: 1;
-      padding: 32px 40px 48px;
-      overflow-y: auto;
+    .rail-status {
+      padding: 14px 18px 20px;
+      border-top: 1px solid var(--line);
+    }
+    .rail-status-badge {
       display: flex;
-      flex-direction: column;
-    }
-    .main-content::-webkit-scrollbar { width: 8px; }
-    .main-content::-webkit-scrollbar-track { background: transparent; }
-    .main-content::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.15);
-      border-radius: var(--r-pill);
-    }
-    .main-content::-webkit-scrollbar-thumb:hover { background: var(--accent); }
-
-    /* HEADER */
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      margin-bottom: 28px;
-      padding-bottom: 20px;
-      border-bottom: 1px solid var(--line);
-    }
-    .brand h1 {
-      font-size: 30px;
-      font-weight: 900;
-      letter-spacing: -0.04em;
-      color: var(--text);
-      line-height: 1;
-    }
-    .header-sub {
-      font-size: 12px;
-      color: var(--text-3);
-      margin-top: 8px;
-      font-family: var(--font-mono);
-      letter-spacing: -0.01em;
-    }
-
-    .status-badge {
-      display: inline-flex;
       align-items: center;
       gap: 8px;
-      padding: 6px 14px;
-      border-radius: var(--r-pill);
+      padding: 8px 12px;
+      border-radius: var(--r-sm);
       background: var(--ok-soft);
       color: var(--ok);
       font-size: 11px;
       font-weight: 700;
       border: 1px solid rgba(78, 222, 128, 0.2);
       font-family: var(--font-mono);
+      justify-content: center;
     }
-    .status-badge.offline {
+    .rail-status-badge.offline {
       background: rgba(248, 113, 113, 0.08);
       color: var(--err);
       border-color: rgba(248, 113, 113, 0.2);
     }
-    .status-badge .badge-dot {
+    .rail-status-badge .badge-dot {
       width: 6px; height: 6px; border-radius: 50%;
       background: currentColor;
       box-shadow: 0 0 8px currentColor;
     }
 
-    /* MODE CARD COMPACTA */
-    .mode-card-compact {
-      background: var(--surface);
-      border: 1px solid var(--line);
-      box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
-      border-radius: var(--r-md);
-      padding: 12px 18px;
-      margin-bottom: 32px;
+    /* ═══ CONTENIDO ═══ */
+    .main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 26px 32px 40px;
+      display: flex;
+      flex-direction: column;
+    }
+    .main::-webkit-scrollbar { width: 8px; }
+    .main::-webkit-scrollbar-track { background: transparent; }
+    .main::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: var(--r-pill);
+    }
+    .main::-webkit-scrollbar-thumb:hover { background: var(--lima); }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .top-bar-left h1 {
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: -0.035em;
+      color: var(--text);
+    }
+    .top-bar-left .sub {
+      font-size: 11.5px;
+      color: var(--text-3);
+      margin-top: 4px;
+      font-family: var(--font-mono);
+    }
+    .top-bar-right {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 16px;
+      gap: 10px;
     }
-    .mode-left { display: flex; align-items: center; gap: 12px; }
-    .mode-pill {
-      font-size: 10px; font-weight: 800; text-transform: uppercase;
-      letter-spacing: 0.1em; font-family: var(--font-mono);
-      padding: 3px 8px; border-radius: var(--r-xs);
-      background: var(--surface-2); color: var(--text-2);
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 12px;
+      background: var(--surface);
       border: 1px solid var(--line-strong);
+      border-radius: var(--r-sm);
+      font-size: 11.5px;
+      font-family: var(--font-mono);
+      color: var(--text-2);
+      cursor: pointer;
+      transition: all 0.15s;
     }
-    .mode-pill.server { background: var(--ok-soft); color: var(--ok); border-color: rgba(78, 222, 128, 0.3); }
-    .mode-pill.client { background: rgba(251, 191, 36, 0.1); color: var(--warn); border-color: rgba(251, 191, 36, 0.3); }
+    .chip:hover {
+      border-color: var(--lima-border);
+      color: var(--lima);
+    }
+    .chip i { font-size: 14px; }
+    .chip.accent {
+      color: var(--lima);
+      border-color: var(--lima-border);
+      background: var(--lima-soft);
+    }
+    #ip-hide:hover { opacity: 1 !important; color: var(--err); }
 
-    .mode-title { font-size: 13.5px; font-weight: 700; color: var(--text); }
-    .mode-right { display: flex; align-items: center; gap: 10px; }
-
-    .ip-chip {
-      display: inline-flex; align-items: center; gap: 8px;
-      background: var(--surface-2); border: 1px solid var(--line-strong);
-      border-radius: var(--r-sm); padding: 6px 12px; font-size: 12px;
-      font-family: var(--font-mono); color: var(--accent); cursor: pointer; transition: all 0.15s;
+    .sec-title {
+      font-size: 10px;
+      font-weight: 800;
+      color: var(--text-3);
+      text-transform: uppercase;
+      letter-spacing: 0.22em;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-family: var(--font-mono);
     }
-    .ip-chip:hover { border-color: var(--accent-border); box-shadow: 0 0 12px rgba(232, 130, 90, 0.15); }
-    .ip-chip i { font-size: 14px; color: var(--text-3); }
-
-    .btn-ghost-sm {
-      background: transparent; border: none; color: var(--text-3);
-      font-size: 12px; font-weight: 600; cursor: pointer; padding: 6px 10px;
-      border-radius: var(--r-sm); transition: all 0.15s;
-    }
-    .btn-ghost-sm:hover { color: var(--err); background: rgba(248, 113, 113, 0.08); }
-
-    /* SECTION TITLES */
-    .section-title {
-      font-size: 10px; font-weight: 800; color: var(--text-3);
-      text-transform: uppercase; letter-spacing: 0.18em; margin-bottom: 14px;
+    .sec-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, var(--line-strong), transparent);
     }
 
-    /* PLATFORMS GRID */
-    .platforms-grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-      gap: 12px; margin-bottom: 32px;
+    .platforms {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px;
+      margin-bottom: 26px;
     }
-    .platform-chip-card {
-      background: var(--surface); border: 1px solid var(--line);
-      box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.03);
-      border-radius: var(--r-md); padding: 14px 16px;
-      display: flex; align-items: center; gap: 14px; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    .plat {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--r-md);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+      overflow: hidden;
     }
-    .platform-chip-card:hover {
-      border-color: var(--line-strong); transform: translateY(-2px);
-      box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.08), 0 8px 24px rgba(0,0,0,0.4);
+    .plat::before {
+      content: '';
+      position: absolute;
+      top: 0; bottom: 0; left: 0;
+      width: 3px;
+      background: var(--plat-color, var(--text-3));
+      opacity: 0.4;
+      transition: opacity 0.2s;
     }
-    .platform-glyph { font-size: 26px; color: var(--text-3); transition: color 0.2s, transform 0.2s; }
-    .platform-chip-card:hover .platform-glyph { transform: scale(1.1); }
-    .platform-meta { flex: 1; min-width: 0; }
-    .platform-label { font-size: 11px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.05em; }
-    .platform-user { font-size: 13.5px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-    .platform-chip-card.twitch.connected  { border-color: rgba(167,139,250,0.3); }
-    .platform-chip-card.twitch.connected .platform-glyph { color: #a78bfa; }
-    .platform-chip-card.tiktok.connected  { border-color: rgba(254,44,85,0.3); }
-    .platform-chip-card.tiktok.connected .platform-glyph { color: #fe2c55; }
-    .platform-chip-card.kick.connected    { border-color: rgba(83,252,24,0.3); }
-    .platform-chip-card.kick.connected .platform-glyph { color: #53fc18; }
-    .platform-chip-card.youtube.connected { border-color: rgba(255,61,61,0.3); }
-    .platform-chip-card.youtube.connected .platform-glyph { color: #ff3d3d; }
-    .platform-chip-card:not(.connected) .platform-user { font-size: 12px; font-weight: 500; color: var(--text-3); }
-
-    /* ACTIONS GRID */
-    .actions-grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 12px; margin-bottom: 36px;
-    }
-    .action-card {
-      background: var(--surface); border: 1px solid var(--line);
-      box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.05), 0 4px 16px rgba(0,0,0,0.2);
-      border-radius: var(--r-md); padding: 18px 20px; cursor: pointer;
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-      display: flex; flex-direction: column; justify-content: space-between;
-    }
-    .action-card:hover {
-      background: var(--surface-hover); border-color: var(--accent-border);
-      box-shadow: inset 0 1px 0 0 rgba(232, 130, 90, 0.25), 0 12px 32px rgba(0, 0, 0, 0.5);
+    .plat:hover {
+      border-color: var(--line-strong);
       transform: translateY(-2px);
     }
-    .action-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
-    .action-glyph { font-size: 24px; color: var(--text-2); transition: color 0.2s, transform 0.2s; }
-    .action-card:hover .action-glyph { color: var(--accent); transform: scale(1.1); }
-    .action-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 4px; letter-spacing: -0.01em; }
-    .action-desc { font-size: 12px; color: var(--text-3); line-height: 1.45; }
+    .plat.state-live::before { opacity: 1; box-shadow: 0 0 12px var(--plat-color); }
+    .plat.state-live { border-color: rgba(255, 255, 255, 0.12); }
 
-    /* BUTTONS */
-    .footer-actions {
-      display: flex; gap: 12px; align-items: center;
-      padding-top: 24px; border-top: 1px solid var(--line); margin-top: auto;
+    .plat-glyph {
+      font-size: 26px;
+      color: var(--text-3);
+      flex-shrink: 0;
+      transition: color 0.2s, transform 0.2s;
+    }
+    .plat.state-live .plat-glyph { color: var(--plat-color); }
+    .plat.state-waiting .plat-glyph { color: var(--plat-color); opacity: 0.55; }
+    .plat:hover .plat-glyph { transform: scale(1.08); }
+
+    .plat-body { flex: 1; min-width: 0; }
+    .plat-label {
+      font-size: 10px;
+      font-weight: 800;
+      color: var(--text-3);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-family: var(--font-mono);
+    }
+    .plat-user {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-top: 3px;
+    }
+    .plat-user .user-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      background: var(--text-3);
+      transition: all 0.2s;
+    }
+    .plat.state-live .user-dot {
+      background: var(--plat-color);
+      box-shadow: 0 0 10px var(--plat-color);
+      animation: pulseDot 1.6s ease-in-out infinite;
+    }
+    .plat.state-waiting .user-dot {
+      background: var(--warn);
+      box-shadow: 0 0 6px var(--warn);
+    }
+    .plat.state-none .plat-user { font-size: 12px; font-weight: 500; color: var(--text-3); }
+
+    @keyframes pulseDot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 10px;
+      margin-bottom: 26px;
+    }
+    .action {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--r-md);
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .action:hover {
+      background: var(--surface-2);
+      border-color: var(--ac-border, var(--lima-border));
+      transform: translateY(-2px);
+      box-shadow: 0 10px 26px rgba(0, 0, 0, 0.4);
+    }
+    .action-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: var(--r-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+      background: var(--ac-soft, var(--lima-soft));
+      color: var(--ac-color, var(--lima));
+      transition: transform 0.2s;
+    }
+    .action:hover .action-icon { transform: scale(1.06) rotate(-3deg); }
+    .action-body { min-width: 0; }
+    .action-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.01em;
+    }
+    .action-desc {
+      font-size: 11.5px;
+      color: var(--text-3);
+      line-height: 1.4;
+      margin-top: 2px;
+    }
+
+    .footer-bar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      padding-top: 22px;
+      border-top: 1px solid var(--line);
+      margin-top: auto;
+      flex-wrap: wrap;
     }
     .btn {
-      padding: 11px 20px; border-radius: var(--r-sm); border: none;
-      cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 700;
-      display: inline-flex; align-items: center; gap: 8px; transition: all 0.15s ease;
+      padding: 11px 18px;
+      border-radius: var(--r-sm);
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.15s ease;
     }
     .btn-primary {
-      background: var(--accent); color: #08070c;
-      box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.3), 0 4px 16px rgba(232, 130, 90, 0.25);
+      background: var(--lima);
+      color: #0a0a0f;
+      box-shadow: 0 4px 18px rgba(184, 255, 0, 0.22);
     }
     .btn-primary:hover:not(:disabled) {
-      background: var(--accent-hover);
-      box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.4), 0 6px 20px rgba(232, 130, 90, 0.4);
+      background: var(--lima-hover);
+      box-shadow: 0 6px 24px rgba(184, 255, 0, 0.35);
       transform: translateY(-1px);
     }
     .btn-secondary {
-      background: var(--surface); color: var(--text-2); border: 1px solid var(--line-strong);
-      box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.03);
+      background: var(--surface);
+      color: var(--text-2);
+      border: 1px solid var(--line-strong);
     }
-    .btn-secondary:hover { background: var(--surface-hover); color: var(--text); border-color: var(--accent-border); }
+    .btn-secondary:hover {
+      background: var(--surface-2);
+      color: var(--text);
+      border-color: var(--lima-border);
+    }
 
-    /* ANIMATIONS */
     .animate-in { animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to   { opacity: 1; transform: translateY(0); }
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
     }
-    .delay-1 { animation-delay: 40ms; }
-    .delay-2 { animation-delay: 80ms; }
-    .delay-3 { animation-delay: 120ms; }
-    .delay-4 { animation-delay: 160ms; }
+    .d1 { animation-delay: 30ms; }
+    .d2 { animation-delay: 60ms; }
+    .d3 { animation-delay: 90ms; }
+    .d4 { animation-delay: 120ms; }
 
-    /* ═══════════════════════════════════════════════════
-       NUEVA CONSOLA DE LOGS (ESTILO WARP TERMINAL)
-       ═══════════════════════════════════════════════════ */
     .modal {
-      position: fixed; inset: 0; background: rgba(5, 4, 8, 0.85);
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 4, 8, 0.88);
       backdrop-filter: blur(8px);
-      display: none; align-items: center; justify-content: center; z-index: 999; padding: 24px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+      padding: 24px;
     }
     .modal.open { display: flex; }
 
-    .modal-box.logs-console-box {
-      background: #09080e;
+    .modal-box {
+      background: #08070d;
       border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: var(--r-lg);
-      width: 920px; max-width: 100%; height: 600px; max-height: 90vh;
-      display: flex; flex-direction: column;
-      box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.08), 0 32px 80px rgba(0, 0, 0, 0.9);
+      width: 940px;
+      max-width: 100%;
+      height: 600px;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 32px 80px rgba(0, 0, 0, 0.9);
       overflow: hidden;
       animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
     }
-
+    .modal-box::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--lima), var(--rosa), var(--cian));
+    }
     @keyframes modalPop {
       from { opacity: 0; transform: scale(0.97) translateY(8px); }
-      to   { opacity: 1; transform: scale(1) translateY(0); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
     }
 
     .console-header {
-      background: #0e0d14;
+      background: #0c0b12;
       padding: 12px 18px;
       border-bottom: 1px solid var(--line);
-      display: flex; align-items: center; justify-content: space-between;
-      gap: 12px; flex-wrap: wrap;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
     }
-
     .console-title {
-      display: flex; align-items: center; gap: 10px;
-      font-size: 13px; font-weight: 700; color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
       font-family: var(--font-mono);
     }
-    .console-title i { color: var(--accent); font-size: 16px; }
-
-    .console-controls {
-      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-    }
+    .console-title i { color: var(--lima); font-size: 16px; }
+    .console-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
     .console-search {
       background: #050408;
       border: 1px solid var(--line);
       border-radius: var(--r-sm);
       padding: 5px 10px;
-      display: flex; align-items: center; gap: 6px;
-      color: var(--text-3); font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-3);
+      font-size: 12px;
     }
     .console-search input {
-      background: transparent; border: none; outline: none;
-      color: var(--text); font-family: var(--font-mono); font-size: 11.5px; width: 130px;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      width: 130px;
     }
-    .console-search input::placeholder { color: var(--text-3); }
-
     .btn-console {
       background: rgba(255, 255, 255, 0.04);
       border: 1px solid var(--line);
       border-radius: var(--r-sm);
-      color: var(--text-2); padding: 5px 10px;
-      font-size: 11.5px; font-weight: 600; font-family: var(--font-mono);
-      cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
-      transition: all 0.15s ease;
+      color: var(--text-2);
+      padding: 5px 10px;
+      font-size: 11.5px;
+      font-weight: 600;
+      font-family: var(--font-mono);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s;
     }
     .btn-console:hover {
-      background: rgba(255, 255, 255, 0.08); color: var(--text);
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text);
       border-color: var(--line-strong);
     }
     .btn-console.active {
-      background: var(--accent-soft); color: var(--accent);
-      border-color: var(--accent-border);
+      background: var(--lima-soft);
+      color: var(--lima);
+      border-color: var(--lima-border);
     }
     .btn-console.close-btn:hover {
-      background: rgba(248, 113, 113, 0.15); color: var(--err); border-color: rgba(248, 113, 113, 0.3);
+      background: rgba(248, 113, 113, 0.15);
+      color: var(--err);
+      border-color: rgba(248, 113, 113, 0.3);
     }
 
     .console-body {
-      flex: 1; background: #050408;
-      padding: 16px; overflow-y: auto;
-      font-family: var(--font-mono); font-size: 12px;
-      line-height: 1.6; color: var(--text-2);
+      flex: 1;
+      background: #050408;
+      padding: 16px;
+      overflow-y: auto;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.6;
+      color: var(--text-2);
     }
     .console-body::-webkit-scrollbar { width: 8px; }
     .console-body::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.1); border-radius: var(--r-pill);
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: var(--r-pill);
     }
-
-    /* Estilos para las líneas de logs formateadas */
     .log-line {
-      display: flex; gap: 12px; padding: 2px 4px; border-radius: 4px;
-      transition: background 0.1s;
+      display: flex;
+      gap: 12px;
+      padding: 2px 4px;
+      border-radius: 4px;
     }
     .log-line:hover { background: rgba(255, 255, 255, 0.02); }
     .log-time { color: var(--text-3); flex-shrink: 0; user-select: none; }
     .log-msg { flex: 1; word-break: break-word; }
-
     .log-tag {
-      font-weight: 700; padding: 0 4px; border-radius: 3px; font-size: 10.5px;
-      text-transform: uppercase; display: inline-block; margin-right: 6px;
+      font-weight: 700;
+      padding: 0 4px;
+      border-radius: 3px;
+      font-size: 10.5px;
+      text-transform: uppercase;
+      display: inline-block;
+      margin-right: 6px;
     }
-    .log-tag.info { background: rgba(56, 189, 248, 0.12); color: var(--info); }
+    .log-tag.info { background: rgba(0, 217, 255, 0.12); color: var(--cian); }
     .log-tag.warn { background: rgba(251, 191, 36, 0.12); color: var(--warn); }
     .log-tag.error { background: rgba(248, 113, 113, 0.12); color: var(--err); }
-    .log-tag.success { background: rgba(78, 222, 128, 0.12); color: var(--ok); }
+    .log-tag.success { background: rgba(184, 255, 0, 0.10); color: var(--lima); }
 
     .console-footer {
-      background: #0e0d14; border-top: 1px solid var(--line);
-      padding: 8px 18px; display: flex; justify-content: space-between;
-      align-items: center; font-family: var(--font-mono); font-size: 11px; color: var(--text-3);
+      background: #0c0b12;
+      border-top: 1px solid var(--line);
+      padding: 8px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-3);
     }
 
-    /* TOAST */
     .toast {
-      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(90px);
-      background: var(--surface-2); border: 1px solid var(--line-strong); border-left: 3px solid var(--ok);
-      color: var(--text); padding: 12px 20px; border-radius: var(--r-sm); font-size: 12.5px;
-      display: flex; align-items: center; gap: 10px; transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); z-index: 1000;
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(90px);
+      background: var(--surface-2);
+      border: 1px solid var(--line-strong);
+      border-left: 3px solid var(--lima);
+      color: var(--text);
+      padding: 12px 20px;
+      border-radius: var(--r-sm);
+      font-size: 12.5px;
+      z-index: 1000;
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .toast.show { transform: translateX(-50%) translateY(0); }
+
+    @media (max-width: 900px) {
+      .rail { width: 88px; }
+      .rail-toki-name, .rail-toki-sub, .rail-toki-msg,
+      .rail-section-title, .rail-nav-item span { display: none; }
+      .rail-toki { padding: 20px 8px 14px; }
+      .toki-frame { width: 60px; height: 60px; }
+      .rail-nav-item { justify-content: center; padding: 12px; }
+      .rail-status { padding: 12px 8px; }
+      .rail-status-badge span:last-child { display: none; }
+      .main { padding: 20px 16px 32px; }
+    }
   </style>
 </head>
 <body>
 
-  <!-- SIDEBAR -->
-  <aside class="sidebar">
-    <div class="sidebar-logo">
-      <div class="logo-mark"><i class="ri-broadcast-fill"></i></div>
-      <span class="logo-text">TogiPanel</span>
+  <aside class="rail">
+    <div class="rail-toki">
+      <div class="toki-frame">
+        <img src="/img/toki.png" alt="Toki"
+          onerror="this.parentNode.innerHTML='<i class=\'ri-emotion-happy-fill\' style=\'font-size:50px; color: var(--lima); display:flex; align-items:center; justify-content:center; height:100%;\'></i>';">
+      </div>
+      <div class="rail-toki-name">Toki</div>
+      <div class="rail-toki-sub">Compañera de chat</div>
+      <div class="rail-toki-msg">
+        Lista para ayudarte, <b id="toki-msg-name">amiga</b>.
+      </div>
     </div>
 
-    <div class="sidebar-section-title">Principal</div>
-    <div class="sidebar-item active"><i class="ri-home-5-fill"></i><span>Inicio</span></div>
-    <div class="sidebar-item" onclick="openDeck()"><i class="ri-layout-grid-fill"></i><span>StreamDeck</span></div>
+    <nav class="rail-nav">
+      <div class="rail-nav-item active">
+        <i class="ri-home-5-fill"></i>
+        <span>Inicio</span>
+      </div>
+      <div class="rail-nav-item" onclick="openDeck()">
+        <i class="ri-layout-grid-fill"></i>
+        <span>StreamDeck</span>
+      </div>
 
-    <div class="sidebar-section-title" style="margin-top:20px;">Recursos</div>
-        <div class="sidebar-item" onclick="goTo('/overlays')"><i class="ri-layout-masonry-line"></i><span>Overlays</span></div>
-    <div class="sidebar-item" onclick="goTo('/moderation')"><i class="ri-shield-check-fill"></i><span>Moderación</span></div>
-    <div class="sidebar-item" onclick="goTo('/gemini-live.html')"><i class="ri-robot-2-line"></i><span>Gemini Live</span></div>
-    <div class="sidebar-item" onclick="openLogs()"><i class="ri-terminal-box-line"></i><span>Logs</span></div>
+      <div class="rail-section-title">Recursos</div>
 
-    <div class="sidebar-spacer"></div>
-    <div class="sidebar-item" onclick="goTo('/config')"><i class="ri-settings-3-fill"></i><span>Configuración</span></div>
+      <div class="rail-nav-item" onclick="goTo('/overlays')">
+        <i class="ri-layout-masonry-line"></i>
+        <span>Overlays</span>
+      </div>
+      <div class="rail-nav-item" onclick="goTo('/moderation')">
+        <i class="ri-shield-check-fill"></i>
+        <span>Moderación</span>
+      </div>
+      <div class="rail-nav-item" onclick="goTo('/gemini-live.html')">
+        <i class="ri-robot-2-line"></i>
+        <span>Gemini Live</span>
+      </div>
+      <div class="rail-nav-item" onclick="openLogs()">
+        <i class="ri-terminal-box-line"></i>
+        <span>Logs</span>
+      </div>
+
+      <div class="rail-section-title">Sistema</div>
+
+      <div class="rail-nav-item" onclick="goTo('/config')">
+        <i class="ri-settings-3-fill"></i>
+        <span>Configuración</span>
+      </div>
+    </nav>
+
+    <div class="rail-status">
+      <div class="rail-status-badge" id="server-badge">
+        <span class="badge-dot"></span>
+        <span id="server-badge-text">Comprobando</span>
+      </div>
+    </div>
   </aside>
 
-  <!-- MAIN CONTENT -->
-  <main class="main-content">
-
-    <header class="header animate-in">
-      <div class="brand">
+  <main class="main">
+    <div class="top-bar animate-in">
+      <div class="top-bar-left">
         <h1>Panel de Control</h1>
-        <div class="header-sub">conexiones · overlays · moderación</div>
+        <div class="sub" id="mode-value">Comprobando modo...</div>
       </div>
-      <div class="header-right">
-        <div class="status-badge" id="server-badge">
-          <span class="badge-dot"></span>
-          <span id="server-badge-text">Comprobando</span>
-        </div>
-      </div>
-    </header>
-
-    <!-- MODE CARD COMPACTA -->
-    <div class="mode-card-compact animate-in delay-1" id="mode-card">
-      <div class="mode-left">
-        <span class="mode-pill" id="mode-pill">Servidor</span>
-        <span class="mode-title" id="mode-value">Comprobando modo...</span>
-      </div>
-      <div class="mode-right">
-        <button class="ip-chip" id="ip-btn" onclick="copyIp()" style="display:none;">
-          <i class="ri-global-line"></i>
-          <span id="ip-text">192.168.1.15</span>
-          <i class="ri-file-copy-line"></i>
+      <div class="top-bar-right">
+        <button class="chip" id="ip-btn" style="display:none;">
+          <i class="ri-global-line" onclick="copyIp()"></i>
+          <span id="ip-text" onclick="copyIp()" style="cursor:pointer;">192.168.1.15</span>
+          <i class="ri-file-copy-line" onclick="copyIp()" style="cursor:pointer;"></i>
+          <i class="ri-eye-off-line" id="ip-hide" style="cursor:pointer; opacity:0.6;" onclick="ocultarIp(event)" title="Ocultar IP"></i>
         </button>
-        <button class="btn-ghost-sm" onclick="reconfigureConnection()">Reconfigurar</button>
+        <button class="chip accent" onclick="reconfigureConnection()">
+          <i class="ri-refresh-line"></i>
+          <span>Reconfigurar</span>
+        </button>
       </div>
     </div>
 
-    <!-- PLATAFORMAS -->
-    <div class="section-title animate-in delay-2">Plataformas activas</div>
-    <div class="platforms-grid animate-in delay-2">
-      <div class="platform-chip-card twitch" id="card-twitch">
-        <i class="ri-twitch-fill platform-glyph"></i>
-        <div class="platform-meta">
-          <div class="platform-label">Twitch</div>
-          <div class="platform-user" id="status-twitch">Sin configurar</div>
+    <div class="sec-title animate-in d2">Plataformas activas</div>
+    <div class="platforms animate-in d2">
+
+      <div class="plat twitch state-none" id="card-twitch" style="--plat-color: #a78bfa;">
+        <i class="ri-twitch-fill plat-glyph"></i>
+        <div class="plat-body">
+          <div class="plat-label">Twitch</div>
+          <div class="plat-user">
+            <span class="user-dot"></span>
+            <span id="status-twitch">No configurado</span>
+          </div>
         </div>
       </div>
-      <div class="platform-chip-card tiktok" id="card-tiktok">
-        <i class="ri-tiktok-fill platform-glyph"></i>
-        <div class="platform-meta">
-          <div class="platform-label">TikTok</div>
-          <div class="platform-user" id="status-tiktok">Sin configurar</div>
+
+      <div class="plat tiktok state-none" id="card-tiktok" style="--plat-color: #fe2c55;">
+        <i class="ri-tiktok-fill plat-glyph"></i>
+        <div class="plat-body">
+          <div class="plat-label">TikTok</div>
+          <div class="plat-user">
+            <span class="user-dot"></span>
+            <span id="status-tiktok">No configurado</span>
+          </div>
         </div>
       </div>
-      <div class="platform-chip-card kick" id="card-kick">
-        <i class="ri-live-fill platform-glyph"></i>
-        <div class="platform-meta">
-          <div class="platform-label">Kick</div>
-          <div class="platform-user" id="status-kick">Sin configurar</div>
+
+      <div class="plat kick state-none" id="card-kick" style="--plat-color: #53fc18;">
+        <i class="ri-live-fill plat-glyph"></i>
+        <div class="plat-body">
+          <div class="plat-label">Kick</div>
+          <div class="plat-user">
+            <span class="user-dot"></span>
+            <span id="status-kick">No configurado</span>
+          </div>
         </div>
       </div>
-      <div class="platform-chip-card youtube" id="card-youtube">
-        <i class="ri-youtube-fill platform-glyph"></i>
-        <div class="platform-meta">
-          <div class="platform-label">YouTube</div>
-          <div class="platform-user" id="status-youtube">Sin configurar</div>
+
+      <div class="plat youtube state-none" id="card-youtube" style="--plat-color: #ff3d3d;">
+        <i class="ri-youtube-fill plat-glyph"></i>
+        <div class="plat-body">
+          <div class="plat-label">YouTube</div>
+          <div class="plat-user">
+            <span class="user-dot"></span>
+            <span id="status-youtube">No configurado</span>
+          </div>
         </div>
       </div>
+
     </div>
 
-    <!-- ACCIONES -->
-    <div class="section-title animate-in delay-3">Acciones rápidas</div>
-    <div class="actions-grid animate-in delay-3">
-      <div class="action-card" onclick="goTo('/config')">
-        <div class="action-top"><i class="ri-settings-3-fill action-glyph"></i></div>
-        <div><div class="action-title">Configuración</div><div class="action-desc">Cuentas, filtros y ajustes de TTS</div></div>
+    <div class="sec-title animate-in d3">Acciones rápidas</div>
+    <div class="actions animate-in d3">
+
+      <div class="action" onclick="goTo('/config')" style="--ac-color: var(--lima); --ac-soft: var(--lima-soft); --ac-border: var(--lima-border);">
+        <div class="action-icon"><i class="ri-settings-3-fill"></i></div>
+        <div class="action-body">
+          <div class="action-title">Configuración</div>
+          <div class="action-desc">Cuentas, filtros y TTS</div>
+        </div>
       </div>
-      <div class="action-card" onclick="goTo('/overlays')">
-        <div class="action-top"><i class="ri-layout-masonry-line action-glyph"></i></div>
-        <div><div class="action-title">Galería de Overlays</div><div class="action-desc">Chat, tops y alertas para OBS</div></div>
+
+      <div class="action" onclick="goTo('/overlays')" style="--ac-color: var(--rosa); --ac-soft: var(--rosa-soft); --ac-border: var(--rosa-border);">
+        <div class="action-icon"><i class="ri-layout-masonry-line"></i></div>
+        <div class="action-body">
+          <div class="action-title">Overlays</div>
+          <div class="action-desc">Chat, tops y alertas</div>
+        </div>
       </div>
-      <div class="action-card" onclick="goTo('/moderation')">
-        <div class="action-top"><i class="ri-shield-check-fill action-glyph"></i></div>
-        <div><div class="action-title">Moderación</div><div class="action-desc">Bans, encuestas y eventos en vivo</div></div>
+
+      <div class="action" onclick="goTo('/moderation')" style="--ac-color: var(--cian); --ac-soft: var(--cian-soft); --ac-border: var(--cian-border);">
+        <div class="action-icon"><i class="ri-shield-check-fill"></i></div>
+        <div class="action-body">
+          <div class="action-title">Moderación</div>
+          <div class="action-desc">Bans, encuestas, eventos</div>
+        </div>
       </div>
-      <div class="action-card" onclick="openDeck()">
-        <div class="action-top"><i class="ri-layout-grid-fill action-glyph"></i></div>
-        <div><div class="action-title">StreamDeck</div><div class="action-desc">Botones de control para el móvil</div></div>
+
+      <div class="action" onclick="openDeck()" style="--ac-color: #a78bfa; --ac-soft: rgba(167, 139, 250, 0.10); --ac-border: rgba(167, 139, 250, 0.32);">
+        <div class="action-icon"><i class="ri-layout-grid-fill"></i></div>
+        <div class="action-body">
+          <div class="action-title">StreamDeck</div>
+          <div class="action-desc">Botones para el móvil</div>
+        </div>
       </div>
+
+      <div class="action" onclick="goTo('/gemini-live.html')" style="--ac-color: var(--rosa); --ac-soft: var(--rosa-soft); --ac-border: var(--rosa-border);">
+        <div class="action-icon"><i class="ri-robot-2-line"></i></div>
+        <div class="action-body">
+          <div class="action-title">Gemini Live</div>
+          <div class="action-desc">Voz, búsqueda, resúmenes</div>
+        </div>
+      </div>
+
     </div>
 
-    <!-- FOOTER -->
-    <div class="footer-actions animate-in delay-4">
+    <div class="footer-bar animate-in d4">
       <button class="btn btn-primary" id="btn-restart" onclick="restartServers()">
-        <i class="ri-refresh-line"></i><span id="btn-restart-text">Reiniciar servidores</span>
+        <i class="ri-refresh-line"></i>
+        <span id="btn-restart-text">Reiniciar servidores</span>
       </button>
       <button class="btn btn-secondary" onclick="openLogs()">
-        <i class="ri-terminal-box-line"></i> Ver consola de logs
+        <i class="ri-terminal-box-line"></i>
+        Ver consola de logs
       </button>
     </div>
-
   </main>
 
-  <!-- MODAL CONSOLA DE LOGS REDISEÑADA -->
   <div class="modal" id="logs-modal">
-    <div class="modal-box logs-console-box">
+    <div class="modal-box">
       <div class="console-header">
         <div class="console-title">
-          <i class="ri-terminal-box-fill"></i> Consola del Sistema
+          <i class="ri-terminal-box-fill"></i>
+          Consola del Sistema
         </div>
         <div class="console-controls">
           <div class="console-search">
             <i class="ri-search-line"></i>
-            <input type="text" id="log-search-input" placeholder="Filtrar eventos..." oninput="filterLogs()">
+            <input type="text" id="log-search-input" placeholder="Filtrar..." oninput="filterLogs()">
           </div>
           <button class="btn-console active" id="btn-autoscroll" onclick="toggleAutoscroll()">
             <i class="ri-arrow-down-circle-line"></i> Auto-scroll
@@ -637,17 +919,14 @@
           </button>
         </div>
       </div>
-      <div class="console-body" id="logs-output">
-        <!-- Los eventos formateados aparecerán aquí -->
-      </div>
+      <div class="console-body" id="logs-output"></div>
       <div class="console-footer">
-        <span id="console-count">0 eventos registrados</span>
+        <span id="console-count">0 eventos</span>
         <span>Modo: Interactivo</span>
       </div>
     </div>
   </div>
 
-  <!-- TOAST -->
   <div class="toast" id="toast">
     <span id="toast-text">Listo</span>
   </div>
@@ -658,6 +937,10 @@
     let rawLogs = [];
     let autoscroll = true;
     let logsInterval = null;
+
+    const ULTIMA_ACTIVIDAD = { twitch: 0, tiktok: 0, kick: 0, youtube: 0 };
+    const VIVO_MS = 60000;
+    const USERNAME_CACHE = { twitch: '', tiktok: '', kick: '', youtube: '' };
 
     async function checkServerStatus() {
       try {
@@ -682,8 +965,10 @@
 
     function resetPlatforms() {
       ['twitch', 'tiktok', 'kick', 'youtube'].forEach(p => {
-        document.getElementById('card-' + p).classList.remove('connected');
-        document.getElementById('status-' + p).textContent = 'Sin conectar';
+        const card = document.getElementById('card-' + p);
+        card.classList.remove('state-waiting', 'state-live');
+        card.classList.add('state-none');
+        document.getElementById('status-' + p).textContent = 'No configurado';
       });
     }
 
@@ -691,10 +976,20 @@
       try {
         const res = await fetch(window.SERVER_BASE + '/get-config');
         const config = await res.json();
-        updateCard('twitch', config.TWITCH_CHANNEL);
-        updateCard('tiktok', config.TIKTOK_USER_ID || (config.TIKTOK_USERS || [])[0]);
-        updateCard('kick', config.KICK_USERNAME || (config.KICK_USERS || [])[0]);
+        updateCard('twitch',  config.TWITCH_CHANNEL || (config.channels && config.channels[0]));
+        updateCard('tiktok',  config.TIKTOK_USER_ID || (config.TIKTOK_USERS || [])[0]);
+        updateCard('kick',    config.KICK_USERNAME || (config.KICK_USERS || [])[0]);
         updateCard('youtube', config.YOUTUBE_USER_ID || (config.YOUTUBE_USERS || [])[0]);
+
+        const nombre =
+          ((config.TIKTOK_USERS || [])[0]) ||
+          config.TIKTOK_USER_ID ||
+          config.TWITCH_CHANNEL ||
+          ((config.KICK_USERS || [])[0]) ||
+          '';
+        const nombreLimpio = String(nombre).replace(/^@/, '').trim();
+        const el = document.getElementById('toki-msg-name');
+        if (el) el.textContent = nombreLimpio || 'amiga';
       } catch (e) {}
     }
 
@@ -702,34 +997,70 @@
       const card = document.getElementById('card-' + platform);
       const status = document.getElementById('status-' + platform);
       const str = String(value || '').trim();
-      if (str) {
-        card.classList.add('connected');
-        status.textContent = str;
-      } else {
-        card.classList.remove('connected');
-        status.textContent = 'Sin configurar';
+      USERNAME_CACHE[platform] = str;
+
+      if (!str) {
+        card.classList.remove('state-waiting', 'state-live');
+        card.classList.add('state-none');
+        status.textContent = 'No configurado';
+        return;
       }
+
+      card.classList.remove('state-none');
+      const vivo = (Date.now() - (ULTIMA_ACTIVIDAD[platform] || 0)) < VIVO_MS;
+      card.classList.toggle('state-live', vivo);
+      card.classList.toggle('state-waiting', !vivo);
+      status.textContent = str;
+    }
+
+    function initSocket() {
+      if (typeof io === 'undefined') return;
+      const s = io(window.SERVER_BASE, { transports: ['websocket', 'polling'] });
+
+      s.on('chat-message', (msg) => {
+        const p = (msg && msg.platform ? msg.platform : '').toLowerCase();
+        if (ULTIMA_ACTIVIDAD[p] !== undefined) {
+          ULTIMA_ACTIVIDAD[p] = Date.now();
+          updateCard(p, USERNAME_CACHE[p]);
+        }
+      });
+
+      s.on('tiktok-gift', () => {
+        ULTIMA_ACTIVIDAD.tiktok = Date.now();
+        updateCard('tiktok', USERNAME_CACHE.tiktok);
+      });
+      s.on('tiktok-follow', () => {
+        ULTIMA_ACTIVIDAD.tiktok = Date.now();
+        updateCard('tiktok', USERNAME_CACHE.tiktok);
+      });
+      s.on('tiktok-like', () => { ULTIMA_ACTIVIDAD.tiktok = Date.now(); });
+      s.on('youtube-superchat', () => {
+        ULTIMA_ACTIVIDAD.youtube = Date.now();
+        updateCard('youtube', USERNAME_CACHE.youtube);
+      });
+      s.on('youtube-member', () => {
+        ULTIMA_ACTIVIDAD.youtube = Date.now();
+      });
     }
 
     async function loadConnectionMode() {
-      const pill = document.getElementById('mode-pill');
       const val = document.getElementById('mode-value');
       const ipBtn = document.getElementById('ip-btn');
-
       try {
         const info = await ipcRenderer.invoke('setup:get-info');
         if (info && info.mode) {
-          pill.textContent = info.mode === 'server' ? 'Servidor' : 'Cliente';
-          pill.className = 'mode-pill ' + info.mode;
-          val.textContent = info.mode === 'server' ? 'PC Principal' : 'PC Secundaria';
-
+          val.textContent = info.mode === 'server'
+            ? 'Modo servidor · PC principal'
+            : 'Modo cliente · PC secundaria';
           if (info.mode === 'server') {
             const res = await fetch(window.SERVER_BASE + '/api/local-ip');
             const data = await res.json();
             if (data && data.ip) {
               serverIp = data.ip;
               document.getElementById('ip-text').textContent = serverIp;
-              ipBtn.style.display = 'inline-flex';
+              let oculta = false;
+              try { oculta = localStorage.getItem('togi_ip_oculta') === '1'; } catch (e) {}
+              if (!oculta) ipBtn.style.display = 'inline-flex';
             }
           }
         }
@@ -742,8 +1073,18 @@
       showToast('IP copiada: ' + serverIp);
     }
 
+    function ocultarIp(ev) {
+      if (ev) ev.stopPropagation();
+      const btn = document.getElementById('ip-btn');
+      if (btn) btn.style.display = 'none';
+      try { localStorage.setItem('togi_ip_oculta', '1'); } catch (e) {}
+    }
+
     function goTo(path) { window.location.href = window.SERVER_BASE + path; }
     function openDeck() { window.location.href = window.SERVER_BASE + '/deck'; }
+    function reconfigureConnection() {
+      window.location.href = window.SERVER_BASE + '/setup.html';
+    }
 
     async function restartServers() {
       const btn = document.getElementById('btn-restart');
@@ -757,105 +1098,90 @@
       setTimeout(() => btn.disabled = false, 2000);
     }
 
-    /* ═══════════════════════════════════════════════════
-       LÓGICA DE LA CONSOLA DE LOGS
-       ═══════════════════════════════════════════════════ */
     function openLogs() {
       document.getElementById('logs-modal').classList.add('open');
       refreshLogs();
       if (logsInterval) clearInterval(logsInterval);
       logsInterval = setInterval(refreshLogs, 2000);
     }
-
     function closeLogs() {
       document.getElementById('logs-modal').classList.remove('open');
       if (logsInterval) { clearInterval(logsInterval); logsInterval = null; }
     }
-
     async function refreshLogs() {
       try {
         const logs = await ipcRenderer.invoke('get-logs');
         rawLogs = logs || [];
         renderLogs();
       } catch (e) {
-        document.getElementById('logs-output').innerHTML = `<div class="log-line"><span class="log-msg" style="color:var(--err)">Error al leer logs: ${e.message}</span></div>`;
+        document.getElementById('logs-output').innerHTML =
+          `<div class="log-line"><span class="log-msg" style="color:var(--err)">Error: ${e.message}</span></div>`;
       }
     }
-
     function renderLogs() {
       const container = document.getElementById('logs-output');
-      const searchVal = document.getElementById('log-search-input').value.toLowerCase();
-      const countEl = document.getElementById('console-count');
-
-      const filtered = rawLogs.filter(line => line.toLowerCase().includes(searchVal));
-      countEl.textContent = `${filtered.length} eventos mostrados`;
-
+      const q = document.getElementById('log-search-input').value.toLowerCase();
+      const filtered = rawLogs.filter(l => l.toLowerCase().includes(q));
+      document.getElementById('console-count').textContent = `${filtered.length} eventos`;
       if (filtered.length === 0) {
-        container.innerHTML = '<div style="color:var(--text-3); text-align:center; padding: 40px 0;">Sin eventos registrados o coincidentes.</div>';
+        container.innerHTML = '<div style="color:var(--text-3); text-align:center; padding: 40px 0;">Sin eventos.</div>';
         return;
       }
-
-      const html = filtered.map(line => {
+      container.innerHTML = filtered.map(line => {
         let tag = 'info';
-        let text = line;
-
-        if (line.includes('ERROR') || line.includes('Err')) tag = 'error';
-        else if (line.includes('WARN') || line.includes('Advertencia')) tag = 'warn';
-        else if (line.includes('OK') || line.includes('éxito') || line.includes('Iniciado')) tag = 'success';
-
-        const timeMatch = line.match(/^\[(.*?)\]/);
-        const time = timeMatch ? timeMatch[1] : new Date().toLocaleTimeString();
-        const cleanMsg = timeMatch ? line.replace(timeMatch[0], '') : line;
-
-        return `
-          <div class="log-line">
-            <span class="log-time">${time}</span>
-            <span class="log-msg"><span class="log-tag ${tag}">${tag}</span>${cleanMsg}</span>
-          </div>
-        `;
+        if (line.includes('ERROR')) tag = 'error';
+        else if (line.includes('WARN')) tag = 'warn';
+        else if (line.includes('OK') || line.includes('✅')) tag = 'success';
+        const m = line.match(/^\[(.*?)\]/);
+        const time = m ? m[1] : new Date().toLocaleTimeString();
+        const msg = m ? line.replace(m[0], '') : line;
+        return `<div class="log-line"><span class="log-time">${time}</span><span class="log-msg"><span class="log-tag ${tag}">${tag}</span>${msg}</span></div>`;
       }).join('');
-
-      container.innerHTML = html;
-
-      if (autoscroll) {
-        container.scrollTop = container.scrollHeight;
-      }
+      if (autoscroll) container.scrollTop = container.scrollHeight;
     }
-
     function filterLogs() { renderLogs(); }
-
     function toggleAutoscroll() {
       autoscroll = !autoscroll;
-      const btn = document.getElementById('btn-autoscroll');
-      btn.classList.toggle('active', autoscroll);
+      document.getElementById('btn-autoscroll').classList.toggle('active', autoscroll);
     }
-
     function copyConsoleLogs() {
       if (!rawLogs.length) return;
       navigator.clipboard.writeText(rawLogs.join('\n'));
-      showToast('Logs copiados al portapapeles');
+      showToast('Logs copiados');
     }
-
-    function clearLogsUI() {
-      rawLogs = [];
-      renderLogs();
-      showToast('Consola limpiada');
-    }
+    function clearLogsUI() { rawLogs = []; renderLogs(); }
 
     function showToast(msg) {
-      const toast = document.getElementById('toast');
+      const t = document.getElementById('toast');
       document.getElementById('toast-text').textContent = msg;
-      toast.classList.add('show');
-      setTimeout(() => toast.classList.remove('show'), 2500);
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2400);
     }
 
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') closeLogs();
     });
 
-    setInterval(checkServerStatus, 4000);
     checkServerStatus();
     loadConnectionMode();
+    setInterval(checkServerStatus, 5000);
+    setInterval(() => {
+      ['twitch', 'tiktok', 'kick', 'youtube'].forEach(p => {
+        if (USERNAME_CACHE[p]) updateCard(p, USERNAME_CACHE[p]);
+      });
+    }, 5000);
+  </script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    if (typeof io !== 'undefined') initSocket();
+    else {
+      const checkIo = setInterval(() => {
+        if (typeof io !== 'undefined') {
+          clearInterval(checkIo);
+          initSocket();
+        }
+      }, 100);
+    }
   </script>
 </body>
 </html>

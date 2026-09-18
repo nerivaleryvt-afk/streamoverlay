@@ -252,40 +252,66 @@ function closeAllProcesses() {
 // ================================================================
 // 🌐 SESIÓN TIKTOK
 // ================================================================
-let tiktokSessionReady = false;
+// ═══════════════════════════════════════════════════════════════
+// ✨ FIX: configurar TODAS las particiones TikTok, no solo "session"
+// El webview del dashboard usa slot-1/2/3 y necesita los mismos
+// headers CORS + permisos que la ventana de login.
+// ═══════════════════════════════════════════════════════════════
+const TIKTOK_ALL_PARTITIONS = [
+    'persist:tiktok-session',
+    'persist:tiktok-slot-1',
+    'persist:tiktok-slot-2',
+    'persist:tiktok-slot-3',
+    'persist:tiktok-slot-4',
+    'persist:tiktok-slot-5',
+    'persist:tiktok-slot-6'
+];
 
-function getTikTokSession() {
-    const tiktokSession = session.fromPartition('persist:tiktok-session');
-    if (tiktokSessionReady) return tiktokSession;
-    tiktokSessionReady = true;
+const _tiktokSessionsConfigured = new Set();
 
-    tiktokSession.webRequest.onHeadersReceived((details, callback) => {
-        const responseHeaders = {};
-        Object.keys(details.responseHeaders).forEach((key) => {
-            const lowerKey = key.toLowerCase();
-            if (
-                lowerKey !== 'content-security-policy' &&
-                lowerKey !== 'content-security-policy-report-only' &&
-                !lowerKey.startsWith('access-control-')
-            ) {
-                responseHeaders[key] = details.responseHeaders[key];
-            }
+function configurarSesionTikTok(partitionName) {
+    if (_tiktokSessionsConfigured.has(partitionName)) return;
+    _tiktokSessionsConfigured.add(partitionName);
+
+    try {
+        const ses = session.fromPartition(partitionName);
+
+        ses.webRequest.onHeadersReceived((details, callback) => {
+            const responseHeaders = {};
+            Object.keys(details.responseHeaders).forEach((key) => {
+                const lowerKey = key.toLowerCase();
+                if (
+                    lowerKey !== 'content-security-policy' &&
+                    lowerKey !== 'content-security-policy-report-only' &&
+                    !lowerKey.startsWith('access-control-')
+                ) {
+                    responseHeaders[key] = details.responseHeaders[key];
+                }
+            });
+
+            const requestOrigin = details.requestHeaders?.Origin || details.requestHeaders?.origin || 'https://livecenter.tiktok.com';
+            responseHeaders['Access-Control-Allow-Origin'] = [requestOrigin];
+            responseHeaders['Access-Control-Allow-Credentials'] = ['true'];
+            responseHeaders['Access-Control-Allow-Methods'] = ['GET, POST, PUT, DELETE, OPTIONS'];
+            responseHeaders['Access-Control-Allow-Headers'] = ['*'];
+
+            callback({ cancel: false, responseHeaders });
         });
 
-        const requestOrigin = details.requestHeaders?.Origin || details.requestHeaders?.origin || 'https://livecenter.tiktok.com';
-        responseHeaders['Access-Control-Allow-Origin'] = [requestOrigin];
-        responseHeaders['Access-Control-Allow-Credentials'] = ['true'];
-        responseHeaders['Access-Control-Allow-Methods'] = ['GET, POST, PUT, DELETE, OPTIONS'];
-        responseHeaders['Access-Control-Allow-Headers'] = ['*'];
+        ses.setPermissionRequestHandler((webContents, permission, callback) => {
+            callback(true);
+        });
 
-        callback({ cancel: false, responseHeaders });
-    });
+        console.log(`🔧 Sesión TikTok configurada: ${partitionName}`);
+    } catch (e) {
+        console.error(`❌ No se pudo configurar ${partitionName}:`, e.message);
+    }
+}
 
-    tiktokSession.setPermissionRequestHandler((webContents, permission, callback) => {
-        callback(true);
-    });
-
-    return tiktokSession;
+function getTikTokSession() {
+    // Configurar TODAS las particiones candidatas
+    TIKTOK_ALL_PARTITIONS.forEach(configurarSesionTikTok);
+    return session.fromPartition('persist:tiktok-session');
 }
 
 // ================================================================
@@ -324,33 +350,116 @@ const COOKIES_INTERES = new Set([
     'tt_csrf_token', 'msToken', 'tt_chain_token', 'store-idc', 'store-country-code'
 ]);
 
+// ═══════════════════════════════════════════════════════════════
+// ✨ FIX: leer cookies de TODAS las particiones TikTok
+// El webview del dashboard usa persist:tiktok-slot-N, pero el
+// login window usa persist:tiktok-session. Leemos de todas y
+// mezclamos. La partición con sessionid válido es la "ganadora".
+// ═══════════════════════════════════════════════════════════════
+const TIKTOK_PARTITIONS_TO_SCAN = [
+    'persist:tiktok-session',    // ventana de login / externa
+    'persist:tiktok-slot-1',     // webview dashboard slot 1
+    'persist:tiktok-slot-2',     // webview dashboard slot 2
+    'persist:tiktok-slot-3',     // webview dashboard slot 3
+    'persist:tiktok-slot-4',
+    'persist:tiktok-slot-5',
+    'persist:tiktok-slot-6'
+];
+
+// ═══════════════════════════════════════════════════════════════
+// ✨ Notificar al server que las cookies cambiaron
+// El server puede así invalidar cachés y releer del disco.
+// ═══════════════════════════════════════════════════════════════
+async function notificarServerCookiesActualizadas() {
+    try {
+        const base = getServerBase();
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), 3000);
+        await fetch(`${base}/api/tiktok/cookies-updated`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ts: Date.now() }),
+            signal: ctrl.signal
+        }).finally(() => clearTimeout(t));
+        console.log('📡 Server notificado de cookies actualizadas');
+    } catch (e) {
+        // Silencioso — el server puede no tener el endpoint todavía
+    }
+}
+
 async function capturarYGuardarCookies() {
     try {
-        const tiktokSession = session.fromPartition('persist:tiktok-session');
-        const todas = await tiktokSession.cookies.get({});
         const relevantes = {};
-        todas.forEach((c) => {
-            if (COOKIES_INTERES.has(c.name)) {
-                relevantes[c.name] = c.value;
+        let totalCookies = 0;
+        let particionesLeidas = 0;
+        let particionConSesion = null;
+        const debugInfo = [];
+
+        // Recorrer TODAS las particiones candidatas
+        for (const nombre of TIKTOK_PARTITIONS_TO_SCAN) {
+            try {
+                const ses = session.fromPartition(nombre);
+                const cookies = await ses.cookies.get({});
+                totalCookies += cookies.length;
+                particionesLeidas++;
+
+                let tieneSesionEnEsta = false;
+                let relevantesEnEsta = 0;
+
+                cookies.forEach((c) => {
+                    if (COOKIES_INTERES.has(c.name)) {
+                        // Solo sobreescribir si aún no tenemos este cookie
+                        // (la primera partición con cookies gana por defecto)
+                        if (!(c.name in relevantes)) {
+                            relevantes[c.name] = c.value;
+                        }
+                        relevantesEnEsta++;
+                        if (c.name === 'sessionid' || c.name === 'sessionid_ss') {
+                            tieneSesionEnEsta = true;
+                        }
+                    }
+                });
+
+                debugInfo.push(`${nombre}: ${cookies.length} cookies (${relevantesEnEsta} relevantes)`);
+
+                // Prioridad: si esta partición tiene sessionid, gana
+                if (tieneSesionEnEsta) {
+                    if (!particionConSesion) {
+                        particionConSesion = nombre;
+                        // Sobrescribir con los valores de ESTA partición
+                        cookies.forEach((c) => {
+                            if (COOKIES_INTERES.has(c.name)) {
+                                relevantes[c.name] = c.value;
+                            }
+                        });
+                    }
+                }
+            } catch (e) {
+                // Silencioso — la partición puede no existir aún
             }
-        });
+        }
+
+        console.log('🍪 Escaneo de particiones TikTok:');
+        debugInfo.forEach((line) => console.log('   ' + line));
+        console.log(`🍪 Partición con sessionid: ${particionConSesion || 'NINGUNA'}`);
 
         const tieneSesion = relevantes.sessionid || relevantes.sessionid_ss;
         if (!tieneSesion) {
-            console.log('⚠️ No se encontró sessionid. Login incompleto.');
-            return { success: false, error: 'Sin sessionid' };
+            console.log('⚠️ No se encontró sessionid en ninguna partición. Login incompleto.');
+            return { success: false, error: 'Sin sessionid', particionesLeidas };
         }
 
         const payload = {
             cookies: relevantes,
             capturadoEn: new Date().toISOString(),
-            totalCookies: todas.length
+            totalCookies,
+            particionOrigen: particionConSesion
         };
 
         const cifrado = cifrar(JSON.stringify(payload));
         fs.writeFileSync(TIKTOK_COOKIES_FILE, cifrado, 'utf8');
 
-        console.log(`✅ Cookies de TikTok guardadas (${Object.keys(relevantes).length} relevantes)`);
+        console.log(`✅ Cookies de TikTok guardadas (${Object.keys(relevantes).length} relevantes, desde ${particionConSesion})`);
         console.log(`   Archivo: ${TIKTOK_COOKIES_FILE}`);
 
         BrowserWindow.getAllWindows().forEach((win) => {
@@ -359,7 +468,10 @@ async function capturarYGuardarCookies() {
             }
         });
 
-        return { success: true, total: Object.keys(relevantes).length };
+        // ✨ Avisar al server que recargue las cookies del disco
+        notificarServerCookiesActualizadas().catch(() => {});
+
+        return { success: true, total: Object.keys(relevantes).length, particion: particionConSesion };
     } catch (e) {
         console.error('❌ Error capturando cookies:', e.message);
         return { success: false, error: e.message };
@@ -477,6 +589,11 @@ function createWindow() {
     });
 
     mainWindow = win;
+
+    // ✨ Limpiar caché HTTP al arrancar (evita versiones viejas de JS/CSS)
+    win.webContents.session.clearCache()
+      .then(() => console.log('🧹 Caché HTTP limpiada al arrancar'))
+      .catch((e) => console.log('⚠️ No se pudo limpiar caché:', e.message));
 
     win.webContents.setWindowOpenHandler(({ url }) => {
         shell.openExternal(url);
