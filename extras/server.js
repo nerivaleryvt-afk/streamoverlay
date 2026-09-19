@@ -133,6 +133,12 @@ app.use(express.static(publicDir));
 // 🎨 Overlay chat personalizado (StreamElements)
 require('./custom-overlay')(app);
 
+// 🎮 Perfiles de Valorant
+require('./valconfig')(app);
+
+// 📺 Velora Live Chat
+require('./velora')(app, io);
+
 // 🔊 PATCH 2 — Servir MP3 generados por TTS
 app.use('/tts-audio', express.static(ttsEngine.TTS_DIR, {
     setHeaders: (res) => res.setHeader('Cache-Control', 'no-store')
@@ -321,13 +327,8 @@ app.get('/api/tiktok/proxy/status', (req, res) => {
     res.json({ ok: true, state: tiktokProxy.getState() });
 });
 
-app.post('/api/tiktok/proxy/renew', async (req, res) => {
-    try {
-        const result = await tiktokProxy.renewManual();
-        res.json(result);
-    } catch (e) {
-        res.status(500).json({ ok: false, error: e.message });
-    }
+app.post('/api/tiktok/proxy/renew', (req, res) => {
+    res.status(410).json({ ok: false, error: 'Endpoint deprecado. El proxy reconecta solo.' });
 });
 // ================================================================
 // 🌐 IP LOCAL (para el modo dos PC)
@@ -795,6 +796,124 @@ function guardarTemas() {
 const JAR_STATE_PATH = IS_PACKAGED
     ? path.join(USER_DATA_DIR, 'jar-state.json')
     : path.join(__dirname, 'jar-state.json');
+	
+	// ================================================================
+// 📼 ÚLTIMO STREAM — persistencia del resumen de sesión
+// ================================================================
+const LAST_STREAM_PATH = IS_PACKAGED
+    ? path.join(USER_DATA_DIR, 'last-stream.json')
+    : path.join(__dirname, 'last-stream.json');
+
+let lastStream = null;
+
+// Estado en memoria para armar el resumen de la sesión actual
+let sessionState = {
+    activa: false,
+    inicio: 0,
+    plataformas: new Set(),
+    viewersPico: 0,
+    viewersSuma: 0,
+    viewersMuestras: 0,
+    diamantesInicio: 0,
+    follows: 0,
+    canal: ''
+};
+
+function cargarLastStream() {
+    try {
+        if (fs.existsSync(LAST_STREAM_PATH)) {
+            const raw = fs.readFileSync(LAST_STREAM_PATH, 'utf8');
+            lastStream = JSON.parse(raw);
+            console.log(`📼 Último stream cargado: ${lastStream.canal || '(sin canal)'} · ${new Date(lastStream.fin).toLocaleString()}`);
+        } else {
+            console.log('📼 No hay resumen de último stream todavía');
+        }
+    } catch (e) {
+        console.error('❌ Error cargando last-stream.json:', e.message);
+        lastStream = null;
+    }
+}
+
+function guardarLastStream(data) {
+    try {
+        lastStream = data;
+        fs.writeFileSync(LAST_STREAM_PATH, JSON.stringify(data, null, 2));
+        console.log(`📼 Resumen de stream guardado en ${LAST_STREAM_PATH}`);
+    } catch (e) {
+        console.error('❌ Error guardando last-stream.json:', e.message);
+    }
+}
+
+function iniciarSesion(canal, plataforma) {
+    if (sessionState.activa) return;
+    sessionState.activa = true;
+    sessionState.inicio = Date.now();
+    sessionState.plataformas = new Set();
+    sessionState.viewersPico = 0;
+    sessionState.viewersSuma = 0;
+    sessionState.viewersMuestras = 0;
+    sessionState.diamantesInicio = jarState.totalDiamonds || 0;
+    sessionState.follows = 0;
+    sessionState.canal = canal || '';
+    if (plataforma) sessionState.plataformas.add(plataforma);
+    console.log(`📼 [SESIÓN] Iniciada por ${plataforma || '?'} · canal: ${canal || '?'}`);
+}
+
+function registrarActividad(plataforma) {
+    if (!sessionState.activa) {
+        // Autoiniciar si llega actividad sin inicio formal
+        iniciarSesion('', plataforma);
+    }
+    if (plataforma) sessionState.plataformas.add(plataforma);
+}
+
+function registrarViewers(n) {
+    if (!sessionState.activa) return;
+    if (typeof n !== 'number' || n < 0) return;
+    if (n > sessionState.viewersPico) sessionState.viewersPico = n;
+    sessionState.viewersSuma += n;
+    sessionState.viewersMuestras++;
+}
+
+function cerrarSesion(motivo) {
+    if (!sessionState.activa) return;
+    const fin = Date.now();
+    const duracionMs = fin - sessionState.inicio;
+    const diamantes = Math.max(0, (jarState.totalDiamonds || 0) - sessionState.diamantesInicio);
+    const viewersPromedio = sessionState.viewersMuestras > 0
+        ? Math.round(sessionState.viewersSuma / sessionState.viewersMuestras)
+        : 0;
+
+    const resumen = {
+        canal: sessionState.canal || '',
+        inicio: sessionState.inicio,
+        fin: fin,
+        duracionMs: duracionMs,
+        plataformas: Array.from(sessionState.plataformas),
+        viewersPico: sessionState.viewersPico,
+        viewersPromedio: viewersPromedio,
+        diamantes: diamantes,
+        follows: sessionState.follows,
+        motivo: motivo || 'desconocido'
+    };
+
+    guardarLastStream(resumen);
+
+    // Reset
+    sessionState.activa = false;
+    sessionState.inicio = 0;
+    sessionState.plataformas = new Set();
+    sessionState.viewersPico = 0;
+    sessionState.viewersSuma = 0;
+    sessionState.viewersMuestras = 0;
+    sessionState.diamantesInicio = 0;
+    sessionState.follows = 0;
+    sessionState.canal = '';
+
+    console.log(`📼 [SESIÓN] Cerrada (${motivo}) · duración: ${Math.floor(duracionMs/1000)}s · ${diamantes}💎 · ${sessionState.follows} follows`);
+}
+
+cargarLastStream();
 
 let jarState = {
     totalDiamonds: 0,
@@ -1059,6 +1178,17 @@ app.get('/api/jar-state', (req, res) => {
     res.json(jarState);
 });
 
+// ================================================================
+// 📼 ENDPOINT — Último stream
+// ================================================================
+app.get('/api/last-stream', (req, res) => {
+    try {
+        res.json(lastStream || null);
+    } catch (e) {
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
 app.post('/api/jar-state/reset', (req, res) => {
     jarState = {
         totalDiamonds: 0,
@@ -1153,7 +1283,7 @@ function loadConfig() {
         if (!parsed.PLATFORMS_ENABLED || typeof parsed.PLATFORMS_ENABLED !== 'object') {
             parsed.PLATFORMS_ENABLED = {};
         }
-        for (const k of ['tiktok', 'twitch', 'kick', 'youtube']) {
+                for (const k of ['tiktok', 'twitch', 'kick', 'youtube', 'velora']) {
             if (typeof parsed.PLATFORMS_ENABLED[k] !== 'boolean') {
                 parsed.PLATFORMS_ENABLED[k] = true;
             }
@@ -1992,7 +2122,8 @@ function getPlatformsEnabled() {
         tiktok:  e.tiktok  !== false,
         twitch:  e.twitch  !== false,
         kick:    e.kick    !== false,
-        youtube: e.youtube !== false
+        youtube: e.youtube !== false,
+        velora:  e.velora  !== false
     };
 }
 
@@ -2425,6 +2556,7 @@ const tiktokChat = new TikTokChat({
                 diamonds: diamonds,
                 timestamp: Date.now()
             };
+                        registrarActividad('tiktok');
             jarDirty = true;
 
             io.emit('jar-update', {
@@ -2467,8 +2599,10 @@ const tiktokChat = new TikTokChat({
             timerPush((data.diamantesTotales || 0) * 3);
         }
     },
-      onFollow: (data) => {
+            onFollow: (data) => {
         io.emit('tiktok-follow', data);
+        registrarActividad('tiktok');
+        if (sessionState.activa) sessionState.follows++;
         io.emit('chat-message', {
             platform: 'tiktok', username: data.username,
             message: `👤 ${data.username} te empezó a seguir`,
@@ -2510,11 +2644,17 @@ const tiktokChat = new TikTokChat({
             role: inferRole('tiktok', data)
         });
     },
-    onRoomUser: (data) => { io.emit('tiktok-viewers', data); },
+        onRoomUser: (data) => {
+        io.emit('tiktok-viewers', data);
+        const n = data && (data.viewerCount ?? data.viewers ?? data.count);
+        if (typeof n === 'number') {
+            registrarActividad('tiktok');
+            registrarViewers(n);
+        }
+    },
     onSocial: (data) => { io.emit('tiktok-social', data); },
-    onStatus: (info) => {
+        onStatus: (info) => {
     io.emit('tiktok-status', info);
-    try { manejarEstadoTikTok(info); } catch (e) { console.error('⏱️ Error en manejarEstadoTikTok:', e.message); }
 },
     onStats: ({ usuario, stats }) => {
         io.emit('tiktok-stats', { usuario, stats });
@@ -2726,7 +2866,7 @@ app.post('/save-config', (req, res) => {
         if (!newConfig.PLATFORMS_ENABLED || typeof newConfig.PLATFORMS_ENABLED !== 'object') {
             newConfig.PLATFORMS_ENABLED = {};
         }
-        for (const k of ['tiktok', 'twitch', 'kick', 'youtube']) {
+                for (const k of ['tiktok', 'twitch', 'kick', 'youtube', 'velora']) {
             newConfig.PLATFORMS_ENABLED[k] = newConfig.PLATFORMS_ENABLED[k] !== false;
         }
 
@@ -2903,6 +3043,7 @@ app.get('/overlays', (req, res) => res.sendFile(path.join(publicDir, 'overlays.h
 app.get('/moderation', (req, res) => res.sendFile(path.join(publicDir, 'dashboard.html')));
 app.get('/config', (req, res) => res.sendFile(path.join(publicDir, 'config.html')));
 app.get('/crystal', (req, res) => res.sendFile(path.join(publicDir, 'crystal.html')));
+app.get('/valconfig', (req, res) => res.sendFile(path.join(publicDir, 'valconfig.html')));
 
 app.get('/setup.html', (req, res) => res.sendFile(path.join(publicDir, 'setup.html')));
 
@@ -3273,11 +3414,12 @@ async function connectTwitchChannel(channelName, account) {
             procesarCoHost(username, message, 'twitch', canal);
         });
 
-        client.on('cheer', async (channel, tags, message, self) => {
+                client.on('cheer', async (channel, tags, message, self) => {
             if (self) return;
             const username = tags['display-name'] || tags.username;
             const bits = parseInt(tags.bits) || 0;
             totalBits += bits;
+            registrarActividad('twitch');
             io.emit('stats-update', { totalDiamonds, totalBits });
             const canal = channel.replace('#', '');
             const avatar = tags['user-id'] ? await getUserAvatar(tags['user-id'], canal) : null;
@@ -3699,6 +3841,35 @@ io.on('connection', (socket) => {
 });
 
 // ================================================================
+// 📼 DETECCIÓN DE FIN DE SESIÓN POR INACTIVIDAD
+// ================================================================
+const SESSION_IDLE_MS = 30 * 60 * 1000; // 30 minutos
+const lastActivityByPlatform = { tiktok: 0, twitch: 0, kick: 0, youtube: 0, velora: 0 };
+
+const _registrarActividadOriginal = registrarActividad;
+registrarActividad = function(plataforma) {
+    if (plataforma && lastActivityByPlatform[plataforma] !== undefined) {
+        lastActivityByPlatform[plataforma] = Date.now();
+    }
+    _registrarActividadOriginal(plataforma);
+};
+
+setInterval(() => {
+    if (!sessionState.activa) return;
+
+    const ahora = Date.now();
+    const plataformasConActividad = Object.values(lastActivityByPlatform).filter(t => t > 0);
+    const ultimaActividad = plataformasConActividad.length > 0
+        ? Math.max(...plataformasConActividad)
+        : sessionState.inicio;
+
+    if (ahora - ultimaActividad > SESSION_IDLE_MS) {
+        console.log('📼 [SESIÓN] Detectada inactividad prolongada, cerrando sesión...');
+        cerrarSesion('inactividad');
+    }
+}, 60000);
+
+// ================================================================
 // 🛑 CIERRE LIMPIO
 // ================================================================
 let shuttingDown = false;
@@ -3707,9 +3878,10 @@ async function shutdown(reason = 'unknown') {
     shuttingDown = true;
     console.log(`\n🛑 Cerrando servidor (${reason})...`);
 
-    try { guardarJarState(); } catch (e) {}
+        try { guardarJarState(); } catch (e) {}
     try { hypeTrain.destroy(); } catch (e) {}
 	try { guardarTimerState(); } catch (e) {}
+    try { cerrarSesion('shutdown'); } catch (e) {}
 
     if (kickWs) { try { kickWs.close(); } catch {} try { kickWs.terminate(); } catch {} }
     if (kickReconnectTimer) clearTimeout(kickReconnectTimer);

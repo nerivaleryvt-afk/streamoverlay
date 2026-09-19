@@ -49,6 +49,8 @@ extras/jar-state.json
 extras/timer-state.json
 timer-state.json
 jar-state.json
+last-stream.json
+extras/last-stream.json
 
 # Duplicados en raíz (el bueno está en extras/)
 custom-overlay.js

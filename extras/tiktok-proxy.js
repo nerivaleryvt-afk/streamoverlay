@@ -9,19 +9,17 @@ const tiktokStream = require('./tiktok-stream');
 const RTMP_PORT = 1935;
 const OBS_STREAM_PATH_FALLBACK = '/live/togipanel';
 
-// Renovación cada 90 min (TikTok caduca a las ~2h)
-const RENEW_INTERVAL_MS = 90 * 60 * 1000;
+// Reconexión ante caída (no por timer)
+const RECONNECT_DELAY_MS = 3000;
+const RECONNECT_BACKOFF = 1.6;      // multiplicador por intento
+const MAX_RECONNECT_ATTEMPTS = 5;
 
 let nms = null;
 let ffmpegProc = null;
 let obsStreamPath = null;
 let onObsRunning = false;
-let renewalTimer = null;
-let renewing = false;
-
-// 🧹 NUEVO — Timer del "kill diferido" del FFmpeg antiguo durante renovaciones.
-// Se guarda aquí para poder cancelarlo si el proxy se para antes de que dispare.
-let pendingKillTimer = null;
+let reconnecting = false;
+let reconnectAttempts = 0;
 
 let state = {
     status: 'idle',           // idle | waiting | streaming | error
@@ -31,8 +29,7 @@ let state = {
     startedAt: null,
     apiToken: null,
     title: null,
-    lastRenewal: null,
-    nextRenewal: null
+    lastReconnect: null
 };
 
 function getState() {
@@ -54,9 +51,9 @@ async function start(apiToken, title) {
         startedAt: Date.now(),
         apiToken,
         title: title || 'TogiPanel Stream',
-        lastRenewal: null,
-        nextRenewal: null
+        lastReconnect: null
     };
+    reconnectAttempts = 0;
 
     const config = {
         rtmp: {
@@ -131,40 +128,9 @@ async function onObsConnected() {
         state.streamId = result.id;
         state.status = 'streaming';
         state.error = null;
+        reconnectAttempts = 0;
 
-        const inputUrl = `rtmp://localhost:${RTMP_PORT}${obsStreamPath}`;
-        const outputUrl = `${result.server}/${result.key}`;
-
-        console.log(`🚀 [FFMPEG] Reenviando a TikTok (cuenta: ${username})...`);
-        console.log(`   Input:  ${inputUrl}`);
-        console.log(`   Output: ${result.server}/...`);
-
-        ffmpegProc = spawn(ffmpegPath, [
-            '-loglevel', 'warning',
-            '-i', inputUrl,
-            '-c', 'copy',
-            '-f', 'flv',
-            outputUrl
-        ], { windowsHide: true });
-
-        ffmpegProc.stderr.on('data', (d) => {
-            const txt = d.toString().trim();
-            if (txt) console.log('[FFMPEG]', txt);
-        });
-
-        ffmpegProc.on('exit', (code) => {
-            console.log(`[FFMPEG] Terminado (código ${code})`);
-            ffmpegProc = null;
-            if (state.status === 'streaming' && !renewing) state.status = 'waiting';
-        });
-
-        ffmpegProc.on('error', (err) => {
-            console.error('❌ [FFMPEG] Error:', err.message);
-            state.status = 'error';
-            state.error = 'FFmpeg falló: ' + err.message;
-        });
-
-        scheduleRenewal();
+        spawnFfmpeg(result, false);
 
     } catch (e) {
         state.status = 'error';
@@ -175,106 +141,101 @@ async function onObsConnected() {
 }
 
 // ----------------------------------------------------------------
-// RENOVACIÓN AUTOMÁTICA
+// Crear FFmpeg (usado en arranque y reconexión)
 // ----------------------------------------------------------------
-function scheduleRenewal() {
-    stopRenewal();
+function spawnFfmpeg(result, isReconnect) {
+    const tag = isReconnect ? '[FFMPEG-RECON]' : '[FFMPEG]';
+    const inputUrl = `rtmp://localhost:${RTMP_PORT}${obsStreamPath}`;
+    const outputUrl = `${result.server}/${result.key}`;
 
-    state.nextRenewal = Date.now() + RENEW_INTERVAL_MS;
+    console.log(`🚀 ${tag} Reenviando a TikTok (cuenta: ${state.username})...`);
+    console.log(`   Input:  ${inputUrl}`);
+    console.log(`   Output: ${result.server}/...`);
 
-    renewalTimer = setTimeout(() => {
-        renewNow();
-    }, RENEW_INTERVAL_MS);
+    const proc = spawn(ffmpegPath, [
+        '-loglevel', 'warning',
+        '-i', inputUrl,
+        '-c', 'copy',
+        '-f', 'flv',
+        outputUrl
+    ], { windowsHide: true });
 
-    console.log(`⏰ [RENEW] Próxima renovación en ${Math.round(RENEW_INTERVAL_MS / 60000)} min`);
+    ffmpegProc = proc;
+
+    proc.stderr.on('data', (d) => {
+        const txt = d.toString().trim();
+        if (txt) console.log(tag, txt);
+    });
+
+    proc.on('exit', (code) => {
+        console.log(`${tag} Terminado (código ${code})`);
+
+        // Ignorar si ya no somos el activo (parada manual, reconexión en curso)
+        if (ffmpegProc !== proc) return;
+        ffmpegProc = null;
+
+        // Si fue parada manual o ya estamos reconectando, no hacer nada
+        if (state.status !== 'streaming') return;
+        if (reconnecting) return;
+
+        // Caída inesperada → reconectar
+        console.warn(`⚠️ ${tag} Caída inesperada. Iniciando reconexión...`);
+        attemptReconnect();
+    });
+
+    proc.on('error', (err) => {
+        console.error(`❌ ${tag} Error:`, err.message);
+    });
 }
 
-function stopRenewal() {
-    if (renewalTimer) {
-        clearTimeout(renewalTimer);
-        renewalTimer = null;
-    }
-    state.nextRenewal = null;
-}
-
-async function renewNow() {
-    if (renewing) return;
-    if (state.status !== 'streaming') return;
-
-    renewing = true;
-    console.log('🔄 [RENEW] Renovando stream key...');
+// ----------------------------------------------------------------
+// Reconexión con backoff
+// ----------------------------------------------------------------
+async function attemptReconnect() {
+    if (reconnecting) return;
+    reconnecting = true;
 
     try {
-        // Guardamos el FFmpeg viejo SIN matarlo todavía
-        const oldFfmpeg = ffmpegProc;
+        reconnectAttempts++;
+        if (reconnectAttempts > MAX_RECONNECT_ATTEMPTS) {
+            state.status = 'error';
+            state.error = `Reconexión fallida tras ${MAX_RECONNECT_ATTEMPTS} intentos`;
+            console.error(`❌ [RECON] ${state.error}`);
+            return;
+        }
 
-        // 1) Pedimos clave nueva
+        const delay = Math.round(RECONNECT_DELAY_MS * Math.pow(RECONNECT_BACKOFF, reconnectAttempts - 1));
+        console.log(`🔄 [RECON] Intento ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS} en ${delay/1000}s...`);
+        await new Promise(r => setTimeout(r, delay));
+
+        // Cerrar el stream viejo en Streamlabs (best-effort)
+        if (state.streamId && state.apiToken) {
+            try { await tiktokStream.endLive(state.apiToken, state.streamId); } catch (e) {}
+        }
+
         const result = await tiktokStream.startLive(state.apiToken, state.title);
         if (!result.ok) {
-            console.error('❌ [RENEW] Error al pedir clave nueva:', result.error);
-            state.status = 'error';
-            state.error = 'Renovación falló: ' + result.error;
-            renewing = false;
+            console.error('❌ [RECON] startLive falló:', result.error);
+            state.error = result.error;
+            reconnecting = false;
+            attemptReconnect();  // siguiente intento
             return;
         }
 
         state.streamId = result.id;
-        state.lastRenewal = Date.now();
+        state.lastReconnect = Date.now();
+        state.status = 'streaming';
+        state.error = null;
+        reconnectAttempts = 0;
 
-        // 2) Arrancamos FFmpeg nuevo SIN matar el viejo (en paralelo)
-        const inputUrl = `rtmp://localhost:${RTMP_PORT}${obsStreamPath}`;
-        const outputUrl = `${result.server}/${result.key}`;
-
-        console.log(`🚀 [RENEW] Nueva clave obtenida. Arrancando FFmpeg nuevo en paralelo...`);
-
-        const newFfmpeg = spawn(ffmpegPath, [
-            '-loglevel', 'warning',
-            '-i', inputUrl,
-            '-c', 'copy',
-            '-f', 'flv',
-            outputUrl
-        ], { windowsHide: true });
-
-        newFfmpeg.stderr.on('data', (d) => {
-            const txt = d.toString().trim();
-            if (txt) console.log('[FFMPEG-NEW]', txt);
-        });
-
-        newFfmpeg.on('error', (err) => {
-            console.error('❌ [FFMPEG-NEW] Error:', err.message);
-        });
-
-        // El nuevo pasa a ser el "oficial"
-        ffmpegProc = newFfmpeg;
-
-        newFfmpeg.on('exit', (code) => {
-            console.log(`[FFMPEG-NEW] Terminado (código ${code})`);
-            if (ffmpegProc === newFfmpeg) {
-                ffmpegProc = null;
-                if (state.status === 'streaming' && !renewing) state.status = 'waiting';
-            }
-        });
-
-        // 3) Esperamos 4 segundos y matamos el viejo
-        // 🧹 Guardamos el ID para poder cancelarlo si el proxy se para antes.
-        pendingKillTimer = setTimeout(() => {
-            pendingKillTimer = null;
-            if (oldFfmpeg && !oldFfmpeg.killed) {
-                console.log('🛑 [RENEW] Cerrando FFmpeg antiguo');
-                try { oldFfmpeg.kill(); } catch (e) {}
-            }
-        }, 4000);
-
-        console.log('✅ [RENEW] Stream renovado correctamente');
-
-        renewing = false;
-        scheduleRenewal();
+        console.log('✅ [RECON] Reconectado a TikTok');
+        spawnFfmpeg(result, true);
 
     } catch (e) {
-        console.error('❌ [RENEW] Error:', e.message);
-        state.status = 'error';
-        state.error = 'Renovación falló: ' + e.message;
-        renewing = false;
+        console.error('❌ [RECON] Error:', e.message);
+        state.error = e.message;
+    } finally {
+        reconnecting = false;
     }
 }
 
@@ -282,14 +243,6 @@ async function renewNow() {
 // Parar el relay (FFmpeg + stream de TikTok)
 // ----------------------------------------------------------------
 async function stopRelay() {
-    stopRenewal();
-
-    // 🧹 Cancelar el "kill diferido" si estaba pendiente
-    if (pendingKillTimer) {
-        clearTimeout(pendingKillTimer);
-        pendingKillTimer = null;
-    }
-
     if (ffmpegProc) {
         try { ffmpegProc.kill(); } catch (e) {}
         ffmpegProc = null;
@@ -307,7 +260,7 @@ async function stopRelay() {
 }
 
 // ----------------------------------------------------------------
-// PARAR todo (servidor RTMP incluido)
+// PARAR todo
 // ----------------------------------------------------------------
 async function stop() {
     await stopRelay();
@@ -325,26 +278,15 @@ async function stop() {
         startedAt: null,
         apiToken: null,
         title: null,
-        lastRenewal: null,
-        nextRenewal: null
+        lastReconnect: null
     };
     obsStreamPath = null;
     onObsRunning = false;
-    renewing = false;
+    reconnecting = false;
+    reconnectAttempts = 0;
 
     console.log('🛑 [PROXY] Detenido por completo');
     return { ok: true };
 }
 
-// ----------------------------------------------------------------
-// RENOVAR manualmente (para pruebas)
-// ----------------------------------------------------------------
-async function renewManual() {
-    if (state.status !== 'streaming') {
-        return { ok: false, error: 'No hay stream activo' };
-    }
-    await renewNow();
-    return { ok: true, state: getState() };
-}
-
-module.exports = { start, stop, getState, renewManual };
+module.exports = { start, stop, getState };

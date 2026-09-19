@@ -606,10 +606,12 @@ body::-webkit-scrollbar-thumb:hover { background: rgba(184, 255, 0, 0.6); }
 .chat-message.platform-tiktok  { border-left-color: rgba(255, 0, 128, 0.55); }
 .chat-message.platform-kick    { border-left-color: rgba(83, 252, 24, 0.55); }
 .chat-message.platform-youtube { border-left-color: rgba(255, 59, 59, 0.55); }
+.chat-message.platform-velora  { border-left-color: rgba(0, 217, 255, 0.55); }
 .chat-message:hover.platform-twitch  { border-left-color: #a78bfa; }
 .chat-message:hover.platform-tiktok  { border-left-color: var(--secondary); }
 .chat-message:hover.platform-kick    { border-left-color: var(--kick); }
 .chat-message:hover.platform-youtube { border-left-color: var(--youtube); }
+.chat-message:hover.platform-velora  { border-left-color: var(--accent); }
 
 /* Hover con tinte por plataforma */
 .chat-message:hover.platform-twitch {
@@ -624,7 +626,9 @@ body::-webkit-scrollbar-thumb:hover { background: rgba(184, 255, 0, 0.6); }
 .chat-message:hover.platform-youtube {
   background: linear-gradient(90deg, rgba(255,59,59,0.06), transparent 80%);
 }
-
+.chat-message:hover.platform-velora {
+  background: linear-gradient(90deg, rgba(0,217,255,0.06), transparent 80%);
+}
 .chat-message .avatar {
   width: 32px; height: 32px; border-radius: 50%;
   object-fit: cover; flex-shrink: 0;
@@ -645,6 +649,15 @@ body::-webkit-scrollbar-thumb:hover { background: rgba(184, 255, 0, 0.6); }
   margin-top: 3px; word-break: break-word;
   font-size: 12.5px; line-height: 1.55;
 }
+.chat-message .message .chat-emote {
+  height: 20px;
+  width: auto;
+  vertical-align: middle;
+  display: inline-block;
+  margin: -2px 1px;
+  border: none;
+  image-rendering: -webkit-optimize-contrast;
+}
 .chat-message .lang-flag {
   font-size: 12px; margin-right: 5px;
   opacity: 0.85; vertical-align: middle;
@@ -663,6 +676,7 @@ body::-webkit-scrollbar-thumb:hover { background: rgba(184, 255, 0, 0.6); }
 .platform-tiktok  { background: var(--secondary-soft-bg); color: var(--secondary); border: 1px solid var(--secondary-border); }
 .platform-kick    { background: rgba(83,252,24,0.1);    color: var(--kick);      border: 1px solid rgba(83,252,24,0.25); }
 .platform-youtube { background: rgba(255,59,59,0.1);    color: var(--youtube);   border: 1px solid rgba(255,59,59,0.25); }
+.platform-velora  { background: var(--accent-soft-bg); color: var(--accent);    border: 1px solid var(--accent-border); }
 
 .chat-message .mod-actions {
   display: flex; gap: 2px;

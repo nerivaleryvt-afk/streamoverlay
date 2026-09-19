@@ -1,11 +1,40 @@
 /* ═══════════════════════════════════════════════════════════════
    config-ui.js — UI: sidebar, modales, cuentas, multi-inputs
    Depende de: shared.js (window.Togi)
-   No contiene lógica de guardado ni de estado global.
    ═══════════════════════════════════════════════════════════════ */
 
 /* ──────────────────────────────────────────────
-   TOGGLE VISIBILIDAD DE PASSWORD (ojito)
+   SUB-PÁGINAS
+   ────────────────────────────────────────────── */
+function abrirSubpagina(id) {
+    const mainConfig = document.getElementById('mainConfig');
+    const sub = document.getElementById(id);
+    if (!mainConfig || !sub) return;
+
+    document.querySelectorAll('.card > div[id$="Subpage"]').forEach(el => {
+        if (el.id !== id) el.classList.remove('open');
+    });
+    mainConfig.classList.add('hidden');
+    sub.classList.add('open');
+    window.scrollTo({ top: 0 });
+    marcarSidebarActivo(id);
+    if (id === 'aiSubpage' && typeof actualizarEstadosProveedores === 'function') {
+        actualizarEstadosProveedores();
+    }
+}
+
+function cerrarSubpagina(id) {
+    const mainConfig = document.getElementById('mainConfig');
+    const sub = document.getElementById(id);
+    if (!mainConfig || !sub) return;
+    sub.classList.remove('open');
+    mainConfig.classList.remove('hidden');
+    window.scrollTo({ top: 0 });
+    marcarSidebarActivo(null);
+}
+
+/* ──────────────────────────────────────────────
+   TOGGLE VISIBILIDAD DE PASSWORD
    ────────────────────────────────────────────── */
 function toggleTokenVisibility(btn) {
     const wrapper = btn.closest('.password-wrap');
@@ -15,9 +44,7 @@ function toggleTokenVisibility(btn) {
     const isPassword = input.type === 'password';
     input.type = isPassword ? 'text' : 'password';
     const icon = btn.querySelector('i');
-    if (icon) {
-        icon.className = isPassword ? 'ri-eye-off-line' : 'ri-eye-line';
-    }
+    if (icon) icon.className = isPassword ? 'ri-eye-off-line' : 'ri-eye-line';
     btn.title = isPassword ? 'Ocultar' : 'Mostrar';
 }
 
@@ -28,20 +55,15 @@ function toggleModal(id) {
     const el = document.getElementById(id);
     if (el) el.classList.add('open');
 }
-
 function closeModal(id) {
     const el = document.getElementById(id);
     if (el) el.classList.remove('open');
 }
-
-// Cerrar modal al click fuera
 window.addEventListener('click', function (event) {
     if (event.target.classList && event.target.classList.contains('modal')) {
         event.target.classList.remove('open');
     }
 });
-
-// Cerrar con ESC
 document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') {
         document.querySelectorAll('.modal.open').forEach(m => m.classList.remove('open'));
@@ -49,76 +71,15 @@ document.addEventListener('keydown', function (e) {
 });
 
 /* ──────────────────────────────────────────────
-   SIDEBAR: SCROLL + ACTIVE + SCROLL SPY
+   SIDEBAR
    ────────────────────────────────────────────── */
-function scrollToSection(targetId) {
-    const aiSubpage = document.getElementById('aiSubpage');
-
-    // Si estamos en la subpágina del AI, primero volvemos
-    if (aiSubpage && aiSubpage.classList.contains('open')) {
-        if (typeof cerrarAsistente === 'function') {
-            cerrarAsistente();
-            setTimeout(() => scrollToSection(targetId), 120);
-        }
-        return;
-    }
-
-    // AI va a subpágina, no a scroll
-    if (targetId === 'section-ai') {
-        if (typeof abrirAsistente === 'function') {
-            abrirAsistente();
-            marcarSidebarActivo('section-ai');
-        }
-        return;
-    }
-
-    const el = document.getElementById(targetId);
-    if (!el) return;
-
-    // Si la sección está oculta (plataforma desactivada), ir al general
-    if (el.classList.contains('hidden') || el.offsetParent === null) {
-        const general = document.getElementById('section-general');
-        if (general) {
-            const y = general.getBoundingClientRect().top + window.scrollY - 30;
-            window.scrollTo({ top: y, behavior: 'smooth' });
-        }
-        return;
-    }
-
-    const y = el.getBoundingClientRect().top + window.scrollY - 30;
-    window.scrollTo({ top: y, behavior: 'smooth' });
-    marcarSidebarActivo(targetId);
-}
-
 function marcarSidebarActivo(targetId) {
     document.querySelectorAll('.sidebar-item[data-target]').forEach(item => {
         item.classList.toggle('active', item.dataset.target === targetId);
     });
 }
 
-function setupSidebarScrollSpy() {
-    const sections = [
-        'section-general', 'section-twitch', 'section-tiktok',
-        'section-kick', 'section-youtube', 'section-tts', 'section-ai'
-    ];
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                const aiSubpage = document.getElementById('aiSubpage');
-                if (aiSubpage && aiSubpage.classList.contains('open')) return;
-                marcarSidebarActivo(entry.target.id);
-            }
-        });
-    }, { rootMargin: '-30% 0px -60% 0px', threshold: 0 });
-
-    sections.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) observer.observe(el);
-    });
-}
-
 function updateSidebarCounts() {
-    // getCurrentValues() vive en config-main.js — puede no estar definida aún al arrancar
     if (typeof getCurrentValues !== 'function') return;
     const v = getCurrentValues();
 
@@ -133,19 +94,57 @@ function updateSidebarCounts() {
     setCount('countTikTok', (v.tiktokUsers || []).length);
     setCount('countKick', (v.kickUsers || []).length);
     setCount('countYouTube', (v.youtubeUsers || []).length);
+    setCount('countVelora', v.veloraUsername ? 1 : 0);
 
     const checkAI = document.getElementById('checkAI');
     if (checkAI) {
         checkAI.style.display = (v.aiCohost && v.aiCohost.enabled) ? 'inline-flex' : 'none';
     }
+
+    refrescarCardsLanding();
+}
+
+/* ──────────────────────────────────────────────
+   LANDING: estado de las cards
+   ────────────────────────────────────────────── */
+function refrescarCardsLanding() {
+    if (typeof getCurrentValues !== 'function') return;
+    let v;
+    try { v = getCurrentValues(); } catch (e) { return; }
+
+    const set = (id, text, active) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = text;
+        el.classList.toggle('active', !!active);
+    };
+
+    const tw = (v.twitchAccounts || []).length;
+    const tk = (v.tiktokUsers || []).length;
+    const kk = (v.kickUsers || []).length;
+    const yt = (v.youtubeUsers || []).length;
+
+    set('landingSubTwitch',  tw > 0 ? tw + ' cuenta' + (tw === 1 ? '' : 's')  : 'sin configurar', tw > 0);
+    set('landingSubTikTok',  tk > 0 ? tk + ' usuario' + (tk === 1 ? '' : 's')  : 'sin configurar', tk > 0);
+    set('landingSubKick',    kk > 0 ? kk + ' usuario' + (kk === 1 ? '' : 's')  : 'sin configurar', kk > 0);
+    set('landingSubYouTube', yt > 0 ? yt + ' canal' + (yt === 1 ? '' : 'es')   : 'sin configurar', yt > 0);
+    set('landingSubVelora',  v.veloraUsername ? '@' + v.veloraUsername         : 'sin configurar', !!v.veloraUsername);
+    set('landingSubTTS',     v.tts && v.tts.enabled ? 'activo'                 : 'inactivo',        !!(v.tts && v.tts.enabled));
+    set('landingSubOverlay', 'meta ' + (v.crystalMeta || 500), true);
+    set('landingSubAI',      v.aiCohost && v.aiCohost.enabled ? 'activo'       : 'inactivo',        !!(v.aiCohost && v.aiCohost.enabled));
 }
 
 function initSidebar() {
     document.querySelectorAll('.sidebar-item[data-target]').forEach(btn => {
-        btn.addEventListener('click', () => scrollToSection(btn.dataset.target));
+        btn.addEventListener('click', () => {
+            const target = btn.dataset.target;
+            if (target && target.endsWith('Subpage')) {
+                abrirSubpagina(target);
+            }
+        });
     });
-    setupSidebarScrollSpy();
     updateSidebarCounts();
+    if (typeof veloraCargarEstado === 'function') veloraCargarEstado();
 }
 
 /* ──────────────────────────────────────────────
@@ -238,11 +237,8 @@ function addTwitchAccount(data) {
     container.appendChild(card);
 
     const channels = (data && Array.isArray(data.channels)) ? data.channels : [];
-    if (channels.length === 0) {
-        addChannelToAccount(id, '');
-    } else {
-        channels.forEach(c => addChannelToAccount(id, c));
-    }
+    if (channels.length === 0) addChannelToAccount(id, '');
+    else channels.forEach(c => addChannelToAccount(id, c));
 
     renumberAccounts();
 }
@@ -323,7 +319,7 @@ function getAccountsFromDOM() {
 }
 
 /* ──────────────────────────────────────────────
-   MULTI-INPUT (TikTok / Kick / YouTube)
+   MULTI-INPUT
    ────────────────────────────────────────────── */
 function addMultiInput(containerId, value, placeholder, inputClass) {
     const container = document.getElementById(containerId);
@@ -392,27 +388,78 @@ function loadYouTubeUsers(users) {
 }
 
 /* ──────────────────────────────────────────────
-   PLATFORM VISIBILITY (toggles de plataforma)
+   VELORA
    ────────────────────────────────────────────── */
-function applyPlatformVisibility() {
-    const map = {
-        twitch:  'section-twitch',
-        tiktok:  'section-tiktok',
-        kick:    'section-kick',
-        youtube: 'section-youtube'
-    };
-    for (const [plat, id] of Object.entries(map)) {
-        const el = document.getElementById(id);
-        if (!el) continue;
-        const cb = document.getElementById('platform' + plat.charAt(0).toUpperCase() + plat.slice(1));
-        const visible = cb ? cb.checked : true;
-        el.classList.toggle('hidden', !visible);
+async function veloraConectar() {
+    const input = document.getElementById('veloraUsername');
+    const statusEl = document.getElementById('veloraStatus');
+    const btn = document.getElementById('btnVeloraConnect');
+    const username = (input?.value || '').replace(/^@/, '').trim();
+
+    if (!username) {
+        statusEl.className = 'test-result fail show';
+        statusEl.textContent = '⚠️ Escribe tu usuario de Velora.';
+        return;
+    }
+
+    if (btn) btn.disabled = true;
+    statusEl.className = 'test-result';
+    statusEl.textContent = 'Conectando…';
+
+    try {
+        const r = await fetch(`${window.SERVER_BASE}/api/velora/connect`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username })
+        });
+        const data = await r.json();
+        if (data.ok) {
+            statusEl.className = 'test-result ok show';
+            statusEl.innerHTML = `✅ Conectado a <b>@${data.channelName || username}</b>.`;
+        } else {
+            statusEl.className = 'test-result fail show';
+            statusEl.textContent = '❌ ' + (data.error || 'No se pudo conectar');
+        }
+    } catch (e) {
+        statusEl.className = 'test-result fail show';
+        statusEl.textContent = '❌ Error de conexión: ' + e.message;
+    } finally {
+        if (btn) btn.disabled = false;
     }
 }
 
-function onPlatformToggle() {
-    applyPlatformVisibility();
-    if (typeof onFieldChange === 'function') onFieldChange();
+async function veloraDesconectar() {
+    const statusEl = document.getElementById('veloraStatus');
+    try {
+        await fetch(`${window.SERVER_BASE}/api/velora/disconnect`, { method: 'POST' });
+        statusEl.className = 'test-result show';
+        statusEl.textContent = '🔌 Desconectado.';
+    } catch (e) {
+        statusEl.className = 'test-result fail show';
+        statusEl.textContent = '❌ ' + e.message;
+    }
+}
+
+async function veloraCargarEstado() {
+    try {
+        const r = await fetch(`${window.SERVER_BASE}/api/velora/status`);
+        const data = await r.json();
+        const statusEl = document.getElementById('veloraStatus');
+        const input = document.getElementById('veloraUsername');
+        if (!statusEl) return;
+        if (data.connected) {
+            statusEl.className = 'test-result ok show';
+            statusEl.innerHTML = `🟢 Conectado a <b>@${data.channelName || '?'}</b> · viewers: ${data.viewerCount || 0}`;
+            if (input && !input.value && data.channelName) input.value = data.channelName;
+        } else if (data.channelName) {
+            statusEl.className = 'test-result';
+            statusEl.textContent = `⚪ Guardado @${data.channelName} · desconectado`;
+            if (input && !input.value) input.value = data.channelName;
+        } else {
+            statusEl.className = 'test-result';
+            statusEl.textContent = 'Configura un usuario y pulsa Conectar.';
+        }
+    } catch (e) {}
 }
 
 console.log('🎨 config-ui.js cargado');

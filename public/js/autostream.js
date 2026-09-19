@@ -1,6 +1,6 @@
 // ============================================================
-// autostream.js — Panel Auto-Stream TikTok (v4 · Toki)
-// Rediseño: paleta lima/rosa/cian, flow 1-2-3 guiado
+// autostream.js — Panel Auto-Stream TikTok (v5 · Toki)
+// Proxy con reconexión automática (sin renovación por timer)
 // ============================================================
 
 (function () {
@@ -719,10 +719,6 @@
             </div>
           </div>
 
-          <button class="as-btn as-btn-warning" id="as-renew" disabled>
-            <i class="ri-refresh-line"></i> Renovar clave ahora
-          </button>
-
           <div class="as-status-box" id="as-status-box" data-state="idle">
             <span class="status-dot"></span>
             <span class="status-label">estado</span>
@@ -731,8 +727,7 @@
 
           <div class="as-meta" id="as-meta" style="display:none;">
             <span><i class="ri-user-line"></i> <b id="as-username">—</b></span>
-            <span>renov. <b id="as-last-renew">—</b></span>
-            <span>próx. <b id="as-next-renew">—</b></span>
+            <span id="as-reconnect-info" style="display:none;">recon. <b id="as-last-reconnect">—</b></span>
           </div>
 
           <div class="as-error" id="as-error">
@@ -840,7 +835,6 @@
     });
     document.getElementById('as-start').addEventListener('click', startStream);
     document.getElementById('as-stop').addEventListener('click', stopStream);
-    document.getElementById('as-renew').addEventListener('click', renewStream);
 
         // ✨ Al cambiar de cuenta, guardar en localStorage
     document.getElementById('as-account').addEventListener('change', (e) => {
@@ -996,7 +990,7 @@
   }
 
   // ============================================================
-  // ▶️ INICIAR / DETENER / RENOVAR
+  // ▶️ INICIAR / DETENER
   // ============================================================
     async function startStream() {
     const title = document.getElementById('as-title').value.trim() || 'TogiPanel Stream';
@@ -1053,14 +1047,6 @@
     setBusy(false);
   }
 
-  async function renewStream() {
-    try {
-      await fetch(window.SERVER_BASE + '/api/tiktok/proxy/renew', { method: 'POST' });
-    } catch (e) {
-      showError('Error al renovar: ' + e.message);
-    }
-  }
-
   // ============================================================
   // 🔄 POLLING
   // ============================================================
@@ -1092,7 +1078,6 @@
     const headBadge = document.getElementById('as-head-badge');
     const btnStart = document.getElementById('as-start');
     const btnStop = document.getElementById('as-stop');
-    const btnRenew = document.getElementById('as-renew');
     const meta = document.getElementById('as-meta');
     const panel = document.getElementById('autostream-panel');
 
@@ -1114,18 +1099,23 @@
 
     if (btnStart) btnStart.disabled = (status !== 'idle' && status !== 'error');
     if (btnStop) btnStop.disabled = (status === 'idle');
-    if (btnRenew) btnRenew.disabled = (status !== 'streaming');
 
     if (meta) {
       if (status === 'streaming' && state.username) {
         meta.style.display = 'flex';
-        document.getElementById('as-username').textContent = state.username;
-        document.getElementById('as-last-renew').textContent = state.lastRenewal
-          ? new Date(state.lastRenewal).toLocaleTimeString('es-ES')
-          : '—';
-        document.getElementById('as-next-renew').textContent = state.nextRenewal
-          ? new Date(state.nextRenewal).toLocaleTimeString('es-ES')
-          : '—';
+        const userEl = document.getElementById('as-username');
+        if (userEl) userEl.textContent = state.username;
+
+        const reconnEl = document.getElementById('as-reconnect-info');
+        const reconnVal = document.getElementById('as-last-reconnect');
+        if (reconnEl && reconnVal) {
+          if (state.lastReconnect) {
+            reconnEl.style.display = '';
+            reconnVal.textContent = new Date(state.lastReconnect).toLocaleTimeString('es-ES');
+          } else {
+            reconnEl.style.display = 'none';
+          }
+        }
       } else {
         meta.style.display = 'none';
       }
@@ -1144,7 +1134,7 @@
   }
 
   function setBusy(busy) {
-    ['as-start', 'as-stop', 'as-renew', 'as-refresh'].forEach(id => {
+    ['as-start', 'as-stop', 'as-refresh'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.disabled = busy;
     });

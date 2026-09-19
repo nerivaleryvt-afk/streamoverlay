@@ -1228,7 +1228,8 @@ function addMessageToFeed(msg) {
   let platformClass = 'platform-twitch';
   if (platform === 'tiktok') platformClass = 'platform-tiktok';
   else if (platform === 'kick') platformClass = 'platform-kick';
-  else if (platform === 'youtube') platformClass = 'platform-youtube';
+    else if (platform === 'youtube') platformClass = 'platform-youtube';
+  else if (platform === 'velora') platformClass = 'platform-velora';
 
   const contentDiv = document.createElement('div');
   contentDiv.style.flex = '1';
@@ -1268,19 +1269,30 @@ function addMessageToFeed(msg) {
   stats.messages++;
   updateStats();
 
-  const messageEl = contentDiv.querySelector('.message');
-  translateText(rawText).then(result => {
-    let finalText = result.translated;
-    if (censorshipEnabled) finalText = applyGenderReplacements(finalText);
-    if (result.translated_ok && result.sourceLang !== 'es') {
-      const flag = getFlagByLang(result.sourceLang);
-      messageEl.innerHTML = `<span class="lang-flag">${flag}</span> ${escapeHtml(finalText)}`;
-    } else {
-      messageEl.innerHTML = escapeHtml(finalText);
-    }
-  }).catch(() => {
-    messageEl.innerHTML = escapeHtml(rawText);
-  });
+    const messageEl = contentDiv.querySelector('.message');
+
+  // Si el mensaje trae emotes parseados, render directo (sin traducir)
+  if (Array.isArray(msg.parts) && msg.parts.length > 0) {
+    messageEl.innerHTML = msg.parts.map(p => {
+      if (p.type === 'emote') {
+        return `<img class="chat-emote" src="${escapeHtml(p.url)}" alt="${escapeHtml(p.code || '')}" title="${escapeHtml(p.code || '')}" loading="lazy">`;
+      }
+      return escapeHtml(p.value || '');
+    }).join('');
+  } else {
+    translateText(rawText).then(result => {
+      let finalText = result.translated;
+      if (censorshipEnabled) finalText = applyGenderReplacements(finalText);
+      if (result.translated_ok && result.sourceLang !== 'es') {
+        const flag = getFlagByLang(result.sourceLang);
+        messageEl.innerHTML = `<span class="lang-flag">${flag}</span> ${escapeHtml(finalText)}`;
+      } else {
+        messageEl.innerHTML = escapeHtml(finalText);
+      }
+    }).catch(() => {
+      messageEl.innerHTML = escapeHtml(rawText);
+    });
+  }
 }
 
 /* ════════════════════════════════════════════════════════════

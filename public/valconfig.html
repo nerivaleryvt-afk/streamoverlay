@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Valorant Config · Toki</title>
+
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="preconnect" href="https://api.fontshare.com">
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600,700,800,900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="/css/valconfig.css">
+<script src="/js/server-url.js"></script>
+</head>
+<body>
+
+<div class="vc-container">
+
+  <header class="vc-header">
+    <div class="vc-header-icon"><i class="ri-gamepad-line"></i></div>
+    <div class="vc-header-text">
+      <h1 class="vc-header-title">Valorant Config</h1>
+      <div class="vc-header-sub">perfiles · backups locales · sin tocar vanguard</div>
+    </div>
+    <a href="/" class="vc-back-btn">
+      <i class="ri-arrow-left-line"></i> Panel
+    </a>
+  </header>
+
+  <div class="vc-status" id="vcStatus">
+    <div class="vc-status-dot"></div>
+    <div class="vc-status-text">
+      <div class="vc-status-label">Estado</div>
+      <div class="vc-status-value" id="vcStatusValue">Verificando...</div>
+    </div>
+    <div class="vc-status-meta" id="vcStatusMeta"></div>
+  </div>
+
+  <div class="vc-current-account empty" id="vcCurrentAccount">
+    <span class="vc-ca-dot"></span>
+    <i class="ri-user-3-line"></i>
+    <span id="vcCurrentAccountText">Detectando cuenta Riot...</span>
+  </div>
+
+  <div class="vc-active-config" id="vcActiveConfig">
+    <div class="vc-ac-head">
+      <i class="ri-file-list-3-line"></i>
+      <span>Configuración actual de la cuenta</span>
+      <span class="vc-ac-badge" id="vcAcBadge">—</span>
+    </div>
+    <div class="vc-ac-grid" id="vcAcGrid"></div>
+  </div>
+
+  <div class="vc-toolbar">
+    <button class="vc-btn vc-btn-primary" onclick="crearPerfil()">
+      <i class="ri-add-line"></i> Guardar configuración actual
+    </button>
+    <button class="vc-btn vc-btn-secondary" onclick="recargar()">
+      <i class="ri-refresh-line"></i> Refrescar
+    </button>
+  </div>
+
+  <div class="vc-account-filters" id="vcAccountFilters" style="display:none;"></div>
+
+  <div class="vc-grid" id="vcGrid">
+    <div class="vc-empty">
+      <div class="vc-empty-icon"><i class="ri-loader-4-line"></i></div>
+      <div class="vc-empty-title">Cargando perfiles...</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══ MODAL: Nombre de perfil ═══ -->
+<div class="vc-modal-back" id="vcModalBack">
+  <div class="vc-modal">
+    <h3><i class="ri-save-line"></i> Guardar perfil</h3>
+    <input type="text" id="vcProfileName" placeholder="Ej: agresivo, tactico, sniper..." maxlength="40" autocomplete="off" spellcheck="false">
+    <div class="vc-modal-hint">Solo letras, números, espacios, - y _. Máximo 40 caracteres.</div>
+    <div class="vc-modal-actions">
+      <button class="vc-btn vc-btn-secondary" onclick="cerrarModal()">Cancelar</button>
+      <button class="vc-btn vc-btn-primary" onclick="confirmarCrearPerfil()">
+        <i class="ri-check-line"></i> Guardar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: Ver teclas ═══ -->
+<div class="vc-modal-back" id="vcKeysModalBack">
+  <div class="vc-modal vc-modal-keys">
+    <div class="vc-keys-head">
+      <div class="vc-keys-icon"><i class="ri-keyboard-line"></i></div>
+      <div class="vc-keys-title">
+        <h3 id="vcKeysTitle">Teclas del perfil</h3>
+        <div class="vc-keys-sub" id="vcKeysSub">—</div>
+      </div>
+      <button class="vc-keys-close" onclick="cerrarKeysModal()">
+        <i class="ri-close-line"></i>
+      </button>
+    </div>
+
+    <div class="vc-keys-warn">
+      <i class="ri-information-line"></i>
+      <span>Las teclas marcadas con <b>cloud</b> se sincronizan con Riot y hay que cambiarlas manualmente en Valorant → Controles.</span>
+    </div>
+
+    <div class="vc-keys-body" id="vcKeysBody">
+      <div class="vc-keys-empty">
+        <div class="vc-empty-icon"><i class="ri-loader-4-line"></i></div>
+        <div class="vc-empty-title">Cargando teclas...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="vc-toast" id="vcToast"></div>
+
+<script>
+const API = (path) => `${window.SERVER_BASE || ''}${path}`;
+
+let perfiles = [];
+let estado = null;
+let filtroCuenta = null;
+let activeMatch = null;
+
+// ─── Toast ───
+let toastTimer = null;
+function toast(msg, type = 'ok') {
+  const el = document.getElementById('vcToast');
+  el.textContent = msg;
+  el.className = 'vc-toast show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// ─── Cargar estado ───
+async function cargarEstado() {
+  try {
+    const r = await fetch(API('/api/valconfig/status'));
+    const data = await r.json();
+    estado = data;
+    renderEstado();
+    renderCuentaActual();
+  } catch (e) {
+    estado = null;
+    renderEstado();
+    renderCuentaActual();
+  }
+}
+
+function renderEstado() {
+  const el = document.getElementById('vcStatus');
+  const val = document.getElementById('vcStatusValue');
+  const meta = document.getElementById('vcStatusMeta');
+
+  if (!estado || !estado.ok) {
+    el.className = 'vc-status err';
+    val.textContent = 'No se pudo conectar';
+    meta.innerHTML = '¿El servidor está corriendo?';
+    return;
+  }
+  if (estado.valorantRunning) {
+    el.className = 'vc-status warn';
+    val.textContent = 'Valorant está abierto';
+    meta.innerHTML = `${estado.processes.join(' · ')}<br>Cerrá el juego antes de guardar/aplicar`;
+    return;
+  }
+  if (!estado.accountsFound) {
+    el.className = 'vc-status err';
+    val.textContent = 'No se encontró cuenta de Valorant';
+    meta.innerHTML = 'Abrí el juego una vez para generar los archivos';
+    return;
+  }
+  el.className = 'vc-status ok';
+  val.textContent = 'Listo para trabajar';
+  const acc = estado.activeAccount;
+  meta.innerHTML = `${acc.filesFound}/${3} archivos detectados<br>Cuenta: ${acc.guid.substring(0, 12)}...`;
+}
+
+function renderCuentaActual() {
+  const el = document.getElementById('vcCurrentAccount');
+  const txt = document.getElementById('vcCurrentAccountText');
+  if (!el || !txt) return;
+  const acc = estado && estado.riotAccount;
+  if (!acc || !acc.name) {
+    el.classList.add('empty');
+    txt.textContent = 'Cuenta Riot no detectada';
+    return;
+  }
+  el.classList.remove('empty');
+  const tag = acc.tag ? `<span class="vc-ca-tag">#${escapeHtml(acc.tag)}</span>` : '';
+  txt.innerHTML = `Vas a guardar la configuración de <b>${escapeHtml(acc.name)}</b> ${tag}`;
+}
+
+// ─── Active match ───
+async function cargarActiveMatch() {
+  try {
+    const r = await fetch(API('/api/valconfig/active-match'));
+    const data = await r.json();
+    activeMatch = data && data.ok ? data : null;
+    renderActiveConfig();
+    renderPerfiles();
+  } catch (e) {
+    activeMatch = null;
+    renderActiveConfig();
+  }
+}
+
+function parseCrosshairColor(str) {
+  if (!str) return null;
+  const m = str.match(/R=(\d+),\s*G=(\d+),\s*B=(\d+)/i);
+  if (!m) return null;
+  return `rgb(${m[1]}, ${m[2]}, ${m[3]})`;
+}
+
+function renderActiveConfig() {
+  const badge = document.getElementById('vcAcBadge');
+  const grid = document.getElementById('vcAcGrid');
+  if (!badge || !grid) return;
+
+  if (!activeMatch || !activeMatch.hasAccount) {
+    badge.className = 'vc-ac-badge';
+    badge.textContent = 'Sin cuenta';
+    grid.innerHTML = '';
+    return;
+  }
+
+  if (activeMatch.matchedProfile) {
+    badge.className = 'vc-ac-badge match';
+    badge.textContent = `= perfil "${activeMatch.matchedProfile}"`;
+  } else if (activeMatch.partials && activeMatch.partials.length > 0) {
+    const p = activeMatch.partials[0];
+    badge.className = 'vc-ac-badge partial';
+    badge.textContent = `parcial: "${p.name}" (${p.matches}/${p.total})`;
+  } else {
+    badge.className = 'vc-ac-badge custom';
+    badge.textContent = 'config personalizada';
+  }
+
+  const ks = activeMatch.keySettings || {};
+  const items = [];
+  if (ks.sensitivity)      items.push({ l: 'Sensibilidad', v: ks.sensitivity });
+  if (ks.sensitivityADS)   items.push({ l: 'Sens ADS', v: ks.sensitivityADS });
+  if (ks.crosshairColor) {
+    const c = parseCrosshairColor(ks.crosshairColor);
+    items.push({ l: 'Color mira', v: c || ks.crosshairColor, color: c });
+  }
+  if (ks.crosshairProfile) items.push({ l: 'Perfil mira', v: ks.crosshairProfile });
+  if (ks.resolutionX && ks.resolutionY) items.push({ l: 'Resolución', v: `${ks.resolutionX}×${ks.resolutionY}` });
+  if (ks.colorBlindMode !== null && ks.colorBlindMode !== undefined) items.push({ l: 'Colorblind', v: ks.colorBlindMode });
+  if (ks.voiceVolume)      items.push({ l: 'Vol. voz', v: ks.voiceVolume });
+  if (ks.micVolume)        items.push({ l: 'Vol. mic', v: ks.micVolume });
+  if (ks.pushToTalkKey)    items.push({ l: 'PTT', v: ks.pushToTalkKey });
+  if (activeMatch.filesFound) items.push({ l: 'Archivos', v: `${activeMatch.filesFound}/3` });
+
+  grid.innerHTML = items.map(it => {
+    const swatch = it.color ? `<span class="vc-ac-swatch" style="background:${it.color}"></span>` : '';
+    const valClass = it.color ? 'vc-ac-item-val color' : 'vc-ac-item-val';
+    return `
+      <div class="vc-ac-item">
+        <span class="vc-ac-item-lbl">${escapeHtml(it.l)}</span>
+        <span class="${valClass}">${swatch}${escapeHtml(it.v)}</span>
+      </div>
+    `;
+  }).join('');
+}
+
+// ─── Cargar perfiles ───
+async function cargarPerfiles() {
+  try {
+    const r = await fetch(API('/api/valconfig/profiles'));
+    const data = await r.json();
+    perfiles = (data && data.profiles) || [];
+    renderPerfiles();
+    renderFiltrosCuentas();
+  } catch (e) {
+    perfiles = [];
+    renderPerfiles();
+    renderFiltrosCuentas();
+  }
+}
+
+function renderAccountLine(p) {
+  if (p.originRiotName) {
+    const hue = p.hue || 140;
+    const color = `hsl(${hue}, 80%, 60%)`;
+    const tag = p.originRiotTag ? `<span class="vc-card-account-tag">#${escapeHtml(p.originRiotTag)}</span>` : '';
+    return `
+      <div class="vc-card-account">
+        <i class="ri-user-3-line vc-card-account-prefix"></i>
+        <span class="vc-card-account-dot" style="background:${color}; color:${color}"></span>
+        <span class="vc-card-account-name">${escapeHtml(p.originRiotName)}</span>
+        ${tag}
+      </div>
+    `;
+  }
+  return `
+    <div class="vc-card-account empty">
+      <i class="ri-user-3-line vc-card-account-prefix"></i>
+      <span class="vc-card-account-name">Cuenta no detectada</span>
+    </div>
+  `;
+}
+
+function renderFiltrosCuentas() {
+  const el = document.getElementById('vcAccountFilters');
+  if (!el) return;
+
+  const cuentas = new Map();
+  perfiles.forEach(p => {
+    if (p.originRiotName) {
+      const key = p.originRiotName + (p.originRiotTag ? '#' + p.originRiotTag : '');
+      if (!cuentas.has(key)) cuentas.set(key, { name: p.originRiotName, tag: p.originRiotTag, hue: p.hue, count: 0 });
+      cuentas.get(key).count++;
+    }
+  });
+
+  if (cuentas.size <= 1) { el.style.display = 'none'; return; }
+  el.style.display = 'flex';
+  el.innerHTML = `
+    <button class="vc-filter ${!filtroCuenta ? 'active' : ''}" onclick="setFiltroCuenta(null)">
+      Todas <span class="vc-filter-count">${perfiles.length}</span>
+    </button>
+    ${Array.from(cuentas.entries()).map(([key, c]) => {
+      const color = `hsl(${c.hue}, 80%, 60%)`;
+      return `
+        <button class="vc-filter ${filtroCuenta === key ? 'active' : ''}" onclick="setFiltroCuenta('${escapeJs(key)}')">
+          <span class="vc-filter-dot" style="background:${color}; color:${color}"></span>
+          ${escapeHtml(c.name)}${c.tag ? `<span style="color:var(--vc-text-3)">#${escapeHtml(c.tag)}</span>` : ''}
+          <span class="vc-filter-count">${c.count}</span>
+        </button>
+      `;
+    }).join('')}
+  `;
+}
+
+function setFiltroCuenta(key) {
+  filtroCuenta = key;
+  renderFiltrosCuentas();
+  renderPerfiles();
+}
+
+function renderPerfiles() {
+  const grid = document.getElementById('vcGrid');
+  let perfilesFiltrados = perfiles;
+  if (filtroCuenta) {
+    perfilesFiltrados = perfiles.filter(p => {
+      const key = p.originRiotName ? p.originRiotName + (p.originRiotTag ? '#' + p.originRiotTag : '') : '';
+      return key === filtroCuenta;
+    });
+  }
+
+  if (!perfilesFiltrados.length) {
+    grid.innerHTML = `
+      <div class="vc-empty">
+        <div class="vc-empty-icon"><i class="ri-inbox-line"></i></div>
+        <div class="vc-empty-title">No tenés perfiles guardados</div>
+        <div class="vc-empty-text">
+          Configurá tu sensibilidad y binds en Valorant, cerrá el juego,
+          y pulsá <b>"Guardar configuración actual"</b> arriba.
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  grid.innerHTML = perfilesFiltrados.map(p => {
+    const fecha = p.createdAt
+      ? new Date(p.createdAt).toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+      : '—';
+    const sizeKb = p.totalSize ? (p.totalSize / 1024).toFixed(1) : '0';
+    const hue = p.hue || 140;
+    const borderColor = `hsl(${hue}, 80%, 60%)`;
+    const isActive = activeMatch && activeMatch.matchedProfile === p.name;
+
+    return `
+      <div class="vc-card ${isActive ? 'active' : ''}" style="border-top-color: ${borderColor};">
+        <div class="vc-card-head">
+          <div class="vc-card-icon"><i class="ri-bookmark-3-line"></i></div>
+          <div class="vc-card-info">
+            <div class="vc-card-name" title="${escapeHtml(p.name)}">${escapeHtml(p.name)}</div>
+            <div class="vc-card-meta">${fecha}</div>
+          </div>
+          ${isActive ? '<span class="vc-card-active-pill">EN USO</span>' : ''}
+        </div>
+        ${renderAccountLine(p)}
+        <div class="vc-card-stats">
+          <div class="vc-card-stat">
+            <span class="vc-card-stat-lbl">Archivos</span>
+            <span class="vc-card-stat-val">${p.fileCount}/${p.totalFiles}</span>
+          </div>
+          <div class="vc-card-stat">
+            <span class="vc-card-stat-lbl">Tamaño</span>
+            <span class="vc-card-stat-val">${sizeKb} KB</span>
+          </div>
+        </div>
+        <div class="vc-card-actions">
+          <button class="vc-btn vc-btn-apply" onclick="aplicarPerfil('${escapeJs(p.name)}')">
+            <i class="ri-download-2-line"></i> Aplicar
+          </button>
+          <button class="vc-btn vc-btn-keys" onclick="verTeclas('${escapeJs(p.name)}')" title="Ver teclas del perfil">
+            <i class="ri-keyboard-line"></i> Teclas
+          </button>
+          <button class="vc-btn vc-btn-danger" onclick="borrarPerfil('${escapeJs(p.name)}')" title="Borrar">
+            <i class="ri-delete-bin-line"></i>
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ─── Ver teclas ───
+async function verTeclas(nombre) {
+  const back = document.getElementById('vcKeysModalBack');
+  const title = document.getElementById('vcKeysTitle');
+  const sub = document.getElementById('vcKeysSub');
+  const body = document.getElementById('vcKeysBody');
+
+  title.textContent = `Teclas del perfil "${nombre}"`;
+  sub.textContent = 'cargando...';
+  body.innerHTML = `
+    <div class="vc-keys-empty">
+      <div class="vc-empty-icon"><i class="ri-loader-4-line"></i></div>
+      <div class="vc-empty-title">Cargando teclas...</div>
+    </div>
+  `;
+  back.classList.add('show');
+
+  try {
+    const r = await fetch(API(`/api/valconfig/profiles/${encodeURIComponent(nombre)}/keybinds`));
+    const data = await r.json();
+
+    if (!data.ok) {
+      sub.textContent = 'error';
+      body.innerHTML = `<div class="vc-keys-empty"><div class="vc-empty-title">${escapeHtml(data.error || 'Error')}</div></div>`;
+      return;
+    }
+
+    const total = data.keybinds.length;
+    const defined = data.keybinds.filter(k => k.defined).length;
+    const cloud = data.keybinds.filter(k => k.defined && k.cloud).length;
+    sub.textContent = `${defined}/${total} definidas · ${cloud} cloud`;
+
+    if (defined === 0) {
+      body.innerHTML = `
+        <div class="vc-keys-empty">
+          <div class="vc-empty-icon"><i class="ri-keyboard-line"></i></div>
+          <div class="vc-empty-title">Este perfil no tiene teclas personalizadas</div>
+          <div class="vc-empty-text">Solo contiene los archivos de gráficos y settings.</div>
+        </div>
+      `;
+      return;
+    }
+
+    body.innerHTML = data.categories.map(cat => {
+      const items = cat.items.filter(i => i.defined);
+      if (items.length === 0) return '';
+      return `
+        <div class="vc-keys-cat">
+          <div class="vc-keys-cat-label">${escapeHtml(cat.label)}</div>
+          ${items.map(it => renderKeybindRow(it)).join('')}
+        </div>
+      `;
+    }).join('');
+
+    // Asignar handlers de copiado
+    body.querySelectorAll('[data-copy]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const key = btn.getAttribute('data-copy');
+        navigator.clipboard.writeText(key).then(() => {
+          btn.classList.add('copied');
+          setTimeout(() => btn.classList.remove('copied'), 1200);
+          toast(`Copiado: ${key}`, 'ok');
+        }).catch(() => toast('No se pudo copiar', 'err'));
+      });
+    });
+  } catch (e) {
+    sub.textContent = 'error de red';
+    body.innerHTML = `<div class="vc-keys-empty"><div class="vc-empty-title">Error de conexión</div></div>`;
+  }
+}
+
+function renderKeybindRow(it) {
+  const keyLabel = it.key || '—';
+  const cloud = it.cloud ? '<span class="vc-key-cloud" title="Sincroniza con Riot">cloud</span>' : '';
+  const copyBtn = it.key
+    ? `<button class="vc-key-copy" data-copy="${escapeHtml(it.key)}" title="Copiar tecla">
+         <i class="ri-file-copy-line"></i>
+       </button>`
+    : '';
+  return `
+    <div class="vc-key-row ${it.cloud ? 'is-cloud' : ''}">
+      <span class="vc-key-label">${escapeHtml(it.label)}</span>
+      <div class="vc-key-right">
+        ${cloud}
+        <span class="vc-key-badge">${escapeHtml(keyLabel)}</span>
+        ${copyBtn}
+      </div>
+    </div>
+  `;
+}
+
+function cerrarKeysModal() {
+  document.getElementById('vcKeysModalBack').classList.remove('show');
+}
+
+// ─── Crear perfil ───
+function crearPerfil() {
+  if (estado && estado.valorantRunning) { toast('Cerrá Valorant antes de guardar', 'err'); return; }
+  if (estado && !estado.accountsFound) { toast('No se encontró la cuenta de Valorant', 'err'); return; }
+  const input = document.getElementById('vcProfileName');
+  input.value = '';
+  document.getElementById('vcModalBack').classList.add('show');
+  setTimeout(() => input.focus(), 100);
+}
+
+function cerrarModal() {
+  document.getElementById('vcModalBack').classList.remove('show');
+}
+
+async function confirmarCrearPerfil() {
+  const input = document.getElementById('vcProfileName');
+  const nombre = input.value.trim();
+  if (!nombre) { toast('Escribí un nombre', 'err'); return; }
+
+  try {
+    const r = await fetch(API('/api/valconfig/profiles'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: nombre })
+    });
+    const data = await r.json();
+    if (!data.ok) { toast(data.error || 'Error al guardar', 'err'); return; }
+
+    const cuenta = data.profile.originRiotName
+      ? ` · ${data.profile.originRiotName}${data.profile.originRiotTag ? '#' + data.profile.originRiotTag : ''}`
+      : '';
+    toast(`Perfil "${nombre}" guardado (${data.profile.fileCount}/${data.profile.totalFiles} archivos)${cuenta}`, 'ok');
+    cerrarModal();
+    cargarPerfiles();
+    cargarActiveMatch();
+  } catch (e) {
+    toast('Error de red', 'err');
+  }
+}
+
+// ─── Aplicar ───
+async function aplicarPerfil(nombre) {
+  if (estado && estado.valorantRunning) { toast('Cerrá Valorant antes de aplicar', 'err'); return; }
+
+  const perfil = perfiles.find(p => p.name === nombre);
+  const cuentaPerfil = perfil && perfil.originRiotName
+    ? `${perfil.originRiotName}${perfil.originRiotTag ? '#' + perfil.originRiotTag : ''}`
+    : null;
+  const cuentaActual = estado && estado.riotAccount && estado.riotAccount.name
+    ? `${estado.riotAccount.name}${estado.riotAccount.tag ? '#' + estado.riotAccount.tag : ''}`
+    : null;
+
+  let avisoCambio = '';
+  if (cuentaPerfil && cuentaActual && cuentaPerfil !== cuentaActual) {
+    avisoCambio = `\n\n⚠️ ATENCIÓN:\nEste perfil fue creado con "${cuentaPerfil}".\nAhora estás con "${cuentaActual}".\n\nSe va a escribir en la carpeta de la cuenta ACTUAL, no en la original.`;
+  }
+  const infoCuenta = cuentaActual ? `\n\nCuenta actual: ${cuentaActual}` : '';
+
+  if (!confirm(`¿Aplicar el perfil "${nombre}"?${infoCuenta}${avisoCambio}\n\nEsto va a sobreescribir la configuración actual de Valorant.\n\nSe guarda un .togibak por si necesitás revertir.`)) return;
+
+  try {
+    const r = await fetch(API(`/api/valconfig/profiles/${encodeURIComponent(nombre)}/apply`), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({})
+    });
+    const data = await r.json();
+    if (!data.ok) { toast(data.error || 'Error al aplicar', 'err'); return; }
+
+    toast(`Perfil "${nombre}" aplicado (${data.applied.length}/3 archivos)`, 'ok');
+    cargarActiveMatch();
+    renderPerfiles();
+  } catch (e) {
+    toast('Error de red', 'err');
+  }
+}
+
+// ─── Borrar ───
+async function borrarPerfil(nombre) {
+  if (!confirm(`¿Borrar el perfil "${nombre}"?\n\nEsta acción no se puede deshacer.`)) return;
+  try {
+    const r = await fetch(API(`/api/valconfig/profiles/${encodeURIComponent(nombre)}`), { method: 'DELETE' });
+    const data = await r.json();
+    if (!data.ok) { toast(data.error || 'Error al borrar', 'err'); return; }
+    toast(`Perfil "${nombre}" borrado`, 'ok');
+    cargarPerfiles();
+    cargarActiveMatch();
+  } catch (e) {
+    toast('Error de red', 'err');
+  }
+}
+
+// ─── Sincronizar ───
+async function sincronizarCuentas() {
+  if (!confirm('¿Asociar todos los perfiles sin cuenta a la cuenta Riot activa?')) return;
+  try {
+    const r = await fetch(API('/api/valconfig/profiles/sync-accounts'), { method: 'POST' });
+    const data = await r.json();
+    if (!data.ok) { toast(data.error || 'Error', 'err'); return; }
+    toast(`${data.updated} perfil(es) actualizado(s)`, 'ok');
+    cargarPerfiles();
+  } catch (e) {
+    toast('Error de red', 'err');
+  }
+}
+
+// ─── Recargar ───
+async function recargar() {
+  await Promise.all([cargarEstado(), cargarPerfiles(), cargarActiveMatch()]);
+  toast('Actualizado', 'ok');
+}
+
+// ─── Helpers ───
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+}
+function escapeJs(s) {
+  return String(s || '').replace(/'/g, "\\'").replace(/"/g, '\\"');
+}
+
+// ─── Init ───
+document.addEventListener('DOMContentLoaded', () => {
+  cargarEstado();
+  cargarPerfiles();
+  cargarActiveMatch();
+
+  document.getElementById('vcProfileName').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); confirmarCrearPerfil(); }
+    if (e.key === 'Escape') cerrarModal();
+  });
+
+  document.getElementById('vcModalBack').addEventListener('click', (e) => {
+    if (e.target.id === 'vcModalBack') cerrarModal();
+  });
+
+  document.getElementById('vcKeysModalBack').addEventListener('click', (e) => {
+    if (e.target.id === 'vcKeysModalBack') cerrarKeysModal();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      cerrarModal();
+      cerrarKeysModal();
+    }
+  });
+
+  setInterval(() => { cargarEstado(); cargarActiveMatch(); }, 30000);
+});
+
+window.sincronizarCuentas = sincronizarCuentas;
+window.verTeclas = verTeclas;
+window.cerrarKeysModal = cerrarKeysModal;
+</script>
+
+</body>
+</html>

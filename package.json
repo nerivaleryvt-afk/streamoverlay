@@ -1,6 +1,6 @@
 {
   "name": "togi-panel",
-  "version": "1.4.4",
+  "version": "1.4.5",
   "description": "Stream Overlay Pro — Multi-plataforma (Twitch, TikTok, Kick, YouTube) con Auto-Stream TikTok vía Streamlabs",
   "main": "main.js",
   "author": "Togi",
@@ -79,6 +79,7 @@
   "dependencies": {
     "electron-log": "^5.4.4",
     "electron-updater": "^6.8.9",
-    "obs-websocket-js": "^5.0.8"
+    "obs-websocket-js": "^5.0.8",
+    "tiktok-live-connector": "^2.5.0"
   }
 }

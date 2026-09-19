@@ -1309,3 +1309,138 @@ input[type="number"]:focus {
 input[type="number"]::placeholder {
   color: var(--text-3);
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   LANDING (Fase 1) — cards de acceso rápido
+   ═══════════════════════════════════════════════════════════════ */
+
+.landing-section { margin-bottom: 32px; }
+
+.landing-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-3);
+  margin-bottom: 12px;
+  font-weight: 700;
+}
+.landing-title i { color: var(--accent); font-size: 14px; }
+
+.landing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.landing-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.15s, background 0.15s, transform 0.12s;
+}
+
+.landing-card:hover {
+  background: var(--surface);
+  border-color: var(--accent-border);
+  transform: translateY(-1px);
+}
+.landing-card:active { transform: translateY(0); }
+
+.landing-card-icon {
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--lc-color, #b8ff00) 15%, transparent);
+  color: var(--lc-color, #b8ff00);
+  font-size: 20px;
+}
+
+.landing-card-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.landing-card-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+  letter-spacing: -0.005em;
+}
+
+.landing-card-sub {
+  font-size: 11.5px;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.landing-card-sub.active { color: var(--accent); font-weight: 700; }
+
+.landing-card-arrow {
+  flex: 0 0 auto;
+  color: var(--text-3);
+  font-size: 18px;
+  transition: transform 0.15s, color 0.15s;
+}
+.landing-card:hover .landing-card-arrow {
+  color: var(--accent);
+  transform: translateX(2px);
+}
+
+.landing-divider {
+  margin-top: 28px;
+  padding-top: 18px;
+  border-top: 1px dashed var(--line);
+  font-size: 11.5px;
+  color: var(--text-3);
+  text-align: center;
+  font-style: italic;
+  font-family: var(--font-mono);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SUB-PÁGINAS genéricas (tiktokSubpage + aiSubpage)
+   ═══════════════════════════════════════════════════════════════ */
+.card > div[id$="Subpage"] { display: none; }
+.card > div[id$="Subpage"].open { display: block; }
+
+/* ═══════════════════════════════════════════════════════════════
+   LANDING FOOTER
+   ═══════════════════════════════════════════════════════════════ */
+.landing-footer {
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid var(--line);
+}
+.landing-footer .action-row { margin-top: 0; }
+.landing-footer .unsaved-badge { display: none; margin-bottom: 12px; }
+.landing-footer .unsaved-badge.show { display: inline-block; }
+
+/* Sub-páginas genéricas */
+.card > div[id$="Subpage"] { display: none; }
+.card > div[id$="Subpage"].open { display: block; }
+#mainConfig.hidden { display: none; }

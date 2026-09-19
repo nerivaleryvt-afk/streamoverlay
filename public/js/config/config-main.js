@@ -3,17 +3,11 @@
    Depende de: shared.js, config-ui.js, config-ai.js
    ═══════════════════════════════════════════════════════════════ */
 
-/* ──────────────────────────────────────────────
-   ESTADO GLOBAL DEL FORMULARIO
-   ────────────────────────────────────────────── */
 const STORAGE_KEY = 'togi_config_backup_v2';
 let hasUnsavedChanges = false;
 let originalValues = {};
 let currentServerConfig = {};
 
-/* ──────────────────────────────────────────────
-   RECOGER VALORES DEL DOM
-   ────────────────────────────────────────────── */
 function getAiCohostValues() {
     return {
         enabled: document.getElementById('aiEnabled').checked,
@@ -40,8 +34,10 @@ function getCurrentValues() {
             twitch:  document.getElementById('platformTwitch').checked,
             tiktok:  document.getElementById('platformTikTok').checked,
             kick:    document.getElementById('platformKick').checked,
-            youtube: document.getElementById('platformYouTube').checked
+            youtube: document.getElementById('platformYouTube').checked,
+            velora:  document.getElementById('platformVelora').checked
         },
+        veloraUsername: (document.getElementById('veloraUsername')?.value || '').replace(/^@/, '').trim(),
         tts: {
             enabled: document.getElementById('ttsEnabled').checked,
             voice:   document.getElementById('ttsVoice').value,
@@ -68,9 +64,6 @@ function getCurrentValues() {
     };
 }
 
-/* ──────────────────────────────────────────────
-   APLICAR VALORES AL DOM
-   ────────────────────────────────────────────── */
 function applyValues(v) {
     const container = document.getElementById('twitchAccountsContainer');
     container.innerHTML = '';
@@ -80,12 +73,15 @@ function applyValues(v) {
     accounts.forEach(acc => addTwitchAccount(acc));
     document.getElementById('enableCensorship').checked = v.enableCensorship || false;
 
-    const pe = v.platformsEnabled || { twitch: true, tiktok: true, kick: true, youtube: true };
+    const pe = v.platformsEnabled || { twitch: true, tiktok: true, kick: true, youtube: true, velora: true };
     document.getElementById('platformTwitch').checked  = pe.twitch  !== false;
     document.getElementById('platformTikTok').checked  = pe.tiktok  !== false;
     document.getElementById('platformKick').checked    = pe.kick    !== false;
     document.getElementById('platformYouTube').checked = pe.youtube !== false;
-    applyPlatformVisibility();
+    document.getElementById('platformVelora').checked  = pe.velora  !== false;
+
+    const veloraUserEl = document.getElementById('veloraUsername');
+    if (veloraUserEl) veloraUserEl.value = v.veloraUsername || '';
 
     loadTikTokUsers(v.tiktokUsers || []);
     loadKickUsers(v.kickUsers || []);
@@ -130,14 +126,10 @@ function applyValues(v) {
     document.getElementById('aiKeyOpenRouter').value = (provs.openrouter && provs.openrouter.apiKey) ? provs.openrouter.apiKey : '';
     document.getElementById('aiKeyAgnes').value = (provs.agnes && provs.agnes.apiKey) ? provs.agnes.apiKey : '';
 
-    // Overlay de cristal
     document.getElementById('crystalStyle').value = v.crystalStyle || 'jar';
     document.getElementById('crystalMeta').value = v.crystalMeta || 500;
 }
 
-/* ──────────────────────────────────────────────
-   PERSISTENCIA LOCAL + BADGE DE CAMBIOS
-   ────────────────────────────────────────────── */
 function saveToLocalStorage(values) {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(values)); } catch (e) {}
 }
@@ -154,8 +146,10 @@ function updateUnsavedBadge() {
     const current = getCurrentValues();
     const hasChanges = JSON.stringify(current) !== JSON.stringify(originalValues);
     const badge = document.getElementById('unsavedBadge');
-    if (hasChanges) badge.classList.add('show');
-    else badge.classList.remove('show');
+    if (badge) {
+        if (hasChanges) badge.classList.add('show');
+        else badge.classList.remove('show');
+    }
     hasUnsavedChanges = hasChanges;
 }
 
@@ -165,9 +159,6 @@ function onFieldChange() {
     updateSidebarCounts();
 }
 
-/* ──────────────────────────────────────────────
-   EXTRACCIÓN DESDE CONFIG DEL SERVIDOR
-   ────────────────────────────────────────────── */
 function extractFromServerConfig(config) {
     let twitchAccounts = [];
     if (Array.isArray(config.TWITCH_ACCOUNTS) && config.TWITCH_ACCOUNTS.length > 0) {
@@ -225,7 +216,8 @@ function extractFromServerConfig(config) {
             ? config.YOUTUBE_USERS
             : (config.YOUTUBE_USER_ID ? String(config.YOUTUBE_USER_ID).split(',').map(s => s.trim()).filter(Boolean) : []),
         enableCensorship: config.ENABLE_CENSORSHIP || false,
-        platformsEnabled: config.PLATFORMS_ENABLED || { twitch: true, tiktok: true, kick: true, youtube: true },
+        platformsEnabled: config.PLATFORMS_ENABLED || { twitch: true, tiktok: true, kick: true, youtube: true, velora: true },
+        veloraUsername: config.VELORA_USERNAME || '',
         tts: config.TTS || {},
         aiCohost,
         crystalStyle: config.CRYSTAL_STYLE || 'jar',
@@ -233,9 +225,6 @@ function extractFromServerConfig(config) {
     };
 }
 
-/* ──────────────────────────────────────────────
-   RESTAURAR / CARGAR / GUARDAR
-   ────────────────────────────────────────────── */
 async function restoreFromServer() {
     try {
         const response = await fetch(`${window.SERVER_BASE}/get-config`);
@@ -289,9 +278,10 @@ async function saveConfig() {
     const tieneTikTok = v.tiktokUsers.length > 0;
     const tieneKick = v.kickUsers.length > 0;
     const tieneYouTube = v.youtubeUsers.length > 0;
+    const tieneVelora = !!v.veloraUsername;
     const tieneAI = v.aiCohost && v.aiCohost.enabled;
 
-    if (!tieneTwitch && !tieneTikTok && !tieneKick && !tieneYouTube && !tieneAI) {
+    if (!tieneTwitch && !tieneTikTok && !tieneKick && !tieneYouTube && !tieneVelora && !tieneAI) {
         alert('No has configurado nada.\nRellena al menos una plataforma o activa el AI Co-Host.');
         return;
     }
@@ -353,6 +343,7 @@ async function saveConfig() {
         KICK_USERS: v.kickUsers,
         YOUTUBE_USER_ID: v.youtubeUsers.join(', '),
         YOUTUBE_USERS: v.youtubeUsers,
+        VELORA_USERNAME: v.veloraUsername || '',
         ENABLE_CENSORSHIP: v.enableCensorship,
         PLATFORMS_ENABLED: v.platformsEnabled,
         TTS: v.tts,
@@ -386,9 +377,6 @@ async function saveConfig() {
     }
 }
 
-/* ──────────────────────────────────────────────
-   PREVIEW TTS
-   ────────────────────────────────────────────── */
 async function probarVozTTS(btn) {
     if (btn) btn.disabled = true;
 
@@ -438,9 +426,6 @@ async function probarVozTTS(btn) {
     }
 }
 
-/* ──────────────────────────────────────────────
-   ARRANQUE
-   ────────────────────────────────────────────── */
 window.addEventListener('load', function() {
     loadConfigData();
     updateUnsavedBadge();
