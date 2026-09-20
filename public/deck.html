@@ -346,6 +346,10 @@
             <div class="config-card">
               <h3><i class="ri-layout-right-line"></i> Panel derecho (LIVE)</h3>
               <div class="config-row">
+                <span class="config-row-label"><i class="ri-cpu-line"></i> Recursos del PC</span>
+                <label class="toggle-switch"><input type="checkbox" id="cfgPanelResources" checked><span></span></label>
+              </div>
+              <div class="config-row">
                 <span class="config-row-label"><i class="ri-bar-chart-line"></i> Widgets stat</span>
                 <label class="toggle-switch"><input type="checkbox" id="cfgPanelStats" checked><span></span></label>
               </div>
@@ -426,6 +430,19 @@
   </main>
 
   <aside class="aside" id="rightAside">
+    <div class="card" id="cardResources">
+      <div class="card-header">
+        <i class="ri-cpu-line"></i>
+        <span>Recursos del sistema</span>
+      </div>
+      <div class="res-body" id="resBody">
+        <div class="res-empty">Cargando recursos…</div>
+      </div>
+      <button class="res-reduce-btn" id="resReduceBtn" type="button" data-tip="Libera RAM de procesos en segundo plano (no toca Vanguard/Riot)">
+        <i class="ri-flashlight-fill"></i> Reducir RAM
+      </button>
+    </div>
+
     <div class="card" id="statsCard">
       <div class="card-header">
         <i class="ri-bar-chart-fill"></i>
@@ -494,10 +511,23 @@
     <div class="field"><label>Icono</label><div class="icon-picker" id="btnIcons"></div></div>
     <div class="field"><label>Color</label><div class="color-picker" id="btnColors"></div></div>
     <div class="field"><label>Acción</label><select id="btnAction"></select></div>
+
+    <div class="field" id="btnAudioSourceField" style="display:none">
+      <label>Fuente de audio (OBS)</label>
+      <select id="btnAudioSource"></select>
+      <div class="field-hint" id="btnAudioSourceHint">Se listan las fuentes de audio detectadas en OBS.</div>
+    </div>
+
+    <div class="field" id="btnAudioVolumeField" style="display:none">
+      <label>Volumen: <span id="btnAudioVolumeLabel">100%</span></label>
+      <input type="range" id="btnAudioVolume" min="0" max="1" step="0.01" value="1">
+    </div>
+
     <div class="field" id="btnPayloadField" style="display:none">
       <label>Payload (JSON)</label>
       <textarea id="btnPayload" rows="3" placeholder='{"scene":"Game"}'></textarea>
     </div>
+
     <div class="modal-actions">
       <button class="danger" id="btnDeleteBtn" style="display:none" onclick="deleteButton()">Eliminar</button>
       <button onclick="closeModal('btnModal')">Cancelar</button>

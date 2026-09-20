@@ -1,7 +1,7 @@
 {
   "token": "deck-xxxxxxxx",
   "theme": "cristal",
-  "enabled": false,
+  "enabled": true,
   "obs": {
     "host": "127.0.0.1",
     "port": 4455,
@@ -33,6 +33,15 @@
       "color": "#5a8ad6",
       "action": "obs:stream:start",
       "payload": {}
+    },
+    {
+      "id": "b-1789866201788",
+      "label": "sda",
+      "categoryId": "cat-1789347110570",
+      "icon": "ri-apps-2-line",
+      "color": "#5a8ad6",
+      "action": "obs:audio:list",
+      "payload": {}
     }
   ],
   "widgets": [],
@@ -47,7 +56,8 @@
     },
     "panelRight": {
       "stats": true,
-      "rankings": true
+      "rankings": true,
+      "resources": true
     },
     "chat": {
       "translate": true,

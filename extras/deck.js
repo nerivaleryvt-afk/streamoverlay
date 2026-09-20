@@ -1,7 +1,9 @@
 // extras/deck.js — StreamDeck web para TogiPanel
+// v1.4.6 — recursos del sistema (RAM/CPU/GPU/Disco/Uptime) + control de audio OBS adaptativo
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const { execFile } = require('child_process');
 
 const DECK_FILE = path.join(__dirname, 'deck.json');
 
@@ -94,6 +96,28 @@ async function connectObs() {
     console.log('[deck] OBS conectado a', deckConfig.obs.host + ':' + deckConfig.obs.port);
     if (_io) _io.emit('deck:obs-status', { connected: true });
     obsRetryDelay = 8000;
+
+    /* ── Hooks de audio OBS → re-emitir como deck:obs:audio-update ── */
+    try {
+      obsWs.on('InputMuteStateChanged', (data) => {
+        if (_io) _io.emit('deck:obs:audio-update', {
+          type: 'mute',
+          inputName: data.inputName,
+          inputMuted: data.inputMuted
+        });
+      });
+      obsWs.on('InputVolumeChanged', (data) => {
+        if (_io) _io.emit('deck:obs:audio-update', {
+          type: 'volume',
+          inputName: data.inputName,
+          inputVolumeMul: data.inputVolumeMul,
+          inputVolumeDb: data.inputVolumeDb
+        });
+      });
+    } catch (hookErr) {
+      console.warn('[deck] No se pudieron registrar hooks de audio OBS:', hookErr.message);
+    }
+
     obsWs.on('ConnectionClosed', () => {
       console.warn('[deck] OBS desconectado, reintentando en ' + obsRetryDelay + 'ms');
       obsWs = null;
@@ -134,7 +158,6 @@ async function callAitum(requestType, requestData = {}) {
   return data;
 }
 
-/* ── Escenas verticales ── */
 async function aitumGetScenes() {
   const data = await callAitum('get_scenes', {});
   return (data && data.scenes) || [];
@@ -149,7 +172,6 @@ async function aitumSwitchScene(sceneName) {
   return callAitum('switch_scene', { scene: sceneName });
 }
 
-/* ── Estado de los outputs ── */
 async function aitumGetStatus() {
   const data = await callAitum('status', {});
   return {
@@ -160,12 +182,10 @@ async function aitumGetStatus() {
   };
 }
 
-/* ── Streaming ── */
 async function aitumStartStreaming()  { return callAitum('start_streaming'); }
 async function aitumStopStreaming()   { return callAitum('stop_streaming'); }
 async function aitumToggleStreaming() { return callAitum('toggle_streaming'); }
 
-/* ── Grabación ── */
 async function aitumStartRecording()   { return callAitum('start_recording'); }
 async function aitumStopRecording()    { return callAitum('stop_recording'); }
 async function aitumToggleRecording()  { return callAitum('toggle_recording'); }
@@ -173,23 +193,359 @@ async function aitumPauseRecording()   { return callAitum('pause_recording'); }
 async function aitumUnpauseRecording() { return callAitum('unpause_recording'); }
 async function aitumAddChapter(name)   { return callAitum('add_chapter', { chapter_name: name || '' }); }
 
-/* ── Backtrack / Replay buffer ── */
 async function aitumStartBacktrack()  { return callAitum('start_backtrack'); }
 async function aitumStopBacktrack()   { return callAitum('stop_backtrack'); }
 async function aitumSaveBacktrack(filename) {
   return callAitum('save_backtrack', filename ? { filename } : {});
 }
 
-/* ── Cámara virtual ── */
 async function aitumStartVirtualCam() { return callAitum('start_virtual_camera'); }
 async function aitumStopVirtualCam()  { return callAitum('stop_virtual_camera'); }
 
-/* ── Actualizar stream key/server ── */
 async function aitumUpdateStreamKey(key, index) {
   return callAitum('update_stream_key', { stream_key: key, index: index || 0 });
 }
 async function aitumUpdateStreamServer(server, index) {
   return callAitum('update_stream_server', { stream_server: server, index: index || 0 });
+}
+
+/* ════════════════════════════════════════════════════════════
+   RECURSOS DEL SISTEMA (Windows / PowerShell)
+   ════════════════════════════════════════════════════════════ */
+
+let _psPath = null;
+function getPsPath() {
+  if (_psPath) return _psPath;
+  const candidates = [
+    'C:\\Program Files\\PowerShell\\7\\pwsh.exe',
+    'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe',
+    'powershell.exe',
+    'pwsh.exe'
+  ];
+  for (const c of candidates) {
+    try {
+      if (c.includes('\\') && !fs.existsSync(c)) continue;
+      _psPath = c;
+      return c;
+    } catch (e) {}
+  }
+  _psPath = 'powershell.exe';
+  return _psPath;
+}
+
+function runPowerShell(script, timeoutMs = 12000) {
+  return new Promise((resolve, reject) => {
+    const ps = getPsPath();
+    const args = [
+      '-NoProfile',
+      '-NonInteractive',
+      '-ExecutionPolicy', 'Bypass',
+      '-Command', script
+    ];
+    execFile(ps, args, { timeout: timeoutMs, windowsHide: true, maxBuffer: 4 * 1024 * 1024 }, (err, stdout, stderr) => {
+      if (err) {
+        return reject(new Error((stderr || err.message || 'PowerShell error').toString().trim()));
+      }
+      resolve((stdout || '').toString());
+    });
+  });
+}
+
+function buildResourcesScript() {
+  return `
+$ErrorActionPreference = 'SilentlyContinue'
+
+# ── RAM ──
+$os = Get-CimInstance Win32_OperatingSystem
+$ramTotalKB = [double]$os.TotalVisibleMemorySize
+$ramFreeKB  = [double]$os.FreePhysicalMemory
+$ramTotalMB = [math]::Round($ramTotalKB / 1024, 0)
+$ramFreeMB  = [math]::Round($ramFreeKB  / 1024, 0)
+$ramUsedMB  = $ramTotalMB - $ramFreeMB
+$ramPct     = if ($ramTotalMB -gt 0) { [math]::Round(($ramUsedMB / $ramTotalMB) * 100, 0) } else { 0 }
+
+# ── Uptime ──
+$boot = $os.LastBootUpTime
+$uptimeMs = 0
+if ($boot) {
+  $uptimeMs = [math]::Round(((Get-Date) - $boot).TotalMilliseconds, 0)
+}
+
+# ── Disco C: ──
+$diskLetter = 'C:'
+$disk = Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='C:'"
+$diskTotalGB = 0; $diskFreeGB = 0; $diskUsedGB = 0; $diskPct = 0
+if ($disk) {
+  $diskTotalGB = [math]::Round($disk.Size / 1GB, 1)
+  $diskFreeGB  = [math]::Round($disk.FreeSpace / 1GB, 1)
+  $diskUsedGB  = [math]::Round($diskTotalGB - $diskFreeGB, 1)
+  if ($diskTotalGB -gt 0) { $diskPct = [math]::Round(($diskUsedGB / $diskTotalGB) * 100, 0) }
+}
+
+# ── CPU (WMI, sin depender del idioma) ──
+$cpuPct = 0
+try {
+  $cpuData = Get-CimInstance Win32_PerfFormattedData_PerfOS_Processor -Filter "Name='_Total'"
+  if ($cpuData) {
+    $cpuPct = [math]::Round([double]$cpuData.PercentProcessorTime, 0)
+  }
+} catch {
+  $cpuPct = 0
+}
+
+# ── GPU: nombres + uso ──
+# Filtrar GPUs virtuales / adaptadores falsos
+$gpuBlacklist = @(
+  'meta virtual monitor',
+  'microsoft basic render',
+  'microsoft basic display',
+  'parsec',
+  'virtual display',
+  'virtual monitor'
+)
+
+$gpus = @()
+$videoCtrls = Get-CimInstance Win32_VideoController
+foreach ($vc in $videoCtrls) {
+  $name = [string]$vc.Name
+  $nameLower = $name.ToLower()
+  $skip = $false
+  foreach ($bl in $gpuBlacklist) {
+    if ($nameLower.Contains($bl)) { $skip = $true; break }
+  }
+  if ($skip) { continue }
+  $gpus += [pscustomobject]@{
+    name = $name
+    pct  = $null
+  }
+}
+
+# Uso de GPU por contador
+try {
+  $gpuCounterPath = '\\GPU Engine(*)\\Utilization Percentage'
+  $gpuSamples = Get-Counter -Counter $gpuCounterPath -MaxSamples 1 -ErrorAction Stop
+
+  $byInstance = @{}
+  foreach ($s in $gpuSamples.CounterSamples) {
+    $inst = [string]$s.InstanceName
+    if (-not $inst) { continue }
+    if ($inst -notmatch 'engtype_3D') { continue }
+    $val = [double]$s.CookedValue
+    if ($val -le 0) { continue }
+    $gpuKey = 'GPU'
+    foreach ($g in $gpus) {
+      $short = $g.name
+      if ($short.Length -gt 24) { $short = $short.Substring(0, 24) }
+      $shortClean = ($short -replace '[^A-Za-z0-9]', '')
+      if ($shortClean.Length -ge 6) {
+        if ($inst -replace '[^A-Za-z0-9]', '' -match [regex]::Escape($shortClean)) {
+          $gpuKey = $g.name
+          break
+        }
+      }
+    }
+    if (-not $byInstance.ContainsKey($gpuKey)) { $byInstance[$gpuKey] = 0 }
+    $byInstance[$gpuKey] += $val
+  }
+
+  foreach ($g in $gpus) {
+    if ($byInstance.ContainsKey($g.name)) {
+      $v = [math]::Round($byInstance[$g.name], 0)
+      if ($v -gt 100) { $v = 100 }
+      $g.pct = $v
+    } else {
+      $best = $null
+      foreach ($k in $byInstance.Keys) {
+        if ($k -eq 'GPU') { continue }
+        $kn = ($k -replace '\\s+', '').ToLower()
+        $gn = ($g.name -replace '\\s+', '').ToLower()
+        if ($kn.Length -ge 4 -and ($gn.Contains($kn) -or $kn.Contains($gn))) {
+          $vv = [math]::Round($byInstance[$k], 0)
+          if ($best -eq $null -or $vv -gt $best) { $best = $vv }
+        }
+      }
+      if ($best -ne $null -and $best -gt 100) { $best = 100 }
+      $g.pct = $best
+    }
+  }
+} catch {
+  # Sin contadores GPU → todos null
+  foreach ($g in $gpus) {
+    $g.pct = $null
+  }
+}
+
+# Ordenar GPUs por uso descendente (null al final)
+$gpus = @($gpus | Sort-Object -Property @{Expression={ if ($_.pct -eq $null) { -1 } else { $_.pct } }; Descending=$true}, @{Expression={$_.name}; Descending=$false})
+
+$result = [pscustomobject]@{
+  ram = [pscustomobject]@{
+    usadaMB  = $ramUsedMB
+    totalMB  = $ramTotalMB
+    libreMB  = $ramFreeMB
+    pct      = $ramPct
+  }
+  cpu = [pscustomobject]@{
+    pct = $cpuPct
+  }
+  gpu = @($gpus)
+  disco = [pscustomobject]@{
+    letra    = $diskLetter
+    usadaGB  = $diskUsedGB
+    totalGB  = $diskTotalGB
+    libreGB  = $diskFreeGB
+    pct      = $diskPct
+  }
+  uptimeMs = $uptimeMs
+  ts = [math]::Round(((Get-Date).ToUniversalTime() - (Get-Date '1970-01-01')).TotalMilliseconds, 0)
+}
+
+$result | ConvertTo-Json -Depth 6 -Compress
+`;
+}
+
+let _resourcesCache = { data: null, ts: 0 };
+const RESOURCES_CACHE_MS = 1000;
+
+async function getSystemResources() {
+  const now = Date.now();
+  if (_resourcesCache.data && (now - _resourcesCache.ts) < RESOURCES_CACHE_MS) {
+    return _resourcesCache.data;
+  }
+  const raw = await runPowerShell(buildResourcesScript(), 15000);
+  const trimmed = raw.trim();
+  if (!trimmed) throw new Error('PowerShell no devolvió datos');
+  let parsed;
+  try {
+    parsed = JSON.parse(trimmed);
+  } catch (e) {
+    throw new Error('JSON inválido de PowerShell: ' + trimmed.slice(0, 200));
+  }
+  if (!Array.isArray(parsed.gpu)) parsed.gpu = parsed.gpu ? [parsed.gpu] : [];
+  _resourcesCache = { data: parsed, ts: now };
+  return parsed;
+}
+
+/* ── Reducir RAM (EmptyWorkingSet) ── */
+function buildReduceRamScript() {
+  return `
+$ErrorActionPreference = 'SilentlyContinue'
+
+$whitelist = @(
+  'system','idle','registry','memory compression','memcompression',
+  'csrss','wininit','winlogon','services','lsass','smss','svchost',
+  'dwm','explorer',
+  'vgc','vgtray','vanguard',
+  'valorant','riotclientservices','riotclientux'
+)
+
+Add-Type -Namespace Win32 -Name Psapi -MemberDefinition @'
+[DllImport("psapi.dll", SetLastError=true)]
+public static extern bool EmptyWorkingSet(System.IntPtr hProcess);
+'@ -ErrorAction SilentlyContinue
+
+function Get-RamMB {
+  $os = Get-CimInstance Win32_OperatingSystem
+  $totalMB = [math]::Round([double]$os.TotalVisibleMemorySize / 1024, 0)
+  $freeMB  = [math]::Round([double]$os.FreePhysicalMemory / 1024, 0)
+  return [pscustomobject]@{ total = $totalMB; libre = $freeMB; usada = ($totalMB - $freeMB) }
+}
+
+$before = Get-RamMB
+
+$procs = Get-Process
+$count = 0
+foreach ($p in $procs) {
+  try {
+    $name = ($p.ProcessName + '').ToLower().Trim()
+    if ($whitelist -contains $name) { continue }
+    if ($p.Id -le 4) { continue }
+    $h = $p.Handle
+    if ($h -eq [IntPtr]::Zero) { continue }
+    $ok = [Win32.Psapi]::EmptyWorkingSet($h)
+    if ($ok) { $count++ }
+  } catch {}
+}
+
+Start-Sleep -Milliseconds 400
+$after = Get-RamMB
+
+$liberada = $before.usada - $after.usada
+if ($liberada -lt 0) { $liberada = 0 }
+
+$result = [pscustomobject]@{
+  procesosAfectados = $count
+  antesMB   = $before.usada
+  despuesMB = $after.usada
+  liberadaMB = [math]::Round($liberada, 0)
+  totalMB   = $before.total
+  ts = [math]::Round(((Get-Date).ToUniversalTime() - (Get-Date '1970-01-01')).TotalMilliseconds, 0)
+}
+$result | ConvertTo-Json -Compress
+`;
+}
+
+async function reducirRam() {
+  const raw = await runPowerShell(buildReduceRamScript(), 30000);
+  const trimmed = raw.trim();
+  if (!trimmed) throw new Error('PowerShell no devolvió datos');
+  try {
+    return JSON.parse(trimmed);
+  } catch (e) {
+    throw new Error('JSON inválido de PowerShell: ' + trimmed.slice(0, 200));
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   AUDIO DE OBS — listar fuentes
+   ════════════════════════════════════════════════════════════ */
+async function getObsAudioSources() {
+  if (!obsWs) throw new Error('OBS no conectado');
+  const inputsRes = await obsWs.call('GetInputList');
+  const inputs = Array.isArray(inputsRes.inputs) ? inputsRes.inputs : [];
+
+  const audioKinds = new Set([
+    'wasapi_input_capture',
+    'wasapi_output_capture',
+    'wasapi_process_output_capture',
+    'coreaudio_input_capture',
+    'coreaudio_output_capture',
+    'pulse_input_capture',
+    'pulse_output_capture',
+    'alsa_input_capture'
+  ]);
+
+  const result = [];
+  for (const inp of inputs) {
+    const kind = inp.inputKind || inp.unversionedInputKind || '';
+    if (!audioKinds.has(kind)) continue;
+    let muted = false;
+    let volumeMul = 1;
+    let volumeDb = 0;
+    try {
+      const m = await obsWs.call('GetInputMute', { inputName: inp.inputName });
+      muted = !!m.inputMuted;
+    } catch (e) {}
+    try {
+      const v = await obsWs.call('GetInputVolume', { inputName: inp.inputName });
+      volumeMul = typeof v.inputVolumeMul === 'number' ? v.inputVolumeMul : 1;
+      volumeDb  = typeof v.inputVolumeDb  === 'number' ? v.inputVolumeDb  : 0;
+    } catch (e) {}
+    result.push({
+      name: inp.inputName,
+      kind,
+      muted,
+      volume: volumeMul,
+      volumeDb
+    });
+  }
+
+  result.sort((a, b) => {
+    if (a.muted !== b.muted) return a.muted ? 1 : -1;
+    return a.name.localeCompare(b.name);
+  });
+
+  return result;
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -224,15 +580,76 @@ async function runAction(action, payload) {
       await obsWs.call('StopStream');
       return { ok: true };
 
+    /* ── LEGACY: mic mute ── */
     case 'obs:mic:mute':
       if (!obsWs) throw new Error('OBS no conectado');
       await obsWs.call('ToggleInputMute', { inputName: payload.input || 'Mic/Aux' });
       return { ok: true };
 
+    /* ── NUEVO: audio adaptativo ── */
+    case 'obs:audio:mute':
+      if (!obsWs) throw new Error('OBS no conectado');
+      if (!payload.source) throw new Error('Falta source');
+      await obsWs.call('ToggleInputMute', { inputName: payload.source });
+      return { ok: true };
+
+    case 'obs:audio:mute:on':
+      if (!obsWs) throw new Error('OBS no conectado');
+      if (!payload.source) throw new Error('Falta source');
+      await obsWs.call('SetInputMute', { inputName: payload.source, inputMuted: true });
+      return { ok: true };
+
+    case 'obs:audio:mute:off':
+      if (!obsWs) throw new Error('OBS no conectado');
+      if (!payload.source) throw new Error('Falta source');
+      await obsWs.call('SetInputMute', { inputName: payload.source, inputMuted: false });
+      return { ok: true };
+
+    case 'obs:audio:volume':
+      if (!obsWs) throw new Error('OBS no conectado');
+      if (!payload.source) throw new Error('Falta source');
+      {
+        let vol = Number(payload.volume);
+        if (!isFinite(vol)) vol = 1;
+        if (vol < 0) vol = 0;
+        if (vol > 1) vol = 1;
+        await obsWs.call('SetInputVolume', { inputName: payload.source, inputVolumeMul: vol });
+      }
+      return { ok: true };
+
+    case 'obs:audio:mute:all': {
+      if (!obsWs) throw new Error('OBS no conectado');
+      const sources = await getObsAudioSources();
+      for (const s of sources) {
+        try { await obsWs.call('SetInputMute', { inputName: s.name, inputMuted: true }); } catch (e) {}
+      }
+      return { ok: true, count: sources.length };
+    }
+
+    case 'obs:audio:unmute:all': {
+      if (!obsWs) throw new Error('OBS no conectado');
+      const sources = await getObsAudioSources();
+      for (const s of sources) {
+        try { await obsWs.call('SetInputMute', { inputName: s.name, inputMuted: false }); } catch (e) {}
+      }
+      return { ok: true, count: sources.length };
+    }
+
+    case 'obs:audio:list': {
+      const sources = await getObsAudioSources();
+      return { ok: true, sources };
+    }
+
     case 'obs:scene:list':
       if (!obsWs) throw new Error('OBS no conectado');
       const scenes = await obsWs.call('GetSceneList');
       return { ok: true, scenes: scenes.scenes.map(s => s.sceneName) };
+
+    /* ── Sistema: reducir RAM ── */
+    case 'system:ram:reduce': {
+      const res = await reducirRam();
+      return { ok: true, result: res };
+    }
 
     /* ── Aitum Vertical ── */
     case 'aitum:scene:switch':
@@ -418,7 +835,6 @@ function init(app, io) {
     res.json({ ok: true });
   });
 
-  /* ── Activar/desactivar deck ── */
   app.post('/api/deck/enabled', (req, res) => {
     if (!checkToken(req, res)) return;
     const { enabled } = req.body || {};
@@ -445,7 +861,6 @@ function init(app, io) {
     res.json({ ok: true });
   });
 
-  /* ── Preferencias UI del deck ── */
   app.post('/api/deck/prefs', (req, res) => {
     if (!checkToken(req, res)) return;
     const prefs = req.body && (req.body.prefs || req.body);
@@ -491,11 +906,39 @@ function init(app, io) {
     res.json(statsAgg);
   });
 
-  /* ════════════════════════════════════════════════════════════
-     AITUM VERTICAL — Endpoints
-     ════════════════════════════════════════════════════════════ */
+  /* ════ RECURSOS DEL SISTEMA ════ */
+  app.get('/api/deck/system/resources', async (req, res) => {
+    if (!checkToken(req, res)) return;
+    try {
+      const data = await getSystemResources();
+      res.json({ ok: true, ...data });
+    } catch (e) {
+      res.status(500).json({ ok: false, error: e.message });
+    }
+  });
 
-  /* Diagnóstico: lista los requestType soportados */
+  app.post('/api/deck/system/ram/reduce', async (req, res) => {
+    if (!checkToken(req, res)) return;
+    try {
+      const data = await reducirRam();
+      res.json({ ok: true, result: data });
+    } catch (e) {
+      res.status(500).json({ ok: false, error: e.message });
+    }
+  });
+
+  /* ════ AUDIO OBS ════ */
+  app.get('/api/deck/obs/audio-sources', async (req, res) => {
+    if (!checkToken(req, res)) return;
+    try {
+      const sources = await getObsAudioSources();
+      res.json({ ok: true, sources });
+    } catch (e) {
+      res.status(500).json({ ok: false, error: e.message });
+    }
+  });
+
+  /* ════ AITUM VERTICAL ════ */
   app.get('/api/deck/aitum/requests', (req, res) => {
     if (!checkToken(req, res)) return;
     res.json({
@@ -513,7 +956,6 @@ function init(app, io) {
     });
   });
 
-  /* Estado completo: escenas + escena actual + outputs */
   app.get('/api/deck/aitum/state', async (req, res) => {
     if (!checkToken(req, res)) return;
     try {
@@ -534,7 +976,6 @@ function init(app, io) {
     }
   });
 
-  /* Lista de escenas del canvas vertical */
   app.get('/api/deck/aitum/scenes', async (req, res) => {
     if (!checkToken(req, res)) return;
     try {
@@ -546,7 +987,6 @@ function init(app, io) {
     }
   });
 
-  /* Cambiar escena vertical */
   app.post('/api/deck/aitum/switch', async (req, res) => {
     if (!checkToken(req, res)) return;
     const { scene } = req.body || {};
@@ -559,7 +999,6 @@ function init(app, io) {
     }
   });
 
-  /* Estado de outputs (streaming/recording/backtrack/virtualcam) */
   app.get('/api/deck/aitum/status', async (req, res) => {
     if (!checkToken(req, res)) return;
     try {
@@ -570,7 +1009,6 @@ function init(app, io) {
     }
   });
 
-  /* Acciones sobre outputs */
   app.post('/api/deck/aitum/action', async (req, res) => {
     if (!checkToken(req, res)) return;
     const { action, name, filename } = req.body || {};
@@ -600,9 +1038,7 @@ function init(app, io) {
     }
   });
 
-  /* ════════════════════════════════════════════════════════════
-     HOOK SOBRE io.emit — capturamos TODO lo que el servidor emite
-     ════════════════════════════════════════════════════════════ */
+  /* ════ HOOK io.emit ════ */
   const originalEmit = io.emit.bind(io);
   io.emit = function (event, ...args) {
     originalEmit(event, ...args);

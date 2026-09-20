@@ -17,6 +17,15 @@ let DECK_ENABLED = true;
 /* handles de runtime */
 let SOCKETS_STARTED = false;
 let STATS_POLL_TIMER = null;
+let RESOURCES_POLL_TIMER = null;
+
+/* recursos */
+let LAST_RESOURCES = null;
+const RESOURCES_POLL_MS = 3000;
+
+/* audio OBS */
+let OBS_AUDIO_SOURCES = [];
+let OBS_AUDIO_STATES = {}; // { inputName: { muted, volume } }
 
 const YT = {
   superchats: 0,
@@ -35,7 +44,7 @@ let chatCount = 0;
 
 const DEFAULT_PREFS = {
   views: { deck: true, dashboard: true, stats: true, overlays: true, config: true, aitum: true },
-  panelRight: { stats: true, rankings: true },
+  panelRight: { stats: true, rankings: true, resources: true },
   chat: { translate: true, censor: false, avatars: true },
   theme: 'cristal'
 };
@@ -81,8 +90,14 @@ const ACTIONS = [
   {v:'obs:record:stop',l:'OBS → Grabar fin'},
   {v:'obs:stream:start',l:'OBS → Stream inicio'},
   {v:'obs:stream:stop',l:'OBS → Stream fin'},
-  {v:'obs:mic:mute',l:'OBS → Silenciar mic',p:true},
+  {v:'obs:mic:mute',l:'OBS → Silenciar mic (legacy)',p:true},
+  {v:'obs:audio:mute',l:'OBS → Silenciar fuente (adaptativo)',p:'audio'},
+  {v:'obs:audio:volume',l:'OBS → Volumen de fuente',p:'audio-volume'},
+  {v:'obs:audio:mute:all',l:'OBS → Silenciar TODO'},
+  {v:'obs:audio:unmute:all',l:'OBS → Reactivar TODO'},
+  {v:'obs:audio:list',l:'OBS → Listar fuentes de audio'},
   {v:'obs:scene:list',l:'OBS → Listar escenas'},
+  {v:'system:ram:reduce',l:'Sistema → Reducir RAM'},
   {v:'tts:speak',l:'TTS → Hablar'},
   {v:'tts:skip',l:'TTS → Saltar'},
   {v:'tts:pause',l:'TTS → Pausar'},
@@ -346,22 +361,37 @@ function applyPrefs(){
     switchView('deck');
   }
 
-  document.getElementById('statsCard').style.display = PREFS.panelRight.stats ? '' : 'none';
-  if(!PREFS.panelRight.rankings){
-    document.getElementById('topCard').style.display = 'none';
+  const statsCardEl = document.getElementById('statsCard');
+  if(statsCardEl) statsCardEl.style.display = PREFS.panelRight.stats ? '' : 'none';
+  const topCardEl = document.getElementById('topCard');
+  if(topCardEl && !PREFS.panelRight.rankings){
+    topCardEl.style.display = 'none';
   }
+  const resCardEl = document.getElementById('cardResources');
+  if(resCardEl) resCardEl.style.display = PREFS.panelRight.resources === false ? 'none' : '';
 
-  document.getElementById('cfgViewDashboard').checked = PREFS.views.dashboard;
-  document.getElementById('cfgViewStats').checked = PREFS.views.stats;
-  document.getElementById('cfgViewOverlays').checked = PREFS.views.overlays;
+  const elDash = document.getElementById('cfgViewDashboard');
+  if(elDash) elDash.checked = PREFS.views.dashboard;
+  const elStats = document.getElementById('cfgViewStats');
+  if(elStats) elStats.checked = PREFS.views.stats;
+  const elOv = document.getElementById('cfgViewOverlays');
+  if(elOv) elOv.checked = PREFS.views.overlays;
   const cfgAitum = document.getElementById('cfgViewAitum');
   if(cfgAitum) cfgAitum.checked = PREFS.views.aitum;
-  document.getElementById('cfgViewConfig').checked = PREFS.views.config;
-  document.getElementById('cfgPanelStats').checked = PREFS.panelRight.stats;
-  document.getElementById('cfgPanelRankings').checked = PREFS.panelRight.rankings;
-  document.getElementById('cfgChatTranslate').checked = PREFS.chat.translate;
-  document.getElementById('cfgChatCensor').checked = PREFS.chat.censor;
-  document.getElementById('cfgChatAvatars').checked = PREFS.chat.avatars;
+  const elCfg = document.getElementById('cfgViewConfig');
+  if(elCfg) elCfg.checked = PREFS.views.config;
+  const elPanelStats = document.getElementById('cfgPanelStats');
+  if(elPanelStats) elPanelStats.checked = PREFS.panelRight.stats;
+  const elPanelRank = document.getElementById('cfgPanelRankings');
+  if(elPanelRank) elPanelRank.checked = PREFS.panelRight.rankings;
+  const elPanelRes = document.getElementById('cfgPanelResources');
+  if(elPanelRes) elPanelRes.checked = PREFS.panelRight.resources !== false;
+  const elTranslate = document.getElementById('cfgChatTranslate');
+  if(elTranslate) elTranslate.checked = PREFS.chat.translate;
+  const elCensor = document.getElementById('cfgChatCensor');
+  if(elCensor) elCensor.checked = PREFS.chat.censor;
+  const elAvatars = document.getElementById('cfgChatAvatars');
+  if(elAvatars) elAvatars.checked = PREFS.chat.avatars;
 
   document.querySelectorAll('.theme-btn').forEach(b=>{
     b.classList.toggle('active', b.dataset.theme === PREFS.theme);
@@ -408,12 +438,16 @@ function startRuntime(){
   }
   startStatsPolling();
   startAitumPolling();
+  startResourcesPolling();
   loadStreamInfo();
+  loadObsAudioSources();
+  loadSystemResources();
 }
 
 function stopRuntime(){
   if(STATS_POLL_TIMER){ clearInterval(STATS_POLL_TIMER); STATS_POLL_TIMER = null; }
   if(AITUM.pollTimer){ clearInterval(AITUM.pollTimer); AITUM.pollTimer = null; }
+  if(RESOURCES_POLL_TIMER){ clearInterval(RESOURCES_POLL_TIMER); RESOURCES_POLL_TIMER = null; }
   if(SOCKETS_STARTED){
     socket.removeAllListeners();
     SOCKETS_STARTED = false;
@@ -489,6 +523,7 @@ function renderAll(){
   renderStatsView();
   renderOverlays();
   renderObsStatus();
+  renderResources();
 }
 
 function renderCatNav(){
@@ -561,13 +596,19 @@ function renderGrid(){
           </button>
         </div>
         <div class="grid">
-          ${btns.map(b=>`
-            <div class="deck-btn" data-trigger="${b.id}">
-              <small>${esc(b.action)}</small>
-              <i class="${b.icon}" style="color:${b.color}"></i>
-              <span>${esc(b.label)}</span>
-            </div>
-          `).join('')}
+          ${btns.map(b=>{
+            const isAudio = typeof b.action === 'string' && b.action.startsWith('obs:audio:mute');
+            const src = b.payload && b.payload.source;
+            const muted = isAudio && src && OBS_AUDIO_STATES[src] && OBS_AUDIO_STATES[src].muted;
+            return `
+              <div class="deck-btn ${muted?'muted':''}" data-trigger="${b.id}" data-action="${esc(b.action)}" data-source="${esc(src||'')}">
+                <small>${esc(b.action)}</small>
+                <i class="${b.icon}" style="color:${b.color}"></i>
+                <span>${esc(b.label)}</span>
+                ${muted ? '<span class="deck-btn-mute-dot"></span>' : ''}
+              </div>
+            `;
+          }).join('')}
           <div class="deck-btn empty" data-addbtn="${c.id}">
             <i class="ri-add-line"></i>
             <span>Añadir</span>
@@ -577,7 +618,33 @@ function renderGrid(){
     `;
   }).join('');
 
-  el.querySelectorAll('[data-trigger]').forEach(b=>b.onclick=()=>trigger(b.dataset.trigger));
+  el.querySelectorAll('[data-trigger]').forEach(b=>{
+  b.onclick = ()=>trigger(b.dataset.trigger);
+  b.oncontextmenu = (e)=>{
+    e.preventDefault();
+    openBtnModal(b.dataset.trigger);
+  };
+  let pressTimer = null;
+  b.addEventListener('touchstart', ()=>{
+    pressTimer = setTimeout(()=>{
+      pressTimer = null;
+      openBtnModal(b.dataset.trigger);
+      if(navigator.vibrate) navigator.vibrate(30);
+    }, 500);
+  }, { passive: true });
+  b.addEventListener('touchend', (e)=>{
+    if(pressTimer){
+      clearTimeout(pressTimer);
+      pressTimer = null;
+    }
+  });
+  b.addEventListener('touchmove', ()=>{
+    if(pressTimer){
+      clearTimeout(pressTimer);
+      pressTimer = null;
+    }
+  });
+});
   el.querySelectorAll('[data-addbtn]').forEach(b=>b.onclick=()=>openBtnModal(null, b.dataset.addbtn));
   el.querySelectorAll('[data-editcat]').forEach(b=>b.onclick=()=>openCatModal(b.dataset.editcat));
 }
@@ -1073,6 +1140,16 @@ function hexA(hex, alpha){
 function esc(s){
   return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
+function formatUptime(ms){
+  if(!ms || ms < 0) return '—';
+  const totalSec = Math.floor(ms / 1000);
+  const days = Math.floor(totalSec / 86400);
+  const hours = Math.floor((totalSec % 86400) / 3600);
+  const mins = Math.floor((totalSec % 3600) / 60);
+  if(days > 0) return `${days}d ${hours}h`;
+  if(hours > 0) return `${hours}h ${mins}m`;
+  return `${mins}m`;
+}
 let toastTimer;
 function toast(msg, type=''){
   const t = document.getElementById('toast');
@@ -1093,108 +1170,196 @@ function startStatsPolling(){
   }, 4000);
 }
 
-function connectSockets(){
-  socket.on('deck:stats-update', s=>{ STATS = s; renderLive(); renderStatsView(); });
-  socket.on('deck:obs-status', s=>{ OBS_CONNECTED = !!s.connected; renderObsStatus(); });
-  socket.on('deck:enabled-updated', d=>{
-    const newEnabled = !!(d && d.enabled);
-    if(newEnabled === DECK_ENABLED) return;
-    DECK_ENABLED = newEnabled;
-    applyDeckEnabled();
-    if(DECK_ENABLED) startRuntime();
-    else stopRuntime();
-  });
-  socket.on('deck:categories-updated', c=>{ STATE.categories = c; renderAll(); });
-  socket.on('deck:buttons-updated', b=>{ STATE.buttons = b; renderAll(); });
-  socket.on('deck:widgets-updated', w=>{ STATE.widgets = w; renderLive(); });
-  socket.on('deck:theme-updated', t=>{ PREFS.theme = t; applyTheme(t); });
-  socket.on('deck:prefs-updated', p=>{
-    if(!p || typeof p !== 'object') return;
-    PREFS = { ...DEFAULT_PREFS, ...p };
-    PREFS.views = { ...DEFAULT_PREFS.views, ...(p.views||{}) };
-    PREFS.panelRight = { ...DEFAULT_PREFS.panelRight, ...(p.panelRight||{}) };
-    PREFS.chat = { ...DEFAULT_PREFS.chat, ...(p.chat||{}) };
-    try { localStorage.setItem('deck:prefs', JSON.stringify(PREFS)); } catch(e){}
-    applyPrefs();
-  });
-
-  socket.on('chat-message', msg=>addChatMessage(msg));
-
-  socket.on('youtube-superchat', data=>{
-    if(!data) return;
-    YT.superchats++;
-    const amt = parseAmount(data.amount);
-    YT.totalAmount += amt;
-    const u = data.username || 'Anónimo';
-    YT.topSuperchatters.set(u, (YT.topSuperchatters.get(u)||0) + amt);
-    renderStatsView();
-  });
-  socket.on('youtube-member', data=>{
-    if(!data) return;
-    YT.members++;
-    const u = data.username || 'Anónimo';
-    YT.topMembers.set(u, (YT.topMembers.get(u)||0) + 1);
-    renderStatsView();
-  });
-
-  socket.on('twitch-poll-created', p=>{ renderActivePoll(p); });
-  socket.on('twitch-poll-ended', id=>{
-    toast('Encuesta finalizada', 'ok');
-    document.getElementById('activePollDisplay').innerHTML = '';
-  });
-
-  socket.on('category-change-result', r=>{
-    if(r && r.success) toast('Categoría cambiada', 'ok');
-    else if(r && r.error) toast(r.error, 'err');
-  });
-  socket.on('title-change-result', r=>{
-    if(r && r.success) toast('Título cambiado', 'ok');
-    else if(r && r.error) toast(r.error, 'err');
-  });
+/* ════════════════════════════════════════════════════════════
+   RECURSOS DEL SISTEMA
+   ════════════════════════════════════════════════════════════ */
+function startResourcesPolling(){
+  if(RESOURCES_POLL_TIMER) clearInterval(RESOURCES_POLL_TIMER);
+  RESOURCES_POLL_TIMER = setInterval(loadSystemResources, RESOURCES_POLL_MS);
 }
 
-function renderActivePoll(p){
-  if(!p) return;
-  const el = document.getElementById('activePollDisplay');
+async function loadSystemResources(){
+  try {
+    const r = await fetch(API('/system/resources'));
+    if(!r.ok) return;
+    const data = await r.json();
+    if(!data.ok) return;
+    LAST_RESOURCES = data;
+    renderResources();
+  } catch(e){
+    // silencioso
+  }
+}
+
+function renderResources(){
+  const el = document.getElementById('resBody');
+  if(!el) return;
+  const d = LAST_RESOURCES;
+  if(!d){
+    el.innerHTML = `<div class="res-empty">Cargando recursos…</div>`;
+    return;
+  }
+
+  const ramPct = d.ram && typeof d.ram.pct === 'number' ? d.ram.pct : 0;
+  const cpuPct = d.cpu && typeof d.cpu.pct === 'number' ? d.cpu.pct : 0;
+  const diskPct = d.disco && typeof d.disco.pct === 'number' ? d.disco.pct : 0;
+  const ramUsedGB = d.ram ? (d.ram.usadaMB / 1024).toFixed(1) : '—';
+  const ramTotalGB = d.ram ? (d.ram.totalMB / 1024).toFixed(0) : '—';
+  const diskUsedGB = d.disco ? d.disco.usadaGB : '—';
+  const diskTotalGB = d.disco ? d.disco.totalGB : '—';
+
+  const gpuHtml = (Array.isArray(d.gpu) && d.gpu.length)
+    ? d.gpu.map(g=>{
+        const pct = (g.pct === null || g.pct === undefined) ? null : g.pct;
+        const pctTxt = pct === null ? '—' : pct + '%';
+        const cls = pct === null ? 'unknown' : pctClass(pct);
+        const barW = pct === null ? 0 : Math.min(100, pct);
+        return `
+          <div class="res-row res-gpu-row">
+            <div class="res-label" title="${esc(g.name)}">
+              <i class="ri-cpu-line"></i>
+              <span class="res-gpu-name">${esc(shortGpuName(g.name))}</span>
+            </div>
+            <div class="res-bar">
+              <div class="res-bar-fill ${cls}" style="width:${barW}%"></div>
+            </div>
+            <div class="res-value ${cls}">${pctTxt}</div>
+          </div>
+        `;
+      }).join('')
+    : `<div class="res-row"><div class="res-label"><i class="ri-cpu-line"></i><span>GPU</span></div><div class="res-bar"><div class="res-bar-fill unknown" style="width:0%"></div></div><div class="res-value unknown">—</div></div>`;
+
   el.innerHTML = `
-    <div style="background:#0a0b0e;border:1px solid var(--border);border-radius:8px;padding:10px;font-size:12px">
-      <div style="font-weight:700;margin-bottom:6px">${esc(p.question)}</div>
-      ${(p.options||[]).map((o,i)=>`
-        <div class="poll-active-item">
-          <span>${esc(o)}</span>
-          <span class="votes">${(p.votes&&p.votes[i])||0} votos</span>
-        </div>
-      `).join('')}
-      <button class="overlay-btn stop" style="margin-top:8px" onclick="endActivePoll('${p.id}')">
-        <i class="ri-stop-fill"></i> Finalizar
-      </button>
+    <div class="res-row">
+      <div class="res-label"><i class="ri-database-2-line"></i><span>RAM</span></div>
+      <div class="res-bar"><div class="res-bar-fill ${pctClass(ramPct)}" style="width:${Math.min(100,ramPct)}%"></div></div>
+      <div class="res-value ${pctClass(ramPct)}">${ramPct}%</div>
+      <div class="res-sub">${ramUsedGB} / ${ramTotalGB} GB</div>
+    </div>
+
+    <div class="res-row">
+      <div class="res-label"><i class="ri-cpu-line"></i><span>CPU</span></div>
+      <div class="res-bar"><div class="res-bar-fill ${pctClass(cpuPct)}" style="width:${Math.min(100,cpuPct)}%"></div></div>
+      <div class="res-value ${pctClass(cpuPct)}">${cpuPct}%</div>
+      <div class="res-sub"></div>
+    </div>
+
+    <div class="res-gpu-section">
+      <div class="res-gpu-title"><i class="ri-cpu-line"></i> GPU</div>
+      ${gpuHtml}
+    </div>
+
+    <div class="res-row">
+      <div class="res-label"><i class="ri-hard-drive-2-line"></i><span>Disco ${esc(d.disco?.letra||'C:')}</span></div>
+      <div class="res-bar"><div class="res-bar-fill ${pctClass(diskPct)}" style="width:${Math.min(100,diskPct)}%"></div></div>
+      <div class="res-value ${pctClass(diskPct)}">${diskPct}%</div>
+      <div class="res-sub">${diskUsedGB} / ${diskTotalGB} GB</div>
+    </div>
+
+    <div class="res-row res-row-uptime">
+      <div class="res-label"><i class="ri-time-line"></i><span>Uptime</span></div>
+      <div class="res-uptime">${formatUptime(d.uptimeMs)}</div>
     </div>
   `;
 }
 
-function endActivePoll(id){
-  socket.emit('end-twitch-poll', { pollId: id });
+function pctClass(pct){
+  if(typeof pct !== 'number') return 'unknown';
+  if(pct >= 90) return 'danger';
+  if(pct >= 70) return 'warn';
+  return 'ok';
 }
 
-function parseAmount(str){
-  if(!str) return 0;
-  const m = String(str).replace(',','.').match(/(\d+(\.\d+)?)/);
-  return m ? parseFloat(m[1]) : 0;
+function shortGpuName(name){
+  if(!name) return 'GPU';
+  // Acortar nombres largos: "NVIDIA GeForce RTX 3060" → "RTX 3060"
+  const m = name.match(/(RTX|GTX|RX|Arc|Radeon|UHD|Iris|Vega)\s*[A-Za-z0-9 ]+/i);
+  if(m) return m[0].trim();
+  if(name.length > 18) return name.slice(0, 16) + '…';
+  return name;
 }
 
-function renderObsStatus(){
-  const pill = document.getElementById('obsPill');
-  const text = document.getElementById('obsPillText');
-  if(OBS_CONNECTED){
-    pill.className = 'pill ok';
-    text.textContent = 'OBS conectado';
-  } else {
-    pill.className = 'pill';
-    text.textContent = 'OBS desconectado';
+async function reduceRam(){
+  const btn = document.getElementById('resReduceBtn');
+  if(btn){ btn.disabled = true; btn.classList.add('loading'); }
+  try {
+    const r = await fetch(API('/system/ram/reduce'), { method: 'POST' });
+    const data = await r.json();
+    if(data && data.ok && data.result){
+      const lib = data.result.liberadaMB || 0;
+      toast(`RAM liberada: ${lib} MB`, 'ok');
+      setTimeout(loadSystemResources, 600);
+    } else {
+      toast(data.error || 'No se pudo reducir RAM', 'err');
+    }
+  } catch(e){
+    toast('Error de red', 'err');
+  } finally {
+    if(btn){ btn.disabled = false; btn.classList.remove('loading'); }
   }
-  document.getElementById('navDeckCount').textContent = STATE.buttons.length;
 }
 
+/* ════════════════════════════════════════════════════════════
+   AUDIO OBS
+   ════════════════════════════════════════════════════════════ */
+async function loadObsAudioSources(){
+  try {
+    const r = await fetch(API('/obs/audio-sources'));
+    if(!r.ok){
+      OBS_AUDIO_SOURCES = [];
+      renderAudioSourceSelect();
+      return;
+    }
+    const data = await r.json();
+    if(data && data.ok && Array.isArray(data.sources)){
+      OBS_AUDIO_SOURCES = data.sources;
+      OBS_AUDIO_STATES = {};
+      data.sources.forEach(s => {
+        OBS_AUDIO_STATES[s.name] = { muted: s.muted, volume: s.volume };
+      });
+      renderAudioSourceSelect();
+      // Refrescar botones del grid para mostrar estado muted correcto
+      renderGrid();
+    }
+  } catch(e){
+    OBS_AUDIO_SOURCES = [];
+    renderAudioSourceSelect();
+  }
+}
+
+function renderAudioSourceSelect(){
+  const sel = document.getElementById('btnAudioSource');
+  if(!sel) return;
+  const current = sel.value;
+  if(!OBS_AUDIO_SOURCES.length){
+    sel.innerHTML = `<option value="">(OBS no conectado — sin fuentes)</option>`;
+    return;
+  }
+  sel.innerHTML = OBS_AUDIO_SOURCES.map(s=>{
+    const muted = s.muted ? ' 🔇' : '';
+    return `<option value="${esc(s.name)}">${esc(s.name)}${muted}</option>`;
+  }).join('');
+  if(current && OBS_AUDIO_SOURCES.some(s=>s.name===current)){
+    sel.value = current;
+  }
+}
+
+function syncAudioPayload(){
+  const action = document.getElementById('btnAction').value;
+  const pField = document.getElementById('btnPayload');
+  if(action === 'obs:audio:mute'){
+    const src = document.getElementById('btnAudioSource')?.value || '';
+    pField.value = JSON.stringify({ source: src });
+  } else if(action === 'obs:audio:volume'){
+    const src = document.getElementById('btnAudioSource')?.value || '';
+    const vol = parseFloat(document.getElementById('btnAudioVolume')?.value || '1');
+    pField.value = JSON.stringify({ source: src, volume: isFinite(vol) ? vol : 1 });
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   ACCIONES
+   ════════════════════════════════════════════════════════════ */
 async function trigger(id){
   const b = STATE.buttons.find(x=>x.id===id);
   try {
@@ -1207,6 +1372,11 @@ async function trigger(id){
     if(r.ok){
       toast(`▶ ${b?b.label:'Acción'}`, 'ok');
       if(btn){ btn.classList.add('ok'); setTimeout(()=>btn.classList.remove('ok'), 500); }
+      // Si la acción es de audio o recursos, refrescar tras breve espera
+      if(b && typeof b.action === 'string'){
+        if(b.action.startsWith('obs:audio')) setTimeout(loadObsAudioSources, 350);
+        if(b.action === 'system:ram:reduce') setTimeout(loadSystemResources, 600);
+      }
     } else {
       toast('Error al ejecutar', 'err');
       if(btn){ btn.classList.add('err'); setTimeout(()=>btn.classList.remove('err'), 500); }
@@ -1286,6 +1456,10 @@ async function saveButton(){
   const icon = document.querySelector('#btnIcons button.active')?.dataset.icon || 'ri-apps-2-line';
   const color = document.querySelector('#btnColors button.active')?.dataset.color || COLORS[0];
   const action = document.getElementById('btnAction').value;
+
+  // Sincronizar payload antes de leer
+  syncAudioPayload();
+
   let payload = {};
   const pRaw = document.getElementById('btnPayload').value.trim();
   if(pRaw){
@@ -1294,6 +1468,9 @@ async function saveButton(){
   }
   if(!label) return toast('Falta etiqueta','err');
   if(!categoryId) return toast('Elige una categoría','err');
+  if((action === 'obs:audio:mute' || action === 'obs:audio:volume') && !payload.source){
+    return toast('Elige una fuente de audio', 'err');
+  }
   const btns = [...STATE.buttons];
   if(id){
     const i = btns.findIndex(b=>b.id===id);
@@ -1439,13 +1616,53 @@ function openBtnModal(id, presetCat){
   buildIconPicker('btnIcons', b.icon);
   buildColorPicker('btnColors', b.color);
   document.getElementById('btnDeleteBtn').style.display = isNew ? 'none' : 'block';
+  // Rellenar dropdown de audio si aplica
+  renderAudioSourceSelect();
+  // Si el botón guardado tiene source, preseleccionar
+  if(b.payload && b.payload.source){
+    const sel = document.getElementById('btnAudioSource');
+    if(sel) sel.value = b.payload.source;
+  }
+  if(b.payload && typeof b.payload.volume === 'number'){
+    const vol = document.getElementById('btnAudioVolume');
+    if(vol){
+      vol.value = b.payload.volume;
+      const lbl = document.getElementById('btnAudioVolumeLabel');
+      if(lbl) lbl.textContent = Math.round(b.payload.volume * 100) + '%';
+    }
+  }
   togglePayload();
   openModal('btnModal');
 }
 
 function togglePayload(){
-  const a = ACTIONS.find(x=>x.v===document.getElementById('btnAction').value);
-  document.getElementById('btnPayloadField').style.display = a?.p ? 'block' : 'none';
+  const actionVal = document.getElementById('btnAction').value;
+  const a = ACTIONS.find(x=>x.v===actionVal);
+  const payloadField = document.getElementById('btnPayloadField');
+  const audioSourceField = document.getElementById('btnAudioSourceField');
+  const audioVolumeField = document.getElementById('btnAudioVolumeField');
+
+  // Reset
+  if(payloadField) payloadField.style.display = 'none';
+  if(audioSourceField) audioSourceField.style.display = 'none';
+  if(audioVolumeField) audioVolumeField.style.display = 'none';
+
+  if(!a) return;
+
+  if(a.p === 'audio'){
+    if(audioSourceField) audioSourceField.style.display = 'block';
+    if(payloadField) payloadField.style.display = 'none';
+    renderAudioSourceSelect();
+    syncAudioPayload();
+  } else if(a.p === 'audio-volume'){
+    if(audioSourceField) audioSourceField.style.display = 'block';
+    if(audioVolumeField) audioVolumeField.style.display = 'block';
+    if(payloadField) payloadField.style.display = 'none';
+    renderAudioSourceSelect();
+    syncAudioPayload();
+  } else if(a.p === true){
+    if(payloadField) payloadField.style.display = 'block';
+  }
 }
 
 function openWidgetModal(id){
@@ -1781,17 +1998,43 @@ function bindUI(){
   document.getElementById('btnAction').onchange = togglePayload;
   document.getElementById('widgetPlatform').onchange = (e)=>buildMetricOptions(e.target.value);
 
-  document.getElementById('cfgViewDashboard').onchange = (e)=>{ PREFS.views.dashboard = e.target.checked; applyPrefs(); savePrefs(); };
-  document.getElementById('cfgViewStats').onchange = (e)=>{ PREFS.views.stats = e.target.checked; applyPrefs(); savePrefs(); };
-  document.getElementById('cfgViewOverlays').onchange = (e)=>{ PREFS.views.overlays = e.target.checked; applyPrefs(); savePrefs(); };
+  // Slider de volumen
+  const volSlider = document.getElementById('btnAudioVolume');
+  if(volSlider){
+    volSlider.oninput = ()=>{
+      const lbl = document.getElementById('btnAudioVolumeLabel');
+      if(lbl) lbl.textContent = Math.round(parseFloat(volSlider.value) * 100) + '%';
+      syncAudioPayload();
+    };
+  }
+  // Select de fuente
+  const srcSel = document.getElementById('btnAudioSource');
+  if(srcSel){
+    srcSel.onchange = ()=>syncAudioPayload();
+  }
+
+  const elDash = document.getElementById('cfgViewDashboard');
+  if(elDash) elDash.onchange = (e)=>{ PREFS.views.dashboard = e.target.checked; applyPrefs(); savePrefs(); };
+  const elStats = document.getElementById('cfgViewStats');
+  if(elStats) elStats.onchange = (e)=>{ PREFS.views.stats = e.target.checked; applyPrefs(); savePrefs(); };
+  const elOv = document.getElementById('cfgViewOverlays');
+  if(elOv) elOv.onchange = (e)=>{ PREFS.views.overlays = e.target.checked; applyPrefs(); savePrefs(); };
   const cfgAitumEl = document.getElementById('cfgViewAitum');
   if(cfgAitumEl) cfgAitumEl.onchange = (e)=>{ PREFS.views.aitum = e.target.checked; applyPrefs(); savePrefs(); };
-  document.getElementById('cfgViewConfig').onchange = (e)=>{ PREFS.views.config = e.target.checked; applyPrefs(); savePrefs(); };
-  document.getElementById('cfgPanelStats').onchange = (e)=>{ PREFS.panelRight.stats = e.target.checked; applyPrefs(); renderLive(); savePrefs(); };
-  document.getElementById('cfgPanelRankings').onchange = (e)=>{ PREFS.panelRight.rankings = e.target.checked; applyPrefs(); renderLive(); savePrefs(); };
-  document.getElementById('cfgChatTranslate').onchange = (e)=>{ PREFS.chat.translate = e.target.checked; savePrefs(); };
-  document.getElementById('cfgChatCensor').onchange = (e)=>{ PREFS.chat.censor = e.target.checked; savePrefs(); };
-  document.getElementById('cfgChatAvatars').onchange = (e)=>{ PREFS.chat.avatars = e.target.checked; renderChatFeed(); savePrefs(); };
+  const elCfg = document.getElementById('cfgViewConfig');
+  if(elCfg) elCfg.onchange = (e)=>{ PREFS.views.config = e.target.checked; applyPrefs(); savePrefs(); };
+  const elPanelStats = document.getElementById('cfgPanelStats');
+  if(elPanelStats) elPanelStats.onchange = (e)=>{ PREFS.panelRight.stats = e.target.checked; applyPrefs(); renderLive(); savePrefs(); };
+  const elPanelRank = document.getElementById('cfgPanelRankings');
+  if(elPanelRank) elPanelRank.onchange = (e)=>{ PREFS.panelRight.rankings = e.target.checked; applyPrefs(); renderLive(); savePrefs(); };
+  const elPanelRes = document.getElementById('cfgPanelResources');
+  if(elPanelRes) elPanelRes.onchange = (e)=>{ PREFS.panelRight.resources = e.target.checked; applyPrefs(); savePrefs(); };
+  const elTranslate = document.getElementById('cfgChatTranslate');
+  if(elTranslate) elTranslate.onchange = (e)=>{ PREFS.chat.translate = e.target.checked; savePrefs(); };
+  const elCensor = document.getElementById('cfgChatCensor');
+  if(elCensor) elCensor.onchange = (e)=>{ PREFS.chat.censor = e.target.checked; savePrefs(); };
+  const elAvatars = document.getElementById('cfgChatAvatars');
+  if(elAvatars) elAvatars.onchange = (e)=>{ PREFS.chat.avatars = e.target.checked; renderChatFeed(); savePrefs(); };
 
   document.querySelectorAll('.theme-btn').forEach(b=>{
     b.onclick = ()=>applyTheme(b.dataset.theme);
@@ -1854,7 +2097,20 @@ function bindUI(){
   const aitumRefresh = document.getElementById('aitumRefreshBtn');
   if(aitumRefresh) aitumRefresh.onclick = ()=>loadAitumState();
 
+  // Botón reducir RAM
+  const reduceBtn = document.getElementById('resReduceBtn');
+  if(reduceBtn) reduceBtn.onclick = reduceRam;
+
   /* VOLVER AL PANEL */
+  
+  // Bloquear menú contextual del navegador dentro del deck (pero no en inputs)
+document.addEventListener('contextmenu', (e) => {
+  const t = e.target;
+  const tag = (t.tagName || '').toLowerCase();
+  if (tag === 'input' || tag === 'textarea' || t.isContentEditable) return;
+  if (t.closest('.modal-back')) return; // permitir en modales (para copiar texto)
+  e.preventDefault();
+});
   const goBack = () => {
     const anyModalOpen = document.querySelector('.modal-back.show');
     if (anyModalOpen) {
@@ -1886,6 +2142,137 @@ function bindUI(){
     if (tag === 'input' || tag === 'textarea' || e.target.isContentEditable) return;
     goBack();
   });
+}
+
+/* ════════════════════════════════════════════════════════════
+   SOCKETS
+   ════════════════════════════════════════════════════════════ */
+function connectSockets(){
+  socket.on('deck:stats-update', s=>{ STATS = s; renderLive(); renderStatsView(); });
+  socket.on('deck:obs-status', s=>{
+    OBS_CONNECTED = !!s.connected;
+    renderObsStatus();
+    if(OBS_CONNECTED) loadObsAudioSources();
+  });
+  socket.on('deck:enabled-updated', d=>{
+    const newEnabled = !!(d && d.enabled);
+    if(newEnabled === DECK_ENABLED) return;
+    DECK_ENABLED = newEnabled;
+    applyDeckEnabled();
+    if(DECK_ENABLED) startRuntime();
+    else stopRuntime();
+  });
+  socket.on('deck:categories-updated', c=>{ STATE.categories = c; renderAll(); });
+  socket.on('deck:buttons-updated', b=>{ STATE.buttons = b; renderAll(); });
+  socket.on('deck:widgets-updated', w=>{ STATE.widgets = w; renderLive(); });
+  socket.on('deck:theme-updated', t=>{ PREFS.theme = t; applyTheme(t); });
+  socket.on('deck:prefs-updated', p=>{
+    if(!p || typeof p !== 'object') return;
+    PREFS = { ...DEFAULT_PREFS, ...p };
+    PREFS.views = { ...DEFAULT_PREFS.views, ...(p.views||{}) };
+    PREFS.panelRight = { ...DEFAULT_PREFS.panelRight, ...(p.panelRight||{}) };
+    PREFS.chat = { ...DEFAULT_PREFS.chat, ...(p.chat||{}) };
+    try { localStorage.setItem('deck:prefs', JSON.stringify(PREFS)); } catch(e){}
+    applyPrefs();
+  });
+
+  /* ── Audio OBS updates ── */
+  socket.on('deck:obs:audio-update', d=>{
+    if(!d || !d.inputName) return;
+    if(d.type === 'mute'){
+      OBS_AUDIO_STATES[d.inputName] = { ...(OBS_AUDIO_STATES[d.inputName]||{}), muted: !!d.inputMuted };
+    } else if(d.type === 'volume'){
+      OBS_AUDIO_STATES[d.inputName] = { ...(OBS_AUDIO_STATES[d.inputName]||{}), volume: d.inputVolumeMul };
+    }
+    // Actualizar botones del grid que usen esa fuente
+    document.querySelectorAll('.deck-btn[data-source]').forEach(el=>{
+      const src = el.dataset.source;
+      if(!src || src !== d.inputName) return;
+      if(d.type === 'mute'){
+        el.classList.toggle('muted', !!d.inputMuted);
+      }
+    });
+    // Actualizar dropdown por si está abierto
+    renderAudioSourceSelect();
+  });
+
+  socket.on('chat-message', msg=>addChatMessage(msg));
+
+  socket.on('youtube-superchat', data=>{
+    if(!data) return;
+    YT.superchats++;
+    const amt = parseAmount(data.amount);
+    YT.totalAmount += amt;
+    const u = data.username || 'Anónimo';
+    YT.topSuperchatters.set(u, (YT.topSuperchatters.get(u)||0) + amt);
+    renderStatsView();
+  });
+  socket.on('youtube-member', data=>{
+    if(!data) return;
+    YT.members++;
+    const u = data.username || 'Anónimo';
+    YT.topMembers.set(u, (YT.topMembers.get(u)||0) + 1);
+    renderStatsView();
+  });
+
+  socket.on('twitch-poll-created', p=>{ renderActivePoll(p); });
+  socket.on('twitch-poll-ended', id=>{
+    toast('Encuesta finalizada', 'ok');
+    document.getElementById('activePollDisplay').innerHTML = '';
+  });
+
+  socket.on('category-change-result', r=>{
+    if(r && r.success) toast('Categoría cambiada', 'ok');
+    else if(r && r.error) toast(r.error, 'err');
+  });
+  socket.on('title-change-result', r=>{
+    if(r && r.success) toast('Título cambiado', 'ok');
+    else if(r && r.error) toast(r.error, 'err');
+  });
+}
+
+function renderActivePoll(p){
+  if(!p) return;
+  const el = document.getElementById('activePollDisplay');
+  el.innerHTML = `
+    <div style="background:#0a0b0e;border:1px solid var(--border);border-radius:8px;padding:10px;font-size:12px">
+      <div style="font-weight:700;margin-bottom:6px">${esc(p.question)}</div>
+      ${(p.options||[]).map((o,i)=>`
+        <div class="poll-active-item">
+          <span>${esc(o)}</span>
+          <span class="votes">${(p.votes&&p.votes[i])||0} votos</span>
+        </div>
+      `).join('')}
+      <button class="overlay-btn stop" style="margin-top:8px" onclick="endActivePoll('${p.id}')">
+        <i class="ri-stop-fill"></i> Finalizar
+      </button>
+    </div>
+  `;
+}
+
+function endActivePoll(id){
+  socket.emit('end-twitch-poll', { pollId: id });
+}
+
+function parseAmount(str){
+  if(!str) return 0;
+  const m = String(str).replace(',','.').match(/(\d+(\.\d+)?)/);
+  return m ? parseFloat(m[1]) : 0;
+}
+
+function renderObsStatus(){
+  const pill = document.getElementById('obsPill');
+  const text = document.getElementById('obsPillText');
+  if(!pill || !text) return;
+  if(OBS_CONNECTED){
+    pill.className = 'pill ok';
+    text.textContent = 'OBS conectado';
+  } else {
+    pill.className = 'pill';
+    text.textContent = 'OBS desconectado';
+  }
+  const navDeck = document.getElementById('navDeckCount');
+  if(navDeck) navDeck.textContent = STATE.buttons.length;
 }
 
 init();
