@@ -1,4 +1,4 @@
-// server.js - VERSIÓN MULTI-CUENTA TWITCH + TikTok + Kick + YouTube + IMÁGENES DE REGALOS + TEMAS + PLATFORM TOGGLES + TTS + CRISTAL PERSISTENTE + AI CO-HOST + PRIDE FLAGS + HYPE TRAIN
+// server.js - VERSIÓN MULTI-CUENTA TWITCH + TikTok + Kick + YouTube + IMÁGENES DE REGALOS + TEMAS + PLATFORM TOGGLES + TTS + CRISTAL PERSISTENTE + AI CO-HOST + KICK API OFICIAL
 require('dotenv').config();
 const express = require('express');
 const http = require('http');
@@ -12,20 +12,14 @@ const os = require('os');
 const WebSocket = require('ws');
 const { TikTokChat } = require('./tiktok');
 const { YouTubeChat } = require('./youtube');
-const tiktokStream = require('./tiktok-stream');
-const tiktokProxy = require('./tiktok-proxy');
+
 // 🤖 AI CO-HOST
 const aiKeyPool = require('./ai-key-pool');
 const aiCohost = require('./ai-cohost');
-const geminiLive = require('./gemini-live');
-const geminiText = require('./gemini-text');
 
 // 🔊 PATCH 1 — Requires del sistema TTS
 const { TTSQueue } = require('./tts-queue');
 const ttsEngine = require('./tts-engine');
-
-// 🚂 HYPE TRAIN
-const { HypeTrain, HYPE_TRAIN_DEFAULTS } = require('./hype-train');
 
 // ================================================================
 // 📦 NUEVO — DETECCIÓN DE EMPAQUETADO (Electron)
@@ -63,40 +57,6 @@ const io = socketIO(server, { cors: { origin: "*" } });
 const PORT = process.env.PORT || 3000;
 
 // ================================================================
-// 🏳️🌈 PRIDE FLAGS — defaults y helpers
-// ================================================================
-const PRIDE_DEFAULTS = {
-    mode: 'rotate',        // 'rotate' | 'fixed' | 'chat'
-    fixedId: 'pride',
-    rotateMs: 6000,
-    folder: 'HD 1080p',
-    showName: true,
-    showMeaning: true,
-    showColors: true,
-    soloBandera: false,
-    enabled: null          // null = todas
-};
-
-// ================================================================
-// 🚂 HYPE TRAIN — defaults y helpers
-// ================================================================
-function getHypeTrainConfig() {
-    const h = config.HYPE_TRAIN || {};
-    return { ...HYPE_TRAIN_DEFAULTS, ...h };
-}
-
-function saveHypeTrainConfig(nueva) {
-    config.HYPE_TRAIN = { ...HYPE_TRAIN_DEFAULTS, ...(config.HYPE_TRAIN || {}), ...nueva };
-    try {
-        fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
-        return true;
-    } catch (e) {
-        console.error('❌ [HYPE] Error guardando config:', e.message);
-        return false;
-    }
-}
-
-// ================================================================
 // 🔥 RUTA ABSOLUTA AL CONFIG
 // ================================================================
 const CONFIG_PATH = IS_PACKAGED
@@ -130,14 +90,6 @@ console.log(`📁 Sirviendo archivos estáticos desde: ${publicDir}`);
 app.use(cors());
 app.use(express.json());
 app.use(express.static(publicDir));
-// 🎨 Overlay chat personalizado (StreamElements)
-require('./custom-overlay')(app);
-
-// 🎮 Perfiles de Valorant
-require('./valconfig')(app);
-
-// 📺 Velora Live Chat
-require('./velora')(app, io);
 
 // 🔊 PATCH 2 — Servir MP3 generados por TTS
 app.use('/tts-audio', express.static(ttsEngine.TTS_DIR, {
@@ -146,190 +98,6 @@ app.use('/tts-audio', express.static(ttsEngine.TTS_DIR, {
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
-// ================================================================
-// 🏷️ BADGE DE PLATAFORMA (SVG servido como URL)
-// GET /api/platform-badge/:platform.svg
-// ================================================================
-app.get('/api/platform-badge/:platform.svg', (req, res) => {
-    const p = String(req.params.platform || '').toLowerCase();
-    const map = {
-        twitch:  { l: 'TWITCH',  c: '#a78bfa', bg: '#2a1f4d' },
-        tiktok:  { l: 'TIKTOK',  c: '#fe2c55', bg: '#4d1a28' },
-        kick:    { l: 'KICK',    c: '#53fc18', bg: '#1a3d10' },
-        youtube: { l: 'YOUTUBE', c: '#ff5252', bg: '#4d1a1a' }
-    };
-    const i = map[p] || map.twitch;
-    const w = i.l.length * 6 + 10;
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="14" viewBox="0 0 ${w} 14"><rect width="${w}" height="14" rx="3" fill="${i.bg}" stroke="${i.c}" stroke-width="0.8"/><text x="${w/2}" y="10" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="8" font-weight="700" fill="${i.c}" letter-spacing="0.4">${i.l}</text></svg>`;
-    res.setHeader('Content-Type', 'image/svg+xml');
-    res.setHeader('Cache-Control', 'public, max-age=86400');
-    res.send(svg);
-});
-
-// 🧪 TEST — simular eventos para probar overlays (Fase 4)
-app.post('/api/test/event', (req, res) => {
-    try {
-        const b = req.body || {};
-        const payload = {
-            platform: b.platform || 'twitch',
-            channel:  b.channel  || 'test',
-            username: b.username || 'Tester',
-            message:  b.message  || '',
-            avatar:   b.avatar   || null,
-            color:    b.color    || '#a970ff',
-            timestamp: Date.now(),
-            role:     b.role     || null,
-            type:     b.type     || 'chat'
-        };
-        if (b.type === 'cheer')        payload.bits = b.bits || 100;
-        if (b.type === 'resub')        payload.months = b.months || 6;
-        if (b.type === 'subgift')      payload.giftSender = b.username; payload.recipient = b.recipient || 'Alguien';
-        if (b.type === 'submysterygift') payload.amount = b.amount || 5;
-                if (b.type === 'gift') {
-            payload.giftName = b.giftName || 'Rosa';
-            payload.giftTotalDiamonds = b.amount || 100;
-            payload.giftImage = b.giftImage || null;
-            payload.giftRepeat = b.repeat || 1;
-        }
-        if (b.type === 'delete')       payload.targetMsgId = b.targetMsgId || 'fake-id';
-
-        io.emit('chat-message', payload);
-        console.log('🧪 [TEST]', payload);
-        res.json({ ok: true, payload });
-    } catch (e) {
-        res.status(500).json({ ok: false, error: e.message });
-    }
-});
-
-// ================================================================
-// 🎬 TIKTOK STREAM KEY vía STREAMLABS
-// ================================================================
-app.get('/api/tiktok/streamlabs-accounts', async (req, res) => {
-    try {
-        const accounts = tiktokStream.readStreamlabsTokens();
-        const detailed = [];
-
-        for (const acc of accounts) {
-            try {
-                const info = await tiktokStream.getAccountInfo(acc.apiToken);
-                if (info && info.user) {
-                    detailed.push({
-                        apiToken: acc.apiToken,
-                        username: info.user.username || acc.username || '(desconocido)',
-                        nickname: info.user.nickname || info.user.username || '',
-                        avatar: info.user.avatar || info.user.avatar_thumb || null,
-                        canBeLive: !!info.can_be_live
-                    });
-                } else {
-                    detailed.push({
-                        apiToken: acc.apiToken,
-                        username: acc.username || '(sin acceso)',
-                        canBeLive: false,
-                        invalid: true
-                    });
-                }
-            } catch (e) {
-                detailed.push({
-                    apiToken: acc.apiToken,
-                    username: acc.username || '(error)',
-                    canBeLive: false,
-                    error: e.message
-                });
-            }
-        }
-
-        const unique = [];
-        const seen = new Set();
-        for (const d of detailed) {
-            if (!seen.has(d.apiToken)) {
-                seen.add(d.apiToken);
-                unique.push(d);
-            }
-        }
-
-        res.json({ ok: true, total: unique.length, accounts: unique });
-    } catch (e) {
-        res.status(500).json({ ok: false, error: e.message });
-    }
-});
-app.get('/api/tiktok/stream-key', async (req, res) => {
-    try {
-        const apiToken = String(req.query.token || '').trim();
-        if (!apiToken) return res.status(400).json({ ok: false, error: 'Falta ?token=' });
-
-        const info = await tiktokStream.getAccountInfo(apiToken);
-        if (!info) return res.json({ ok: false, error: 'Token inválido o expirado' });
-
-        const canBeLive = !!info.can_be_live;
-        const username = (info.user && info.user.username) || '(desconocido)';
-
-        if (!canBeLive) {
-            return res.json({ ok: false, error: 'La cuenta no puede emitir en TikTok', username });
-        }
-
-        const title = String(req.query.title || 'TogiPanel Stream');
-        const result = await tiktokStream.startLive(apiToken, title);
-
-        if (!result.ok) {
-            return res.json({ ok: false, error: result.error, raw: result.raw, username });
-        }
-
-        res.json({
-            ok: true,
-            username,
-            server: result.server,
-            key: result.key,
-            id: result.id
-        });
-    } catch (e) {
-        res.status(500).json({ ok: false, error: e.message });
-    }
-});
-
-app.get('/api/tiktok/stream-stop', async (req, res) => {
-    try {
-        const apiToken = String(req.query.token || '').trim();
-        const streamId = String(req.query.id || '').trim();
-        if (!apiToken || !streamId) return res.status(400).json({ ok: false, error: 'Faltan token o id' });
-        const ok = await tiktokStream.endLive(apiToken, streamId);
-        res.json({ ok });
-    } catch (e) {
-        res.status(500).json({ ok: false, error: e.message });
-    }
-});
-
-// ================================================================
-// 🎥 PROXY RTMP (OBS → TogiPanel → TikTok)
-// ================================================================
-app.post('/api/tiktok/proxy/start', async (req, res) => {
-    try {
-        const { token, title } = req.body || {};
-        console.log('📥 [/api/tiktok/proxy/start] token recibido:', token ? token.slice(0, 30) + '...' : '(vacío)');
-        console.log('📥 [/api/tiktok/proxy/start] title recibido:', title);
-        if (!token) return res.status(400).json({ ok: false, error: 'Falta token' });
-        const result = await tiktokProxy.start(token, title);
-        res.json(result);
-    } catch (e) {
-        res.status(500).json({ ok: false, error: e.message });
-    }
-});
-
-app.post('/api/tiktok/proxy/stop', async (req, res) => {
-    try {
-        const result = await tiktokProxy.stop();
-        res.json(result);
-    } catch (e) {
-        res.status(500).json({ ok: false, error: e.message });
-    }
-});
-
-app.get('/api/tiktok/proxy/status', (req, res) => {
-    res.json({ ok: true, state: tiktokProxy.getState() });
-});
-
-app.post('/api/tiktok/proxy/renew', (req, res) => {
-    res.status(410).json({ ok: false, error: 'Endpoint deprecado. El proxy reconecta solo.' });
-});
 // ================================================================
 // 🌐 IP LOCAL (para el modo dos PC)
 // ================================================================
@@ -367,55 +135,6 @@ app.get('/api/local-ip', (req, res) => {
     });
 });
 
-// ================================================================
-// 🎥 INFO PARA OBS (modo 2 PCs)
-// ================================================================
-app.get('/api/obs-info', (req, res) => {
-    try {
-        const nets = os.networkInterfaces();
-        const candidates = [];
-        const isPrivate = (ip) =>
-            /^192\.168\./.test(ip) ||
-            /^10\./.test(ip) ||
-            /^172\.(1[6-9]|2\d|3[01])\./.test(ip);
-        const isTailscale = (ip) =>
-            /^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\./.test(ip);
-
-        for (const name of Object.keys(nets)) {
-            for (const net of nets[name] || []) {
-                if (net.family !== 'IPv4' || net.internal) continue;
-                if (net.address.startsWith('169.254.')) continue;
-                if (isTailscale(net.address)) continue;
-                candidates.push({ iface: name, ip: net.address, private: isPrivate(net.address) });
-            }
-        }
-        const preferida = candidates.find(c => c.private) || candidates[0] || null;
-        const lanIp = preferida ? preferida.ip : '127.0.0.1';
-
-        const rtmpPort = 1935;
-        const key = 'togipanel';
-
-        const state = (typeof tiktokProxy.getState === 'function') ? tiktokProxy.getState() : { status: 'idle' };
-        let proxyStatus = 'Parado';
-        if (state.status === 'waiting')        proxyStatus = 'Esperando a OBS';
-        else if (state.status === 'streaming') proxyStatus = 'Emitiendo';
-        else if (state.status === 'error')     proxyStatus = 'Error';
-
-        res.json({
-            ok: true,
-            port: rtmpPort,
-            key,
-            lanIp,
-            localUrl: `rtmp://localhost:${rtmpPort}/live`,
-            lanUrl:   `rtmp://${lanIp}:${rtmpPort}/live`,
-            status: state.status || 'idle',
-            statusLabel: proxyStatus,
-            username: state.username || null
-        });
-    } catch (e) {
-        res.status(500).json({ ok: false, error: e.message });
-    }
-});
 // ================================================================
 // 🎁 MAPA DE IMÁGENES DE REGALOS
 // ================================================================
@@ -595,158 +314,6 @@ app.get('/api/twitch/stream-info', async (req, res) => {
 });
 
 // ================================================================
-// 🎭 TWITCH: EMOTES NATIVOS (Fase 5)
-// GET /api/twitch/emotes?channel=NOMBRE
-// ================================================================
-app.get('/api/twitch/emotes', async (req, res) => {
-    try {
-        const channel = String(req.query.channel || '').trim() || getAllTwitchChannels()[0] || '';
-        if (!channel) return res.json({ ok: false, error: 'No hay canal configurado' });
-
-        const account = getAccountForChannel(channel) || getTwitchAccounts().find(a => a.clientId && a.oauthToken);
-        if (!account || !account.clientId || !account.oauthToken) {
-            return res.json({ ok: false, error: 'Canal sin cuenta Twitch con credenciales' });
-        }
-
-        const headers = {
-            'Client-ID': account.clientId,
-            'Authorization': `Bearer ${account.oauthToken.replace('oauth:', '')}`
-        };
-
-        const globales = [];
-        const canalEmotes = [];
-
-        // Globales
-        try {
-            const r = await axios.get('https://api.twitch.tv/helix/chat/emotes/global', { headers });
-            for (const e of (r.data.data || [])) {
-                globales.push({
-                    name: e.name, id: e.id,
-                    url_1x: e.images?.url_1x || null,
-                    url_2x: e.images?.url_2x || null,
-                    url_4x: e.images?.url_4x || null
-                });
-            }
-        } catch (err) {
-            console.error('❌ [TWITCH-EMOTES] Global:', err.response?.status, err.response?.data?.message || err.message);
-        }
-
-        // Del canal
-        try {
-            const ru = await axios.get(`https://api.twitch.tv/helix/users?login=${encodeURIComponent(channel)}`, { headers });
-            const bId = ru.data.data?.[0]?.id;
-            if (bId) {
-                const rc = await axios.get(`https://api.twitch.tv/helix/chat/emotes?broadcaster_id=${bId}`, { headers });
-                for (const e of (rc.data.data || [])) {
-                    canalEmotes.push({
-                        name: e.name, id: e.id,
-                        url_1x: e.images?.url_1x || null,
-                        url_2x: e.images?.url_2x || null,
-                        url_4x: e.images?.url_4x || null
-                    });
-                }
-            }
-        } catch (err) {
-            console.error('❌ [TWITCH-EMOTES] Canal:', err.response?.status, err.response?.data?.message || err.message);
-        }
-
-        console.log(`🎭 [TWITCH-EMOTES] Canal=${channel} global=${globales.length} canal=${canalEmotes.length}`);
-        res.json({ ok: true, channel, global: globales, channelEmotes: canalEmotes });
-    } catch (e) {
-        console.error('❌ [TWITCH-EMOTES] Error:', e.message);
-        res.status(500).json({ ok: false, error: e.message });
-    }
-});
-
-// ================================================================
-// 🎭 EMOTES DE CANAL: 7TV + FFZ (Fase 5b)
-// GET /api/emotes-canales?channel=NOMBRE
-// ================================================================
-app.get('/api/emotes-canales', async (req, res) => {
-    try {
-        const channel = String(req.query.channel || '').trim() || getAllTwitchChannels()[0] || '';
-        if (!channel) return res.json({ ok: false, error: 'No hay canal configurado' });
-
-        const account = getAccountForChannel(channel) || getTwitchAccounts().find(a => a.clientId && a.oauthToken);
-        if (!account || !account.clientId || !account.oauthToken) {
-            return res.json({ ok: false, error: 'Canal sin cuenta Twitch' });
-        }
-
-        const headers = {
-            'Client-ID': account.clientId,
-            'Authorization': `Bearer ${account.oauthToken.replace('oauth:', '')}`
-        };
-
-        let twitchUserId = null;
-        try {
-            const ru = await axios.get(`https://api.twitch.tv/helix/users?login=${encodeURIComponent(channel)}`, { headers });
-            twitchUserId = ru.data.data?.[0]?.id || null;
-        } catch (e) {
-            console.error('❌ [EMOTES-CANAL] Twitch user:', e.message);
-        }
-
-        const sevenTv = [];
-        const ffz = [];
-
-        // 7TV del canal
-        if (twitchUserId) {
-            try {
-                const r7 = await axios.get(`https://7tv.io/v3/users/twitch/${twitchUserId}`);
-                const set = r7.data?.emote_set;
-                if (set && Array.isArray(set.emotes)) {
-                    for (const e of set.emotes) {
-                        const host = e.data?.host;
-                        if (!host || !host.url) continue;
-                        const base = 'https:' + host.url;
-                        const files = Array.isArray(host.files) ? host.files : [];
-                        const pick = (n) => {
-                            const f = files.find(x => x.name === n);
-                            return f ? `${base}/${f.name}` : null;
-                        };
-                        sevenTv.push({
-                            name: e.name,
-                            id: e.id,
-                            url_1x: pick('1x.webp') || pick('1x.png') || pick('1x.gif'),
-                            url_2x: pick('2x.webp') || pick('2x.png') || pick('2x.gif'),
-                            url_4x: pick('4x.webp') || pick('4x.png') || pick('4x.gif'),
-                            animated: !!pick('1x.gif') || !!pick('2x.gif') || !!pick('4x.gif')
-                        });
-                    }
-                }
-            } catch (e) {
-                console.error('❌ [EMOTES-CANAL] 7TV:', e.response?.status || e.message);
-            }
-        }
-
-        // FFZ del canal
-        try {
-            const rF = await axios.get(`https://api.frankerfacez.com/v1/room/${encodeURIComponent(channel)}`);
-            const sets = rF.data?.sets || {};
-            for (const sid in sets) {
-                for (const e of (sets[sid].emoticons || [])) {
-                    if (!e.name || !e.urls) continue;
-                    ffz.push({
-                        name: e.name,
-                        id: String(e.id),
-                        url_1x: e.urls['1'] || null,
-                        url_2x: e.urls['2'] || e.urls['1'] || null,
-                        url_4x: e.urls['4'] || e.urls['2'] || e.urls['1'] || null
-                    });
-                }
-            }
-        } catch (e) {
-            console.error('❌ [EMOTES-CANAL] FFZ:', e.response?.status || e.message);
-        }
-
-        console.log(`🎭 [EMOTES-CANAL] ${channel} → 7TV=${sevenTv.length} FFZ=${ffz.length}`);
-        res.json({ ok: true, channel, sevenTv, ffz });
-    } catch (e) {
-        console.error('❌ [EMOTES-CANAL] Error:', e.message);
-        res.status(500).json({ ok: false, error: e.message });
-    }
-});
-
-// ================================================================
 // 🎨 TEMAS DE OVERLAYS
 // ================================================================
 const THEMES_PATH = IS_PACKAGED
@@ -796,124 +363,6 @@ function guardarTemas() {
 const JAR_STATE_PATH = IS_PACKAGED
     ? path.join(USER_DATA_DIR, 'jar-state.json')
     : path.join(__dirname, 'jar-state.json');
-	
-	// ================================================================
-// 📼 ÚLTIMO STREAM — persistencia del resumen de sesión
-// ================================================================
-const LAST_STREAM_PATH = IS_PACKAGED
-    ? path.join(USER_DATA_DIR, 'last-stream.json')
-    : path.join(__dirname, 'last-stream.json');
-
-let lastStream = null;
-
-// Estado en memoria para armar el resumen de la sesión actual
-let sessionState = {
-    activa: false,
-    inicio: 0,
-    plataformas: new Set(),
-    viewersPico: 0,
-    viewersSuma: 0,
-    viewersMuestras: 0,
-    diamantesInicio: 0,
-    follows: 0,
-    canal: ''
-};
-
-function cargarLastStream() {
-    try {
-        if (fs.existsSync(LAST_STREAM_PATH)) {
-            const raw = fs.readFileSync(LAST_STREAM_PATH, 'utf8');
-            lastStream = JSON.parse(raw);
-            console.log(`📼 Último stream cargado: ${lastStream.canal || '(sin canal)'} · ${new Date(lastStream.fin).toLocaleString()}`);
-        } else {
-            console.log('📼 No hay resumen de último stream todavía');
-        }
-    } catch (e) {
-        console.error('❌ Error cargando last-stream.json:', e.message);
-        lastStream = null;
-    }
-}
-
-function guardarLastStream(data) {
-    try {
-        lastStream = data;
-        fs.writeFileSync(LAST_STREAM_PATH, JSON.stringify(data, null, 2));
-        console.log(`📼 Resumen de stream guardado en ${LAST_STREAM_PATH}`);
-    } catch (e) {
-        console.error('❌ Error guardando last-stream.json:', e.message);
-    }
-}
-
-function iniciarSesion(canal, plataforma) {
-    if (sessionState.activa) return;
-    sessionState.activa = true;
-    sessionState.inicio = Date.now();
-    sessionState.plataformas = new Set();
-    sessionState.viewersPico = 0;
-    sessionState.viewersSuma = 0;
-    sessionState.viewersMuestras = 0;
-    sessionState.diamantesInicio = jarState.totalDiamonds || 0;
-    sessionState.follows = 0;
-    sessionState.canal = canal || '';
-    if (plataforma) sessionState.plataformas.add(plataforma);
-    console.log(`📼 [SESIÓN] Iniciada por ${plataforma || '?'} · canal: ${canal || '?'}`);
-}
-
-function registrarActividad(plataforma) {
-    if (!sessionState.activa) {
-        // Autoiniciar si llega actividad sin inicio formal
-        iniciarSesion('', plataforma);
-    }
-    if (plataforma) sessionState.plataformas.add(plataforma);
-}
-
-function registrarViewers(n) {
-    if (!sessionState.activa) return;
-    if (typeof n !== 'number' || n < 0) return;
-    if (n > sessionState.viewersPico) sessionState.viewersPico = n;
-    sessionState.viewersSuma += n;
-    sessionState.viewersMuestras++;
-}
-
-function cerrarSesion(motivo) {
-    if (!sessionState.activa) return;
-    const fin = Date.now();
-    const duracionMs = fin - sessionState.inicio;
-    const diamantes = Math.max(0, (jarState.totalDiamonds || 0) - sessionState.diamantesInicio);
-    const viewersPromedio = sessionState.viewersMuestras > 0
-        ? Math.round(sessionState.viewersSuma / sessionState.viewersMuestras)
-        : 0;
-
-    const resumen = {
-        canal: sessionState.canal || '',
-        inicio: sessionState.inicio,
-        fin: fin,
-        duracionMs: duracionMs,
-        plataformas: Array.from(sessionState.plataformas),
-        viewersPico: sessionState.viewersPico,
-        viewersPromedio: viewersPromedio,
-        diamantes: diamantes,
-        follows: sessionState.follows,
-        motivo: motivo || 'desconocido'
-    };
-
-    guardarLastStream(resumen);
-
-    // Reset
-    sessionState.activa = false;
-    sessionState.inicio = 0;
-    sessionState.plataformas = new Set();
-    sessionState.viewersPico = 0;
-    sessionState.viewersSuma = 0;
-    sessionState.viewersMuestras = 0;
-    sessionState.diamantesInicio = 0;
-    sessionState.follows = 0;
-    sessionState.canal = '';
-
-    console.log(`📼 [SESIÓN] Cerrada (${motivo}) · duración: ${Math.floor(duracionMs/1000)}s · ${diamantes}💎 · ${sessionState.follows} follows`);
-}
-
-cargarLastStream();
 
 let jarState = {
     totalDiamonds: 0,
@@ -956,31 +405,6 @@ function guardarJarState() {
 
 cargarJarState();
 
-// ================================================================
-// ⏱️ ESTADO PERSISTENTE DEL STREAM TIMER
-// ================================================================
-const TIMER_STATE_PATH = IS_PACKAGED
-    ? path.join(USER_DATA_DIR, 'timer-state.json')
-    : path.join(__dirname, 'timer-state.json');
-
-let timerState = {
-    // Cuándo termina el timer (timestamp en ms). 0 = sin meta todavía.
-    metaMs: 0,
-    // Cuánto sumó el chat en total (en segundos, para mostrar).
-    sumadoSec: 0,
-    // 'live' | 'paused' | 'done'
-    modo: 'paused',
-    // Duración base del stream en minutos (configurable desde /config).
-    duracionBaseMin: 240,
-    // Modo de cálculo: 'hora' (hora exacta) | 'duracion'
-    modoConfig: 'duracion',
-    // Si modoConfig es 'hora', acá va la hora objetivo (ej: "22:00").
-    horaObjetivo: '22:00',
-    updatedAt: null
-};
-
-let timerDirty = false;
-
 let jarDirty = false;
 setInterval(() => {
     if (jarDirty) {
@@ -989,204 +413,8 @@ setInterval(() => {
     }
 }, 10000);
 
-// ================================================================
-// ⏱️ STREAM TIMER — Funciones de persistencia
-// ================================================================
-function cargarTimerState() {
-    try {
-        if (fs.existsSync(TIMER_STATE_PATH)) {
-            const raw = fs.readFileSync(TIMER_STATE_PATH, 'utf8');
-            const parsed = JSON.parse(raw);
-            timerState = {
-                metaMs:            typeof parsed.metaMs === 'number' ? parsed.metaMs : 0,
-                sumadoSec:         typeof parsed.sumadoSec === 'number' ? parsed.sumadoSec : 0,
-                modo:              ['live', 'paused', 'done'].includes(parsed.modo) ? parsed.modo : 'paused',
-                duracionBaseMin:   typeof parsed.duracionBaseMin === 'number' && parsed.duracionBaseMin > 0 ? parsed.duracionBaseMin : 240,
-                modoConfig:        ['hora', 'duracion'].includes(parsed.modoConfig) ? parsed.modoConfig : 'duracion',
-                horaObjetivo:      typeof parsed.horaObjetivo === 'string' ? parsed.horaObjetivo : '22:00',
-                updatedAt:         parsed.updatedAt || null
-            };
-            console.log(`⏱️ Estado del timer cargado: meta=${timerState.metaMs}, modo=${timerState.modo}`);
-        } else {
-            console.log('⏱️ No hay estado previo del timer, empezando en pausa');
-        }
-    } catch (e) {
-        console.error('❌ Error cargando timer-state.json:', e.message);
-    }
-}
-
-function guardarTimerState() {
-    try {
-        timerState.updatedAt = new Date().toISOString();
-        fs.writeFileSync(TIMER_STATE_PATH, JSON.stringify(timerState, null, 2));
-    } catch (e) {
-        console.error('❌ Error guardando timer-state.json:', e.message);
-    }
-}
-
-// Guardado automático cada 10s si hay cambios
-setInterval(() => {
-    if (timerDirty) {
-        guardarTimerState();
-        timerDirty = false;
-    }
-}, 10000);
-
-// Cargar al arrancar
-cargarTimerState();
-
-// ────────────────────────────────────────────
-// ⏱️ TICK — baja el timer 1s y avisa a todos
-// ────────────────────────────────────────────
-setInterval(() => {
-    // Solo baja si está en vivo
-    if (timerState.modo !== 'live') return;
-
-    // ¿Cuánto falta ahora?
-    const restanteMs = timerState.metaMs - Date.now();
-
-    // ¿Llegamos a 0?
-    if (restanteMs <= 0) {
-        if (timerState.modo !== 'done') {
-            timerState.modo = 'done';
-            timerDirty = true;
-            console.log('⏱️ Timer llegó a 0 (meta cumplida)');
-        }
-    }
-
-    // Avisar a todos los clientes conectados (overlay)
-    io.emit('timer-update', {
-        ...timerState,
-        restanteMs: Math.max(0, restanteMs)
-    });
-}, 1000);
-
-// ────────────────────────────────────────────
-// ⏱️ Empuja la meta hacia adelante (suma segundos)
-// ────────────────────────────────────────────
-function timerPush(segundos) {
-    if (typeof segundos !== 'number' || segundos <= 0) return;
-    if (timerState.metaMs === 0) return; // sin meta todavía, no suma
-
-    timerState.metaMs += segundos * 1000;
-    timerState.sumadoSec += segundos;
-    timerState.modo = 'live'; // si estaba done, revive
-    timerDirty = true;
-
-    io.emit('timer-update', {
-        ...timerState,
-        restanteMs: Math.max(0, timerState.metaMs - Date.now())
-    });
-}
-
-
-// Endpoints básicos del timer
-app.get('/api/timer-state', (req, res) => {
-    res.json(timerState);
-});
-
-// ────────────────────────────────────────────
-// ⏱️ Fijar la meta y arrancar el timer
-// ────────────────────────────────────────────
-app.post('/api/timer-state/start', (req, res) => {
-    try {
-        const body = req.body || {};
-        const modoConfig = body.modoConfig || config.TIMER_MODO || 'duracion';
-        const duracionMin = Number(body.duracionMin) || config.TIMER_DURACION_MIN || 240;
-        const horaObjetivo = String(body.horaObjetivo || config.TIMER_HORA_OBJETIVO || '22:00');
-
-        let metaMs = 0;
-
-        if (modoConfig === 'hora') {
-            const m = horaObjetivo.match(/^(\d{1,2}):(\d{2})$/);
-            if (!m) return res.status(400).json({ ok: false, error: 'Hora inválida (usar HH:MM)' });
-            const hh = parseInt(m[1], 10);
-            const mm = parseInt(m[2], 10);
-            if (hh < 0 || hh > 23 || mm < 0 || mm > 59) {
-                return res.status(400).json({ ok: false, error: 'Hora fuera de rango' });
-            }
-            const target = new Date();
-            target.setHours(hh, mm, 0, 0);
-            if (target.getTime() <= Date.now()) {
-                target.setDate(target.getDate() + 1);
-            }
-            metaMs = target.getTime();
-        } else {
-            metaMs = Date.now() + duracionMin * 60 * 1000;
-        }
-
-        timerState.metaMs      = metaMs;
-        timerState.modo        = 'live';
-        timerState.modoConfig  = modoConfig;
-        timerState.duracionBaseMin = duracionMin;
-        timerState.horaObjetivo = horaObjetivo;
-        timerState.sumadoSec   = 0;
-        timerDirty = true;
-
-        guardarTimerState();
-        io.emit('timer-update', {
-            ...timerState,
-            restanteMs: Math.max(0, timerState.metaMs - Date.now())
-        });
-
-        console.log(`⏱️ Timer arrancado: modo=${modoConfig}, meta=${new Date(metaMs).toLocaleString()}`);
-
-        res.json({ ok: true, state: timerState });
-    } catch (e) {
-        console.error('❌ Error en /api/timer-state/start:', e.message);
-        res.status(500).json({ ok: false, error: e.message });
-    }
-});
-
-// ────────────────────────────────────────────
-// ⏱️ Pausar / reanudar (sin perder la meta)
-// ────────────────────────────────────────────
-app.post('/api/timer-state/pause', (req, res) => {
-    timerState.modo = 'paused';
-    timerDirty = true;
-    guardarTimerState();
-    io.emit('timer-update', { ...timerState, restanteMs: Math.max(0, timerState.metaMs - Date.now()) });
-    res.json({ ok: true, state: timerState });
-});
-
-app.post('/api/timer-state/resume', (req, res) => {
-    if (timerState.metaMs === 0) {
-        return res.status(400).json({ ok: false, error: 'No hay meta fijada. Arrancá con /api/timer-state/start primero.' });
-    }
-    timerState.modo = 'live';
-    timerDirty = true;
-    guardarTimerState();
-    io.emit('timer-update', { ...timerState, restanteMs: Math.max(0, timerState.metaMs - Date.now()) });
-    res.json({ ok: true, state: timerState });
-});
-
-
-app.post('/api/timer-state/reset', (req, res) => {
-    timerState.metaMs = 0;
-    timerState.sumadoSec = 0;
-    timerState.modo = 'paused';
-    timerState.updatedAt = new Date().toISOString();
-    timerDirty = true;
-    guardarTimerState();
-    io.emit('timer-update', timerState);
-    console.log('⏱️ Timer reseteado');
-    res.json({ success: true, state: timerState });
-});
-
-
 app.get('/api/jar-state', (req, res) => {
     res.json(jarState);
-});
-
-// ================================================================
-// 📼 ENDPOINT — Último stream
-// ================================================================
-app.get('/api/last-stream', (req, res) => {
-    try {
-        res.json(lastStream || null);
-    } catch (e) {
-        res.status(500).json({ ok: false, error: e.message });
-    }
 });
 
 app.post('/api/jar-state/reset', (req, res) => {
@@ -1283,7 +511,7 @@ function loadConfig() {
         if (!parsed.PLATFORMS_ENABLED || typeof parsed.PLATFORMS_ENABLED !== 'object') {
             parsed.PLATFORMS_ENABLED = {};
         }
-                for (const k of ['tiktok', 'twitch', 'kick', 'youtube', 'velora']) {
+        for (const k of ['tiktok', 'twitch', 'kick', 'youtube']) {
             if (typeof parsed.PLATFORMS_ENABLED[k] !== 'boolean') {
                 parsed.PLATFORMS_ENABLED[k] = true;
             }
@@ -1305,6 +533,7 @@ function loadConfig() {
                 parsed.TTS[k] = { ...v, ...(parsed.TTS[k] || {}) };
             }
         }
+
         // 🤖 AI Co-Host — defaults
         if (!parsed.aiCohost || typeof parsed.aiCohost !== 'object') parsed.aiCohost = {};
         const aiDefaults = {
@@ -1314,9 +543,8 @@ function loadConfig() {
             comando: '!guia',
             proveedores: {
                 groq:       { apiKey: '', modelo: 'openai/gpt-oss-20b' },
-                cerebras:   { apiKey: '', modelo: 'gpt-oss-120b' },
-                openrouter: { apiKey: '', modelo: 'meta-llama/llama-3.1-8b-instruct:free' },
-                agnes:      { apiKey: '', modelo: 'agnes-2.5-flash' }
+                cerebras:   { apiKey: '', modelo: 'llama3.1-70b' },
+                openrouter: { apiKey: '', modelo: 'meta-llama/llama-3.1-70b-instruct:free' }
             }
         };
         for (const [k, v] of Object.entries(aiDefaults)) {
@@ -1337,77 +565,28 @@ function loadConfig() {
             }
         }
 
-                                if (typeof parsed.JAR_META !== 'number' || parsed.JAR_META < 1) {
+        if (typeof parsed.JAR_META !== 'number' || parsed.JAR_META < 1) {
             parsed.JAR_META = 500;
         }
-        if (typeof parsed.CRYSTAL_STYLE !== 'string' || !['jar', 'bar'].includes(parsed.CRYSTAL_STYLE)) {
-            parsed.CRYSTAL_STYLE = 'jar';
-        }
-		
-		// ⏱️ TIMER — defaults persistentes
-if (typeof parsed.TIMER_DURACION_MIN !== 'number' || parsed.TIMER_DURACION_MIN < 5) {
-    parsed.TIMER_DURACION_MIN = 240;
-}
-if (!['hora', 'duracion'].includes(parsed.TIMER_MODO)) {
-    parsed.TIMER_MODO = 'duracion';
-}
-if (typeof parsed.TIMER_HORA_OBJETIVO !== 'string' || !/^\d{2}:\d{2}$/.test(parsed.TIMER_HORA_OBJETIVO)) {
-    parsed.TIMER_HORA_OBJETIVO = '22:00';
-}
-if (typeof parsed.TIMER_COLOR !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(parsed.TIMER_COLOR)) {
-    parsed.TIMER_COLOR = '#e8825a';
-}
-		
-        // 🏳️🌈 PRIDE — defaults persistentes
-        if (!parsed.PRIDE || typeof parsed.PRIDE !== 'object') {
-            parsed.PRIDE = { ...PRIDE_DEFAULTS };
+
+                        // 🟢 KICK — defaults con cookies (NUEVO)
+        if (!parsed.kick || typeof parsed.kick !== 'object') {
+            parsed.kick = {
+                cookies: '',
+                sessionToken: '',
+                username: '',
+                connected: false,
+                lastCheck: 0
+            };
         } else {
-            parsed.PRIDE = { ...PRIDE_DEFAULTS, ...parsed.PRIDE };
-        }
-
-        // 🚂 HYPE TRAIN — defaults persistentes
-        if (!parsed.HYPE_TRAIN || typeof parsed.HYPE_TRAIN !== 'object') {
-            parsed.HYPE_TRAIN = { ...HYPE_TRAIN_DEFAULTS };
-        } else {
-            parsed.HYPE_TRAIN = { ...HYPE_TRAIN_DEFAULTS, ...parsed.HYPE_TRAIN };
-        }
-
-                // 🔥 NUEVO: garantizar TIKTOK_VIEWS
-        if (!Array.isArray(parsed.TIKTOK_VIEWS) || parsed.TIKTOK_VIEWS.length === 0) {
-            parsed.TIKTOK_VIEWS = [
-                { id: 'slot1', name: 'Cuenta 1', username: '', url: 'https://livecenter.tiktok.com/live_monitor', partition: 'persist:tiktok-slot-1' },
-                { id: 'slot2', name: 'Cuenta 2', username: '', url: 'https://livecenter.tiktok.com/live_monitor', partition: 'persist:tiktok-slot-2' },
-                { id: 'slot3', name: 'Cuenta 3', username: '', url: 'https://livecenter.tiktok.com/live_monitor', partition: 'persist:tiktok-slot-3' }
-            ];
-        }
-
-        // 🔥 Validar TIKTOK_ACTIVE_VIEW ANTES de usarla
-        if (!parsed.TIKTOK_ACTIVE_VIEW || !parsed.TIKTOK_VIEWS.some(v => v.id === parsed.TIKTOK_ACTIVE_VIEW)) {
-            parsed.TIKTOK_ACTIVE_VIEW = parsed.TIKTOK_VIEWS[0].id;
-        }
-
-        // 🔥 Migración suave: garantizar 'username' en cada vista
-        parsed.TIKTOK_VIEWS = parsed.TIKTOK_VIEWS.map(v => ({
-            id: v.id,
-            name: v.name || ('Cuenta ' + v.id),
-            username: typeof v.username === 'string' ? v.username.replace(/^@/, '').trim() : '',
-            url: v.url || 'https://livecenter.tiktok.com/live_monitor',
-            partition: v.partition || ('persist:tiktok-' + v.id)
-        }));
-
-        // 🔥 Sincronizar TIKTOK_USER_ID con la vista activa (ya garantizada válida)
-        const _vistaActiva = parsed.TIKTOK_VIEWS.find(v => v.id === parsed.TIKTOK_ACTIVE_VIEW);
-        if (_vistaActiva && _vistaActiva.username) {
-            if (!parsed.TIKTOK_USER_ID) parsed.TIKTOK_USER_ID = _vistaActiva.username;
-            if (!Array.isArray(parsed.TIKTOK_USERS) || parsed.TIKTOK_USERS.length === 0) {
-                parsed.TIKTOK_USERS = [_vistaActiva.username];
-            }
+            parsed.kick.cookies = parsed.kick.cookies || '';
+            parsed.kick.sessionToken = parsed.kick.sessionToken || '';
+            parsed.kick.username = parsed.kick.username || '';
+            parsed.kick.connected = !!parsed.kick.connected;
+            parsed.kick.lastCheck = Number(parsed.kick.lastCheck) || 0;
         }
 
         console.log(`✅ Config cargado desde ${CONFIG_PATH}`);
-        console.log(`   📺 TikTok views: ${parsed.TIKTOK_VIEWS.length} | activa: ${parsed.TIKTOK_ACTIVE_VIEW}`);
-        console.log(`   🏳️🌈 Pride: ${parsed.PRIDE.mode} | carpeta: ${parsed.PRIDE.folder}`);
-        console.log(`   🚂 Hype Train: tema ${parsed.HYPE_TRAIN.theme} | duración ${parsed.HYPE_TRAIN.duration}s`);
         return parsed;
     } catch (e) {
         console.log(`⚠️ No se pudo leer config.json (${e.message}). Usando defaults.`);
@@ -1424,19 +603,18 @@ if (typeof parsed.TIMER_COLOR !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(parsed.T
                 enabled: false, nombre: '', personalidad: '', comando: '!guia',
                 proveedores: {
                     groq:       { apiKey: '', modelo: 'openai/gpt-oss-20b' },
-                    cerebras:   { apiKey: '', modelo: 'llama3.1-8b' },
-                    openrouter: { apiKey: '', modelo: 'meta-llama/llama-3.1-8b-instruct:free' }
+                    cerebras:   { apiKey: '', modelo: 'llama3.1-70b' },
+                    openrouter: { apiKey: '', modelo: 'meta-llama/llama-3.1-70b-instruct:free' }
                 }
             },
-            JAR_META: 500,
-            PRIDE: { ...PRIDE_DEFAULTS },
-            HYPE_TRAIN: { ...HYPE_TRAIN_DEFAULTS },
-            TIKTOK_VIEWS: [
-                { id: 'slot1', name: 'Cuenta 1', username: '', url: 'https://livecenter.tiktok.com/live_monitor', partition: 'persist:tiktok-slot-1' },
-                { id: 'slot2', name: 'Cuenta 2', username: '', url: 'https://livecenter.tiktok.com/live_monitor', partition: 'persist:tiktok-slot-2' },
-                { id: 'slot3', name: 'Cuenta 3', username: '', url: 'https://livecenter.tiktok.com/live_monitor', partition: 'persist:tiktok-slot-3' }
-            ],
-            TIKTOK_ACTIVE_VIEW: 'slot1'
+                        JAR_META: 500,
+                        kick: {
+                cookies: '',
+                sessionToken: '',
+                username: '',
+                connected: false,
+                lastCheck: 0
+            }
         };
         if (!fs.existsSync(CONFIG_PATH)) {
             try { fs.writeFileSync(CONFIG_PATH, JSON.stringify(defaults, null, 2)); } catch (e) {}
@@ -1447,233 +625,10 @@ if (typeof parsed.TIMER_COLOR !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(parsed.T
 
 let config = loadConfig();
 
-// 🤖 Gemini Live — módulo puente
-geminiLive.init(io, config);
-
-// 📚 Gemini Text — sesión paralela (resúmenes + búsqueda)
-geminiText.init(io, config);
-// 🔗 Conectar gemini-text con las fuentes de gemini-live
-try {
-    geminiText.registrarFuentes({
-        getBufferChat: () => (typeof geminiLive.obtenerBufferChat === 'function' ? geminiLive.obtenerBufferChat() : []),
-        getTranscripcionVoz: () => (typeof geminiLive.obtenerTranscripcionVoz === 'function' ? geminiLive.obtenerTranscripcionVoz() : '')
-    });
-    console.log('🔗 [GEMINI-TEXT] Fuentes conectadas a Gemini Live');
-} catch (e) {
-    console.error('❌ [GEMINI-TEXT] Error conectando fuentes:', e.message);
-}
-
-// ================================================================
-// 🏳️🌈 PRIDE — helpers (dependen de `config` y `CONFIG_PATH`)
-// ================================================================
-function getPrideConfig() {
-    const p = config.PRIDE || {};
-    return { ...PRIDE_DEFAULTS, ...p };
-}
-
-function savePrideConfig(nueva) {
-    config.PRIDE = { ...PRIDE_DEFAULTS, ...(config.PRIDE || {}), ...nueva };
-    try {
-        fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
-        return true;
-    } catch (e) {
-        console.error('❌ [PRIDE] Error guardando config:', e.message);
-        return false;
-    }
-}
-
 // 🤖 Cargar proveedores de IA con la config actual
 aiKeyPool.cargarProveedores(config);
 console.log(`🤖 AI Co-Host: ${config.aiCohost?.enabled ? 'ACTIVADO' : 'desactivado'}`);
-// ================================================================
-// 📺 VISTAS DE TIKTOK LIVE CENTER (multi-cuenta genérico)
-// ================================================================
-const DEFAULT_TIKTOK_VIEWS = [
-    { id: 'slot1', name: 'Cuenta 1', url: 'https://livecenter.tiktok.com/live_monitor', partition: 'persist:tiktok-slot-1' },
-    { id: 'slot2', name: 'Cuenta 2', url: 'https://livecenter.tiktok.com/live_monitor', partition: 'persist:tiktok-slot-2' },
-    { id: 'slot3', name: 'Cuenta 3', url: 'https://livecenter.tiktok.com/live_monitor', partition: 'persist:tiktok-slot-3' }
-];
 
-app.get('/api/tiktok/views', (req, res) => {
-    try {
-        const views = Array.isArray(config.TIKTOK_VIEWS) && config.TIKTOK_VIEWS.length > 0
-            ? config.TIKTOK_VIEWS
-            : DEFAULT_TIKTOK_VIEWS;
-        const active = config.TIKTOK_ACTIVE_VIEW && views.some(v => v.id === config.TIKTOK_ACTIVE_VIEW)
-            ? config.TIKTOK_ACTIVE_VIEW
-            : views[0].id;
-
-        res.json({ ok: true, views, active });
-    } catch (e) {
-        res.status(500).json({ ok: false, error: e.message });
-    }
-});
-
-app.post('/api/tiktok/active-view', async (req, res) => {
-    try {
-        const { id } = req.body || {};
-        if (!id) return res.status(400).json({ ok: false, error: 'Falta id' });
-
-        const views = Array.isArray(config.TIKTOK_VIEWS) && config.TIKTOK_VIEWS.length > 0
-            ? config.TIKTOK_VIEWS
-            : DEFAULT_TIKTOK_VIEWS;
-        const target = views.find(v => v.id === id);
-        if (!target) {
-            return res.status(400).json({ ok: false, error: 'Vista desconocida: ' + id });
-        }
-
-        config.TIKTOK_ACTIVE_VIEW = id;
-
-        // 🔥 Sincronizar TIKTOK_USER_ID/USERS con el username de la vista activa
-        const usernameVista = (target.username || '').replace(/^@/, '').trim();
-        let reconectado = false;
-        if (usernameVista) {
-            config.TIKTOK_USER_ID = usernameVista;
-            config.TIKTOK_USERS = [usernameVista];
-            try {
-                if (isPlatformEnabled('tiktok')) {
-                    await tiktokChat.setUsuarios([usernameVista]);
-                    reconectado = true;
-                    console.log(`🎵 [TIKTOK] Reconectado a @${usernameVista} por cambio de vista`);
-                }
-            } catch (err) {
-                console.error('❌ [TIKTOK] Error reconectando por cambio de vista:', err.message);
-            }
-        }
-
-        fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
-        console.log(`📺 [TIKTOK VIEW] Vista activa: ${id}${usernameVista ? ' (@' + usernameVista + ')' : ''}`);
-
-        io.emit('tiktok:active-view-changed', { id, username: usernameVista, reconectado });
-
-        res.json({ ok: true, active: id, username: usernameVista, reconectado });
-    } catch (e) {
-        res.status(500).json({ ok: false, error: e.message });
-    }
-});
-
-// ================================================================
-// 🔥 NUEVO ENDPOINT — Renombrar una vista TikTok
-// POST /api/tiktok/rename-view
-// body: { id: "slot1", name: "Cuenta Elio" }
-// ================================================================
-app.post('/api/tiktok/rename-view', (req, res) => {
-    try {
-        const { id, name } = req.body || {};
-        if (!id || typeof name !== 'string') {
-            return res.status(400).json({ ok: false, error: 'Faltan id o name' });
-        }
-
-        const cleanName = name.trim().slice(0, 40);
-        if (!cleanName) {
-            return res.status(400).json({ ok: false, error: 'Nombre vacío' });
-        }
-
-        const views = Array.isArray(config.TIKTOK_VIEWS) && config.TIKTOK_VIEWS.length > 0
-            ? config.TIKTOK_VIEWS
-            : JSON.parse(JSON.stringify(DEFAULT_TIKTOK_VIEWS));
-
-        const target = views.find(v => v.id === id);
-        if (!target) {
-            return res.status(404).json({ ok: false, error: 'Vista no encontrada: ' + id });
-        }
-
-        const antes = target.name;
-        target.name = cleanName;
-        config.TIKTOK_VIEWS = views;
-
-        fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
-        console.log(`📺 [TIKTOK VIEW] Renombrada "${antes}" → "${cleanName}" (id: ${id})`);
-
-        // 🔥 Notifica a todos los dashboards abiertos
-        io.emit('tiktok:view-renamed', { id, name: cleanName });
-
-        res.json({ ok: true, id, name: cleanName });
-    } catch (e) {
-        console.error('❌ [TIKTOK VIEW] Error renombrando:', e.message);
-        res.status(500).json({ ok: false, error: e.message });
-    }
-});
-// ================================================================
-// 🔥 NUEVO ENDPOINT — Asignar/editar el @username real de una vista
-// POST /api/tiktok/set-username
-// body: { id: "slot1", username: "togivt_main" }
-// ================================================================
-app.post('/api/tiktok/set-username', async (req, res) => {
-    try {
-        const { id, username } = req.body || {};
-        if (!id || typeof username !== 'string') {
-            return res.status(400).json({ ok: false, error: 'Faltan id o username' });
-        }
-
-        const clean = username.trim().replace(/^@/, '').slice(0, 60);
-
-        const views = Array.isArray(config.TIKTOK_VIEWS) && config.TIKTOK_VIEWS.length > 0
-            ? config.TIKTOK_VIEWS
-            : JSON.parse(JSON.stringify(DEFAULT_TIKTOK_VIEWS));
-
-        const target = views.find(v => v.id === id);
-        if (!target) {
-            return res.status(404).json({ ok: false, error: 'Vista no encontrada: ' + id });
-        }
-
-        const antes = target.username || '';
-        target.username = clean;
-        config.TIKTOK_VIEWS = views;
-
-        let reconectado = false;
-        // Si es la vista activa, actualizamos también TIKTOK_USER_ID real y reconectamos
-        if (config.TIKTOK_ACTIVE_VIEW === id) {
-            if (clean) {
-                config.TIKTOK_USER_ID = clean;
-                config.TIKTOK_USERS = [clean];
-                try {
-                    if (isPlatformEnabled('tiktok')) {
-                        await tiktokChat.setUsuarios([clean]);
-                        reconectado = true;
-                        console.log(`🎵 [TIKTOK] Reconectado a @${clean} (vista activa)`);
-                    }
-                } catch (err) {
-                    console.error('❌ [TIKTOK] Error reconectando:', err.message);
-                }
-            } else {
-                config.TIKTOK_USER_ID = '';
-                config.TIKTOK_USERS = [];
-                try { tiktokChat.detenerTodo(); } catch {}
-                console.log('🔌 [TIKTOK] Vista activa sin username → desconectado');
-            }
-        }
-
-        fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
-        console.log(`📺 [TIKTOK VIEW] Username de ${id}: "${antes || '(vacío)'}" → "${clean || '(vacío)'}"${reconectado ? ' (reconectado)' : ''}`);
-
-        io.emit('tiktok:username-changed', { id, username: clean, reconectado });
-
-        res.json({ ok: true, id, username: clean, reconectado });
-    } catch (e) {
-        console.error('❌ [TIKTOK VIEW] Error set-username:', e.message);
-        res.status(500).json({ ok: false, error: e.message });
-    }
-});
-app.post('/api/tiktok/views', (req, res) => {
-    try {
-        const { views } = req.body || {};
-        if (!Array.isArray(views)) return res.status(400).json({ ok: false, error: 'views debe ser un array' });
-
-        for (const v of views) {
-            if (!v.id || !v.name || !v.url || !v.partition) {
-                return res.status(400).json({ ok: false, error: 'Cada vista necesita id, name, url y partition' });
-            }
-        }
-
-        config.TIKTOK_VIEWS = views;
-        fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
-        console.log(`📺 [TIKTOK VIEW] Lista actualizada (${views.length} vistas)`);
-        res.json({ ok: true, views });
-    } catch (e) {
-        res.status(500).json({ ok: false, error: e.message });
-    }
-});
 // ================================================================
 // 🏺 RUTA POST — Cambiar meta del cristal
 // ================================================================
@@ -1701,176 +656,6 @@ app.post('/api/jar-state/meta', (req, res) => {
         console.error(`❌ [META] Error:`, e.message);
         res.status(500).json({ error: e.message });
     }
-});
-
-// ================================================================
-// 🏳️🌈 PRIDE FLAGS — API
-// ================================================================
-
-// GET /api/pride/config → devuelve config actual (o defaults)
-app.get('/api/pride/config', (req, res) => {
-    try {
-        res.json({ ok: true, config: getPrideConfig() });
-    } catch (e) {
-        console.error('[pride] GET config error:', e);
-        res.status(500).json({ ok: false, error: e.message });
-    }
-});
-
-// POST /api/pride/config → guarda config y emite pride:config-updated
-app.post('/api/pride/config', (req, res) => {
-    try {
-        const body = req.body || {};
-
-        // Saneamiento básico
-        if (body.mode && !['rotate', 'fixed', 'chat'].includes(body.mode)) {
-            body.mode = 'rotate';
-        }
-        if (body.rotateMs !== undefined) {
-            const n = Number(body.rotateMs);
-            body.rotateMs = (isNaN(n) || n < 1000) ? PRIDE_DEFAULTS.rotateMs : n;
-        }
-        if (body.enabled !== null && body.enabled !== undefined && !Array.isArray(body.enabled)) {
-            body.enabled = null;
-        }
-
-        const merged = { ...getPrideConfig(), ...body };
-        if (!savePrideConfig(merged)) {
-            return res.status(500).json({ ok: false, error: 'No se pudo guardar' });
-        }
-
-        io.emit('pride:config-updated', merged);
-        console.log('🏳️🌈 [PRIDE] Config guardada:', merged);
-        res.json({ ok: true, config: merged });
-    } catch (e) {
-        console.error('[pride] POST config error:', e);
-        res.status(500).json({ ok: false, error: e.message });
-    }
-});
-
-// DELETE /api/pride/config → resetea a defaults
-app.delete('/api/pride/config', (req, res) => {
-    try {
-        config.PRIDE = { ...PRIDE_DEFAULTS };
-        fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
-
-        io.emit('pride:config-updated', config.PRIDE);
-        console.log('🏳️🌈 [PRIDE] Config reseteada a defaults');
-        res.json({ ok: true, config: config.PRIDE });
-    } catch (e) {
-        console.error('[pride] DELETE config error:', e);
-        res.status(500).json({ ok: false, error: e.message });
-    }
-});
-
-// GET /pride → sirve public/pride.html
-app.get('/pride', (req, res) => {
-    res.sendFile(path.join(publicDir, 'pride.html'));
-});
-
-// ================================================================
-// 🚂 HYPE TRAIN — API
-// ================================================================
-
-// GET /api/hype-train/config
-app.get('/api/hype-train/config', (req, res) => {
-    try {
-        res.json({ ok: true, config: getHypeTrainConfig() });
-    } catch (e) {
-        res.status(500).json({ ok: false, error: e.message });
-    }
-});
-
-// POST /api/hype-train/config
-app.post('/api/hype-train/config', (req, res) => {
-    try {
-        const body = req.body || {};
-        const merged = { ...getHypeTrainConfig(), ...body };
-
-        // Saneamiento básico
-        if (merged.duration !== undefined) {
-            const n = Number(merged.duration);
-            merged.duration = (isNaN(n) || n < 30) ? 300 : n;
-        }
-        if (merged.base !== undefined) {
-            const n = Number(merged.base);
-            merged.base = (isNaN(n) || n < 1) ? 100 : n;
-        }
-        if (merged.factor !== undefined) {
-            const n = Number(merged.factor);
-            merged.factor = (isNaN(n) || n <= 1) ? 1.4 : n;
-        }
-        if (!Array.isArray(merged.milestones)) {
-            merged.milestones = HYPE_TRAIN_DEFAULTS.milestones;
-        }
-        if (!Array.isArray(merged.titles)) {
-            merged.titles = HYPE_TRAIN_DEFAULTS.titles;
-        }
-
-        if (!saveHypeTrainConfig(merged)) {
-            return res.status(500).json({ ok: false, error: 'No se pudo guardar' });
-        }
-
-        hypeTrain.onConfigUpdated(merged);
-        console.log('🚂 [HYPE] Config guardada');
-        res.json({ ok: true, config: merged });
-    } catch (e) {
-        console.error('[hype] POST config error:', e);
-        res.status(500).json({ ok: false, error: e.message });
-    }
-});
-
-// DELETE /api/hype-train/config → reset a defaults
-app.delete('/api/hype-train/config', (req, res) => {
-    try {
-        config.HYPE_TRAIN = { ...HYPE_TRAIN_DEFAULTS };
-        fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
-        hypeTrain.onConfigUpdated(config.HYPE_TRAIN);
-        console.log('🚂 [HYPE] Config reseteada a defaults');
-        res.json({ ok: true, config: config.HYPE_TRAIN });
-    } catch (e) {
-        res.status(500).json({ ok: false, error: e.message });
-    }
-});
-
-// GET /api/hype-train/state
-app.get('/api/hype-train/state', (req, res) => {
-    res.json({ ok: true, state: hypeTrain.getState() });
-});
-
-// POST /api/hype-train/start
-app.post('/api/hype-train/start', (req, res) => {
-    try {
-        const state = hypeTrain.start({ reason: 'Manual desde API' });
-        res.json({ ok: true, state });
-    } catch (e) {
-        res.status(500).json({ ok: false, error: e.message });
-    }
-});
-
-// POST /api/hype-train/end
-app.post('/api/hype-train/end', (req, res) => {
-    try {
-        const result = hypeTrain.end();
-        res.json({ ok: true, result });
-    } catch (e) {
-        res.status(500).json({ ok: false, error: e.message });
-    }
-});
-
-// POST /api/hype-train/reset
-app.post('/api/hype-train/reset', (req, res) => {
-    try {
-        const state = hypeTrain.reset();
-        res.json({ ok: true, state });
-    } catch (e) {
-        res.status(500).json({ ok: false, error: e.message });
-    }
-});
-
-// GET /hype-train → sirve public/hype-train.html
-app.get('/hype-train', (req, res) => {
-    res.sendFile(path.join(publicDir, 'hype-train.html'));
 });
 
 // ================================================================
@@ -1903,177 +688,6 @@ app.post('/api/ai/test-key', async (req, res) => {
     }
 });
 
-// ================================================================
-// 🤖 RUTAS API — GEMINI LIVE
-// ================================================================
-app.get('/api/gemini-live/status', (req, res) => {
-    try {
-        res.json({ ok: true, ...geminiLive.estado() });
-    } catch (e) {
-        res.status(500).json({ ok: false, error: e.message });
-    }
-});
-
-app.post('/api/gemini-live/config', (req, res) => {
-    try {
-        const actual = geminiLive.cargarConfig();
-        const body = req.body || {};
-        const merged = {
-            ...actual,
-            voz: typeof body.voz === 'string' && body.voz.trim() ? body.voz.trim() : actual.voz,
-            comandoChat: typeof body.comandoChat === 'string' && body.comandoChat.trim() ? body.comandoChat.trim() : actual.comandoChat,
-            palabraClave: typeof body.palabraClave === 'string' && body.palabraClave.trim() ? body.palabraClave.trim() : actual.palabraClave,
-            pronombre: typeof body.pronombre === 'string' && body.pronombre.trim() ? body.pronombre.trim() : actual.pronombre,
-            pronombrePersonalizado: typeof body.pronombrePersonalizado === 'string' ? body.pronombrePersonalizado.trim() : actual.pronombrePersonalizado
-        };
-
-        // 🔑 Multi-key: aceptar apiKeys array
-        if (Array.isArray(body.apiKeys)) {
-            const keysLimpias = body.apiKeys
-                .map(k => String(k || '').trim())
-                .filter(k => k && k !== '***');
-            if (keysLimpias.length > 0) {
-                merged.apiKeys = keysLimpias;
-                merged.apiKey = keysLimpias[0];
-            }
-        } else if (typeof body.apiKey === 'string' && body.apiKey.trim() && body.apiKey.trim() !== '***') {
-            merged.apiKey = body.apiKey.trim();
-            merged.apiKeys = [merged.apiKey];
-        }
-
-        const ok = geminiLive.guardarConfig(merged);
-        const sanitized = { ...merged };
-        if (sanitized.apiKey) sanitized.apiKey = '***';
-        if (Array.isArray(sanitized.apiKeys)) {
-            sanitized.apiKeys = sanitized.apiKeys.map(() => '***');
-        }
-        res.json({ ok, config: sanitized });
-    } catch (e) {
-        res.status(500).json({ ok: false, error: e.message });
-    }
-});
-
-app.get('/api/gemini-live/config', (req, res) => {
-    try {
-        const cfg = geminiLive.cargarConfig();
-        const sanitized = { ...cfg };
-        if (sanitized.apiKey) sanitized.apiKey = '***';
-        if (Array.isArray(sanitized.apiKeys)) {
-            sanitized.apiKeys = sanitized.apiKeys.map(k => k ? '***' : '');
-        }
-        res.json({ ok: true, config: sanitized });
-    } catch (e) {
-        res.status(500).json({ ok: false, error: e.message });
-    }
-});
-
-// ================================================================
-// 📚 RUTAS API — GEMINI TEXT (sesión paralela)
-// ================================================================
-app.get('/api/gemini-text/status', (req, res) => {
-    try {
-        res.json({ ok: true, ...geminiText.estado() });
-    } catch (e) {
-        res.status(500).json({ ok: false, error: e.message });
-    }
-});
-
-app.get('/api/gemini-text/config', (req, res) => {
-    try {
-        const cfg = geminiText.cargarConfig();
-        const sanitized = { ...cfg };
-        if (sanitized.apiKey) sanitized.apiKey = '***';
-        if (Array.isArray(sanitized.apiKeys)) {
-            sanitized.apiKeys = sanitized.apiKeys.map(k => k ? '***' : '');
-        }
-        res.json({ ok: true, config: sanitized });
-    } catch (e) {
-        res.status(500).json({ ok: false, error: e.message });
-    }
-});
-
-app.post('/api/gemini-text/config', (req, res) => {
-    try {
-        const actual = geminiText.cargarConfig();
-        const body = req.body || {};
-        const merged = { ...actual };
-
-        // apiKeys: si viene array válido, reemplaza. Si viene '***', mantiene las actuales.
-        if (Array.isArray(body.apiKeys)) {
-            const keysLimpias = body.apiKeys
-                .map(k => String(k || '').trim())
-                .filter(k => k && k !== '***');
-            if (keysLimpias.length > 0) {
-                merged.apiKeys = keysLimpias;
-                merged.apiKey = keysLimpias[0];
-            }
-        }
-        if (typeof body.apiKey === 'string' && body.apiKey.trim() && body.apiKey.trim() !== '***') {
-            merged.apiKey = body.apiKey.trim();
-            if (!Array.isArray(merged.apiKeys) || merged.apiKeys.length === 0) {
-                merged.apiKeys = [merged.apiKey];
-            }
-        }
-        if (typeof body.modelo === 'string' && body.modelo.trim()) {
-            merged.modelo = body.modelo.trim();
-        }
-        if (typeof body.intervaloResumenMs === 'number' && body.intervaloResumenMs >= 60000) {
-            merged.intervaloResumenMs = body.intervaloResumenMs;
-        }
-        if (typeof body.activo === 'boolean') {
-            merged.activo = body.activo;
-        }
-
-        const ok = geminiText.guardarConfig(merged);
-        res.json({ ok });
-    } catch (e) {
-        res.status(500).json({ ok: false, error: e.message });
-    }
-});
-
-// 🔍 Búsqueda en Google (endpoint directo)
-app.post('/api/gemini-text/buscar', async (req, res) => {
-    try {
-        const { query, contexto } = req.body || {};
-        if (!query) return res.status(400).json({ ok: false, error: 'Falta query' });
-        const r = await geminiText.buscar(query, contexto);
-        res.json(r);
-    } catch (e) {
-        res.status(500).json({ ok: false, error: e.message });
-    }
-});
-
-// 📝 Resumen manual (endpoint directo)
-app.post('/api/gemini-text/resumen', async (req, res) => {
-    try {
-        const buffer = (typeof geminiLive.obtenerBufferChat === 'function') ? geminiLive.obtenerBufferChat() : [];
-        const voz = (typeof geminiLive.obtenerTranscripcionVoz === 'function') ? geminiLive.obtenerTranscripcionVoz() : '';
-        const r = await geminiText.generarResumen(buffer, voz);
-        res.json({ ok: !!r, texto: r || '' });
-    } catch (e) {
-        res.status(500).json({ ok: false, error: e.message });
-    }
-});
-
-// 🧹 Olvidar resúmenes guardados
-app.post('/api/gemini-text/olvidar-resumenes', (req, res) => {
-    try {
-        // Emitimos por socket para que el propio módulo limpie
-        io.emit('gemini-text:olvidar-resumenes');
-        res.json({ ok: true });
-    } catch (e) {
-        res.status(500).json({ ok: false, error: e.message });
-    }
-});
-
-// 🖼️ Página de control (si quieres una página nueva)
-app.get('/gemini-text', (req, res) => {
-    res.sendFile(path.join(publicDir, 'gemini-live.html'));
-});
-
-// ================================================================
-// 🤖 RUTAS API — AI CO-HOST (RELOAD)
-// ================================================================
 app.post('/api/ai/reload', (req, res) => {
     try {
         const nuevo = loadConfig();
@@ -2085,29 +699,6 @@ app.post('/api/ai/reload', (req, res) => {
         res.status(500).json({ ok: false, error: e.message });
     }
 });
-
-// ================================================================
-// 🔥 HELPERS DE TOGGLES DE PLATAFORMAS
-// ================================================================
-
-// ================================================================
-// 🤖 RUTAS API — AI CO-HOST (RELOAD)
-// ================================================================
-app.post('/api/ai/reload', (req, res) => {
-    try {
-        const nuevo = loadConfig();
-        config = nuevo;
-        aiKeyPool.cargarProveedores(config);
-        io.emit('ai-status', aiKeyPool.estadoProveedores());
-        res.json({ ok: true });
-    } catch (e) {
-        res.status(500).json({ ok: false, error: e.message });
-    }
-});
-
-// ================================================================
-// 🔥 HELPERS DE TOGGLES DE PLATAFORMAS
-// ================================================================
 
 // ================================================================
 // 🔥 HELPERS DE TOGGLES DE PLATAFORMAS
@@ -2122,8 +713,7 @@ function getPlatformsEnabled() {
         tiktok:  e.tiktok  !== false,
         twitch:  e.twitch  !== false,
         kick:    e.kick    !== false,
-        youtube: e.youtube !== false,
-        velora:  e.velora  !== false
+        youtube: e.youtube !== false
     };
 }
 
@@ -2230,69 +820,13 @@ console.log(`   YouTube Users: ${getYouTubeUsers().join(', ') || '(ninguno)'}`);
 console.log(`   🔊 TTS: ${config.TTS?.enabled ? 'ACTIVADO' : 'desactivado'} | Voz: ${config.TTS?.voice || 'N/A'}`);
 console.log(`   🤖 AI Co-Host: ${config.aiCohost?.enabled ? 'ACTIVADO' : 'desactivado'} | Nombre: ${config.aiCohost?.nombre || '(sin nombre)'}`);
 console.log(`   🏺 Meta cristal: ${config.JAR_META} 💎`);
-console.log(`   🏳️🌈 Pride: ${config.PRIDE?.mode || 'rotate'} | carpeta: ${config.PRIDE?.folder || 'HD 1080p'}`);
-console.log(`   🚂 Hype Train: tema ${config.HYPE_TRAIN?.theme || 'cyberpunk'} | duración ${config.HYPE_TRAIN?.duration || 300}s`);
 
 // ================================================================
 // 🛠️ VARIABLES
 // ================================================================
 const twitchChannels = new Map();
 const bannedUsers = new Map();
-
-// 🚫 Lista de palabras bloqueadas (para TTS y overlay si se usa)
-const filteredWords = new Set([
-    'puta', 'puto', 'putas', 'putos',
-    'mierda', 'mierdas',
-    'cabron', 'cabrón', 'cabrona', 'cabronas',
-    'pendejo', 'pendeja', 'pendejos', 'pendejas',
-    'idiota', 'idiotas',
-    'imbecil', 'imbécil', 'imbeciles', 'imbéciles',
-    'estupido', 'estúpido', 'estupida', 'estúpida',
-    'gilipollas', 'capullo', 'capulla',
-    'joder', 'jodete', 'jódete',
-    'coño', 'cono',
-    'hostia', 'hostias',
-    'marica', 'maricon', 'maricón', 'maricona',
-    'zorra', 'zorras',
-    'perra', 'perras',
-    'chupa', 'chupala', 'chúpala',
-    'verga', 'vergas',
-    'chinga', 'chingada', 'chingado', 'chingas',
-    'pinche',
-    'negro', 'negra', 'negros', 'negras',
-    'nigga', 'nigger', 'niggas', 'niggers',
-    'sudaca', 'sudacas',
-    'gitano', 'gitana', 'gitanos', 'gitanas',
-    'moro', 'mora', 'moros', 'moras',
-    'panchito', 'panchita',
-    'indio', 'india',
-    'chino', 'china',
-    'travelo', 'travesti',
-    'torta', 'tortillera',
-    'plumifero', 'plumífero',
-    'retrasado', 'retrasada', 'retrasados', 'retrasadas',
-    'subnormal', 'subnormales',
-    'mongolo', 'mongola', 'mongolos',
-    'polla', 'pollas',
-    'pito',
-    'nalga', 'nalgas',
-    'tetas',
-    'culos',
-    'porno', 'pornografia', 'pornografía',
-    'xxx',
-    'matate', 'mátate',
-    'suicidate', 'suicídate',
-    'muere',
-    'violacion', 'violación',
-    'violar',
-    'nazi', 'nazis',
-    'hitler',
-    'spam',
-    'scam',
-    'estafa',
-    'phishing'
-]);
-
+const filteredWords = new Set(['spam', 'odio']);
 let totalDiamonds = 0;
 let totalBits = 0;
 const TIKTOK_DEFAULT_AVATAR = 'https://i.imgur.com/OmnpuQH.png';
@@ -2306,110 +840,16 @@ function isDuplicateMessage(msg) {
     const now = Date.now();
     const last = recentMessages.get(key);
     if (last && (now - last) < 8000) return true;
-            recentMessages.set(key, now);
+    recentMessages.set(key, now);
     return false;
 }
-// ================================================================
-// 🏅 FASE 3 — Inferir rol del usuario para badges
-// ================================================================
-function inferRole(platform, raw) {
-    if (!raw) return null;
-
-    if (platform === 'twitch') {
-        const b = raw.badges || {};
-        if (b.broadcaster) return 'broadcaster';
-        if (b.moderator)   return 'moderator';
-        if (b.vip)         return 'vip';
-        if (b.subscriber || b.founder) return 'subscriber';
-        return null;
-    }
-
-    if (platform === 'tiktok') {
-        const r = raw.raw || raw.user || raw;
-        if (r.isOwner || r.isBroadcaster || r.isHost) return 'broadcaster';
-        if (r.isModerator || r.isMod)                 return 'moderator';
-        if (r.isSubscriber || r.isSubscribe)          return 'subscriber';
-        if (r.isVip)                                  return 'vip';
-        const arr = Array.isArray(r.badges) ? r.badges : [];
-        for (const bd of arr) {
-            const t = String(bd.type || bd.name || bd).toLowerCase();
-            if (t.includes('moderator')) return 'moderator';
-            if (t.includes('subscriber')) return 'subscriber';
-        }
-        return null;
-    }
-
-    if (platform === 'kick') {
-        const list = (raw.identity && raw.identity.badges) || raw.badges || [];
-        const norm = (Array.isArray(list) ? list : Object.keys(list))
-            .map(x => String(x.type || x).toLowerCase());
-        if (norm.some(x => x === 'broadcaster'))    return 'broadcaster';
-        if (norm.some(x => x === 'moderator'))      return 'moderator';
-        if (norm.some(x => x === 'vip'))            return 'vip';
-        if (norm.some(x => x.includes('subscriber') || x.includes('founder'))) return 'subscriber';
-        return null;
-    }
-
-    if (platform === 'youtube') {
-        const list = (raw.author && raw.author.badges) || raw.badges || [];
-        const norm = (Array.isArray(list) ? list : Object.keys(list))
-            .map(x => String(x.name || x).toLowerCase());
-        if (norm.some(x => x.includes('owner')))     return 'broadcaster';
-        if (norm.some(x => x.includes('moderator'))) return 'moderator';
-        if (norm.some(x => x.includes('member')))    return 'subscriber';
-        return null;
-    }
-
-    return null;
-}
-
-// 🧹 Limpieza periódica de recentMessages para evitar fuga de memoria
-setInterval(() => {
-    const now = Date.now();
-    let borrados = 0;
-    for (const [key, ts] of recentMessages) {
-        if (now - ts > 10000) {
-            recentMessages.delete(key);
-            borrados++;
-        }
-    }
-    if (borrados > 0) {
-        console.log(`🧹 [recentMessages] Limpiadas ${borrados} entradas antiguas (quedan ${recentMessages.size})`);
-    }
-}, 30000);
 
 function broadcastMessage(msgData) {
     if (isDuplicateMessage(msgData)) return;
     io.emit('chat-message', msgData);
     if (msgData && msgData.username && msgData.message && msgData.type !== 'ai') {
-        try { aiCohost.agregarAlaMemoria(msgData.username, msgData.message, config); } catch (e) {}
+        try { aiCohost.agregarAlaMemoria(msgData.username, msgData.message); } catch (e) {}
     }
-}
-
-// ================================================================
-// 🏳️🌈 PRIDE — Comando !bandera <nombre>
-// ================================================================
-const PRIDE_IDS = [
-    'agender','asexual','bigender','bisexual','demigender','demisexual',
-    'gay mens pride trans inclusive','genderfluid','genderqueer',
-    'gilbert baker','intersex','intersex progress','lesbian','non-binary',
-    'pansexual','philadelphia','polysexual','pride','progress pride',
-    'queer','trans'
-];
-
-function handlePrideCommand(text, source = 'chat') {
-    if (!text || typeof text !== 'string') return false;
-    const m = text.trim().match(/^!bandera\s+([a-z0-9\-_ ]+)$/i);
-    if (!m) return false;
-
-    const nombre = m[1].trim().toLowerCase();
-    const norm = s => s.replace(/[\s\-_]/g, '');
-    const id = PRIDE_IDS.find(x => x === nombre || norm(x) === norm(nombre));
-    if (!id) return false;
-
-    io.emit('pride:show', { id, nombre, ts: Date.now() });
-    console.log(`🏳️🌈 [PRIDE] !bandera ${nombre} (${source}) → emitido`);
-    return true;
 }
 
 // ================================================================
@@ -2462,35 +902,6 @@ async function procesarCoHost(usuario, texto, plataforma, canal) {
 // ================================================================
 const ttsQueue = new TTSQueue(io);
 
-// 🚂 HYPE TRAIN — instancia única
-const hypeTrain = new HypeTrain(io, getHypeTrainConfig);
-console.log(`🚂 [HYPE] Instancia creada (tema=${getHypeTrainConfig().theme}, duración=${getHypeTrainConfig().duration}s)`);
-
-const BOTS_CONOCIDOS = new Set([
-    'nightbot', 'streamelements', 'streamlabs', 'moobot', 'fossabot', 'wizebot',
-    'sery_bot', 'kofistreambot', 'soundalerts', 'creatisbot', 'commanderroot',
-    'own3d', 'stay_hydrated_bot', 'pokemoncommunitygame', 'tangiabot', 'togikirei'
-]);
-
-function esBot(nombre) {
-    if (!nombre) return false;
-    const n = String(nombre).toLowerCase().trim();
-    if (BOTS_CONOCIDOS.has(n)) return true;
-    if (n.endsWith('bot')) return true;
-    if (n.endsWith('_bot')) return true;
-    if (n.endsWith('bot_')) return true;
-    return false;
-}
-
-function contienePalabraProhibida(texto) {
-    if (!texto) return false;
-    const t = String(texto).toLowerCase();
-    for (const palabra of filteredWords) {
-        if (t.includes(palabra)) return true;
-    }
-    return false;
-}
-
 function tryEnqueueTTS({ text, type = 'chat', platform, user }) {
     try {
         const tts = config.TTS || {};
@@ -2499,11 +910,11 @@ function tryEnqueueTTS({ text, type = 'chat', platform, user }) {
         if (!tts.readEvents || tts.readEvents[type] === false) return;
         if (type === 'chat' && typeof text === 'string' && /(^|\s)!/.test(text)) return;
 
-        if (user && esBot(user)) return;
-        if (contienePalabraProhibida(text)) return;
-
         ttsQueue.enqueue({
-            text, type, platform, user,
+            text,
+            type,
+            platform,
+            user,
             options: { voice: tts.voice, rate: tts.rate, pitch: tts.pitch }
         });
     } catch (e) {
@@ -2516,23 +927,21 @@ function tryEnqueueTTS({ text, type = 'chat', platform, user }) {
 // ================================================================
 const tiktokChat = new TikTokChat({
     onChat: (msg) => {
-        // 🏳️🌈 Comando !bandera
-        if (handlePrideCommand(msg.message, 'tiktok')) return;
-
         const msgData = {
             platform: 'tiktok', username: msg.username, message: msg.message,
             channel: msg.channel, avatar: msg.avatar || TIKTOK_DEFAULT_AVATAR,
-                        color: '#fe2c55', timestamp: msg.timestamp,
-            role: inferRole('tiktok', msg)
+            color: '#fe2c55', timestamp: msg.timestamp
         };
         if (isDuplicateMessage(msgData)) return;
         io.emit('chat-message', msgData);
-        try { aiCohost.agregarAlaMemoria(msg.username, msg.message, config); } catch (e) {}
+        try { aiCohost.agregarAlaMemoria(msg.username, msg.message); } catch (e) {}
         tryEnqueueTTS({
             text: `${msg.username} dice: ${msg.message}`,
-            type: 'chat', platform: 'tiktok', user: msg.username
+            type: 'chat',
+            platform: 'tiktok',
+            user: msg.username
         });
-		if (geminiLive.procesarComandoChat(msg.username, msg.message, 'tiktok', msg.channel)) return;
+
         procesarCoHost(msg.username, msg.message, 'tiktok', msg.channel);
     },
     onLike: (data) => { io.emit('tiktok-like', data); },
@@ -2556,7 +965,6 @@ const tiktokChat = new TikTokChat({
                 diamonds: diamonds,
                 timestamp: Date.now()
             };
-                        registrarActividad('tiktok');
             jarDirty = true;
 
             io.emit('jar-update', {
@@ -2581,47 +989,34 @@ const tiktokChat = new TikTokChat({
                 giftImage: giftImageFinal,
                 giftImageSource: giftImageSource,
                 giftIcon: data.giftIcon || null,
-                                extendedGiftInfo: data.extendedGiftInfo || null,
-                role: inferRole('tiktok', data)
+                extendedGiftInfo: data.extendedGiftInfo || null
             });
 
-            // 🚂 HYPE TRAIN
-            try {
-                hypeTrain.addGift({
-                    giftName: data.giftName,
-                    points: data.diamantesTotales,
-                    username: data.username,
-                    platform: 'tiktok'
-                });
-            } catch (e) { console.error('❌ [HYPE] Error addGift tiktok:', e.message); }
-
-            // ⏱️ TIMER — regalo suma diamantesTotales × 3s
-            timerPush((data.diamantesTotales || 0) * 3);
+            if (giftImageSource === 'none') {
+                console.log(`⚠️ [GIFT] Sin imagen (ni local ni remota) para "${data.giftName}" ` +
+                            `(clave: ${normalizarNombreRegalo(data.giftName)})`);
+            } else {
+                console.log(`🎁 [GIFT] "${data.giftName}" → imagen ${giftImageSource}`);
+            }
         }
     },
-            onFollow: (data) => {
+    onFollow: (data) => {
         io.emit('tiktok-follow', data);
-        registrarActividad('tiktok');
-        if (sessionState.activa) sessionState.follows++;
         io.emit('chat-message', {
             platform: 'tiktok', username: data.username,
             message: `👤 ${data.username} te empezó a seguir`,
             channel: data.channel, avatar: data.avatar || TIKTOK_DEFAULT_AVATAR,
-                        color: '#fe2c55', type: 'follow', timestamp: data.timestamp,
-            role: inferRole('tiktok', data)
+            color: '#fe2c55', type: 'follow', timestamp: data.timestamp
         });
-        timerPush(30); // ⏱️ TIMER — follow suma 30s
     },
-        onShare: (data) => {
+    onShare: (data) => {
         io.emit('tiktok-share', data);
         io.emit('chat-message', {
             platform: 'tiktok', username: data.username,
             message: `🔗 ${data.username} compartió tu directo`,
             channel: data.channel, avatar: data.avatar || TIKTOK_DEFAULT_AVATAR,
-                        color: '#fe2c55', type: 'share', timestamp: data.timestamp,
-            role: inferRole('tiktok', data)
+            color: '#fe2c55', type: 'share', timestamp: data.timestamp
         });
-        timerPush(0.4); // ⏱️ TIMER — share suma 0.4s
     },
     onSubscribe: (data) => {
         io.emit('tiktok-sub', data);
@@ -2629,10 +1024,8 @@ const tiktokChat = new TikTokChat({
             platform: 'tiktok', username: data.username,
             message: `⭐ ${data.username} se suscribió`,
             channel: data.channel, avatar: data.avatar || TIKTOK_DEFAULT_AVATAR,
-                        color: '#fe2c55', type: 'sub', timestamp: data.timestamp,
-            role: 'subscriber'
+            color: '#fe2c55', type: 'sub', timestamp: data.timestamp
         });
-        timerPush(60); // ⏱️ TIMER — sub suma 60s
     },
     onMember: (data) => {
         io.emit('tiktok-member', data);
@@ -2640,22 +1033,12 @@ const tiktokChat = new TikTokChat({
             platform: 'tiktok', username: data.username,
             message: data.message || `🌹 ${data.username} se unió al directo`,
             channel: data.channel, avatar: data.avatar || TIKTOK_DEFAULT_AVATAR,
-             color: '#fe2c55', type: 'member', timestamp: data.timestamp,
-            role: inferRole('tiktok', data)
+            color: '#fe2c55', type: 'member', timestamp: data.timestamp
         });
     },
-        onRoomUser: (data) => {
-        io.emit('tiktok-viewers', data);
-        const n = data && (data.viewerCount ?? data.viewers ?? data.count);
-        if (typeof n === 'number') {
-            registrarActividad('tiktok');
-            registrarViewers(n);
-        }
-    },
+    onRoomUser: (data) => { io.emit('tiktok-viewers', data); },
     onSocial: (data) => { io.emit('tiktok-social', data); },
-        onStatus: (info) => {
-    io.emit('tiktok-status', info);
-},
+    onStatus: (info) => { io.emit('tiktok-status', info); },
     onStats: ({ usuario, stats }) => {
         io.emit('tiktok-stats', { usuario, stats });
         const todos = tiktokChat.getAllStats();
@@ -2690,23 +1073,21 @@ async function startTikTok() {
 // ================================================================
 const youtubeChat = new YouTubeChat({
     onChat: (msg) => {
-        // 🏳️🌈 Comando !bandera
-        if (handlePrideCommand(msg.message, 'youtube')) return;
-
         const msgData = {
             platform: 'youtube', username: msg.username, message: msg.message,
             channel: msg.channel, avatar: msg.avatar || YOUTUBE_DEFAULT_AVATAR,
-                        color: '#ff0000', timestamp: msg.timestamp,
-            role: inferRole('youtube', msg)
+            color: '#ff0000', timestamp: msg.timestamp
         };
         if (isDuplicateMessage(msgData)) return;
         io.emit('chat-message', msgData);
-        try { aiCohost.agregarAlaMemoria(msg.username, msg.message, config); } catch (e) {}
+        try { aiCohost.agregarAlaMemoria(msg.username, msg.message); } catch (e) {}
         tryEnqueueTTS({
             text: `${msg.username} dice: ${msg.message}`,
-            type: 'chat', platform: 'youtube', user: msg.username
+            type: 'chat',
+            platform: 'youtube',
+            user: msg.username
         });
-		if (geminiLive.procesarComandoChat(msg.username, msg.message, 'youtube', msg.channel)) return;
+
         procesarCoHost(msg.username, msg.message, 'youtube', msg.channel);
     },
     onGift: (data) => {
@@ -2722,20 +1103,9 @@ const youtubeChat = new YouTubeChat({
             timestamp: data.timestamp,
             giftName: data.giftName,
             giftAmount: data.amount,
-                        giftTier: data.tier,
-            extendedGiftInfo: data,
-            role: inferRole('youtube', data)
+            giftTier: data.tier,
+            extendedGiftInfo: data
         });
-
-        // 🚂 HYPE TRAIN
-        try {
-            hypeTrain.addGift({
-                giftName: data.giftName || 'SuperChat',
-                points: Number(data.amount) || 1,
-                username: data.username,
-                platform: 'youtube'
-            });
-        } catch (e) { console.error('❌ [HYPE] Error addGift youtube:', e.message); }
     },
     onMember: (data) => {
         io.emit('youtube-member', data);
@@ -2745,10 +1115,9 @@ const youtubeChat = new YouTubeChat({
             message: `⭐ ${data.message || data.username + ' se unió como miembro'}`,
             channel: data.channel,
             avatar: data.avatar || YOUTUBE_DEFAULT_AVATAR,
-                        color: '#ff0000',
+            color: '#ff0000',
             type: 'member',
-            timestamp: data.timestamp,
-            role: 'subscriber'
+            timestamp: data.timestamp
         });
     }
 });
@@ -2799,14 +1168,12 @@ app.get('/get-config', (req, res) => {
         channels: getAllTwitchChannels(),
         CONTROL_URL: config.CONTROL_URL || 'https://livecenter.tiktok.com/live_monitor',
         TTS: config.TTS || {},
-         JAR_META: config.JAR_META || 500,
-        CRYSTAL_STYLE: config.CRYSTAL_STYLE || 'jar',
-		TIMER_DURACION_MIN: config.TIMER_DURACION_MIN || 240,
-TIMER_MODO: config.TIMER_MODO || 'duracion',
-TIMER_HORA_OBJETIVO: config.TIMER_HORA_OBJETIVO || '22:00',
-TIMER_COLOR: config.TIMER_COLOR || '#e8825a',
-        PRIDE: getPrideConfig(),
-        HYPE_TRAIN: getHypeTrainConfig(),
+        JAR_META: config.JAR_META || 500,
+                kick: {
+            connected: !!(kickCookies && kickCookies.connected),
+            username: (kickCookies && kickCookies.username) || config.KICK_USERNAME || '',
+            lastCheck: (kickCookies && kickCookies.lastCheck) || 0
+        },
         aiCohost: {
             enabled: !!(config.aiCohost && config.aiCohost.enabled),
             nombre: config.aiCohost?.nombre || '',
@@ -2814,9 +1181,8 @@ TIMER_COLOR: config.TIMER_COLOR || '#e8825a',
             comando: config.aiCohost?.comando || '!guia',
             proveedores: {
                 groq:       { modelo: config.aiCohost?.proveedores?.groq?.modelo || 'openai/gpt-oss-20b', apiKey: config.aiCohost?.proveedores?.groq?.apiKey ? '***' : '' },
-                cerebras:   { modelo: config.aiCohost?.proveedores?.cerebras?.modelo || 'gpt-oss-120b', apiKey: config.aiCohost?.proveedores?.cerebras?.apiKey ? '***' : '' },
-                openrouter: { modelo: config.aiCohost?.proveedores?.openrouter?.modelo || 'meta-llama/llama-3.1-8b-instruct:free', apiKey: config.aiCohost?.proveedores?.openrouter?.apiKey ? '***' : '' },
-                agnes:      { modelo: config.aiCohost?.proveedores?.agnes?.modelo || 'agnes-2.5-flash', apiKey: config.aiCohost?.proveedores?.agnes?.apiKey ? '***' : '' }
+                cerebras:   { modelo: config.aiCohost?.proveedores?.cerebras?.modelo || 'llama3.1-70b', apiKey: config.aiCohost?.proveedores?.cerebras?.apiKey ? '***' : '' },
+                openrouter: { modelo: config.aiCohost?.proveedores?.openrouter?.modelo || 'meta-llama/llama-3.1-70b-instruct:free', apiKey: config.aiCohost?.proveedores?.openrouter?.apiKey ? '***' : '' }
             }
         }
     });
@@ -2826,21 +1192,6 @@ app.post('/save-config', (req, res) => {
     try {
         const newConfig = req.body;
 
-        // 🛡️ Validación defensiva: body debe ser objeto
-        if (!newConfig || typeof newConfig !== 'object' || Array.isArray(newConfig)) {
-            console.error('❌ [save-config] Body inválido:', typeof newConfig);
-            return res.status(400).json({ success: false, message: '❌ Body inválido' });
-        }
-
-        // 🛡️ Sanear arrays de usuarios (solo strings no vacíos)
-        const sanearArrayStrings = (arr) => {
-            if (!Array.isArray(arr)) return [];
-            return arr
-                .map(s => (typeof s === 'string' ? s.trim() : ''))
-                .filter(s => s.length > 0);
-        };
-
-        // 🛡️ Sanear cuentas de Twitch (cada channels debe ser array de strings)
         if (Array.isArray(newConfig.TWITCH_ACCOUNTS)) {
             newConfig.TWITCH_ACCOUNTS = newConfig.TWITCH_ACCOUNTS.map(acc => ({
                 id: acc.id || ('acc_' + Math.random().toString(36).slice(2, 10)),
@@ -2855,9 +1206,9 @@ app.post('/save-config', (req, res) => {
         if (newConfig.TWITCH_OAUTH_TOKEN) newConfig.TWITCH_OAUTH_TOKEN = normalizarOauth(newConfig.TWITCH_OAUTH_TOKEN);
         if (newConfig.TWITCH_OAUTH_TOKEN_CHAT) newConfig.TWITCH_OAUTH_TOKEN_CHAT = normalizarOauth(newConfig.TWITCH_OAUTH_TOKEN_CHAT);
 
-        newConfig.TIKTOK_USERS  = sanearArrayStrings(newConfig.TIKTOK_USERS);
-        newConfig.KICK_USERS    = sanearArrayStrings(newConfig.KICK_USERS);
-        newConfig.YOUTUBE_USERS = sanearArrayStrings(newConfig.YOUTUBE_USERS);
+        if (!Array.isArray(newConfig.TIKTOK_USERS)) newConfig.TIKTOK_USERS = [];
+        if (!Array.isArray(newConfig.KICK_USERS)) newConfig.KICK_USERS = [];
+        if (!Array.isArray(newConfig.YOUTUBE_USERS)) newConfig.YOUTUBE_USERS = [];
         if (newConfig.TIKTOK_USERS.length > 0) newConfig.TIKTOK_USER_ID = newConfig.TIKTOK_USERS.join(', ');
         if (newConfig.KICK_USERS.length > 0) newConfig.KICK_USERNAME = newConfig.KICK_USERS[0];
         if (newConfig.YOUTUBE_USERS.length > 0) newConfig.YOUTUBE_USER_ID = newConfig.YOUTUBE_USERS.join(', ');
@@ -2866,7 +1217,7 @@ app.post('/save-config', (req, res) => {
         if (!newConfig.PLATFORMS_ENABLED || typeof newConfig.PLATFORMS_ENABLED !== 'object') {
             newConfig.PLATFORMS_ENABLED = {};
         }
-                for (const k of ['tiktok', 'twitch', 'kick', 'youtube', 'velora']) {
+        for (const k of ['tiktok', 'twitch', 'kick', 'youtube']) {
             newConfig.PLATFORMS_ENABLED[k] = newConfig.PLATFORMS_ENABLED[k] !== false;
         }
 
@@ -2874,12 +1225,13 @@ app.post('/save-config', (req, res) => {
             newConfig.TTS = config.TTS || {};
         }
 
+        // 🤖 AI Co-Host — preservar keys si llegan enmascaradas
         if (newConfig.aiCohost && typeof newConfig.aiCohost === 'object') {
             const provs = newConfig.aiCohost.proveedores || {};
-            for (const pid of ['groq', 'cerebras', 'openrouter', 'agnes']) {
+            for (const pid of ['groq', 'cerebras', 'openrouter']) {
                 const actual = provs[pid] || {};
                 const previo = (config.aiCohost?.proveedores?.[pid] || {});
-                if (!actual.apiKey || actual.apiKey === '***' || actual.apiKey === '••••••••') {
+                if (!actual.apiKey || actual.apiKey === '***') {
                     actual.apiKey = previo.apiKey || '';
                 }
                 if (!actual.modelo) {
@@ -2892,40 +1244,36 @@ app.post('/save-config', (req, res) => {
             newConfig.aiCohost = config.aiCohost || {};
         }
 
-         if (typeof newConfig.JAR_META !== 'number' || newConfig.JAR_META < 1) {
+        if (typeof newConfig.JAR_META !== 'number' || newConfig.JAR_META < 1) {
             newConfig.JAR_META = config.JAR_META || 500;
         }
 
-        if (typeof newConfig.CRYSTAL_STYLE !== 'string' || !['jar', 'bar'].includes(newConfig.CRYSTAL_STYLE)) {
-            newConfig.CRYSTAL_STYLE = config.CRYSTAL_STYLE || 'jar';
-        }
-		
-		// ⏱️ TIMER — saneamiento en save-config
-if (typeof newConfig.TIMER_DURACION_MIN !== 'number' || newConfig.TIMER_DURACION_MIN < 5) {
-    newConfig.TIMER_DURACION_MIN = config.TIMER_DURACION_MIN || 240;
-}
-if (!['hora', 'duracion'].includes(newConfig.TIMER_MODO)) {
-    newConfig.TIMER_MODO = config.TIMER_MODO || 'duracion';
-}
-if (typeof newConfig.TIMER_HORA_OBJETIVO !== 'string' || !/^\d{2}:\d{2}$/.test(newConfig.TIMER_HORA_OBJETIVO)) {
-    newConfig.TIMER_HORA_OBJETIVO = config.TIMER_HORA_OBJETIVO || '22:00';
-}
-if (typeof newConfig.TIMER_COLOR !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(newConfig.TIMER_COLOR)) {
-    newConfig.TIMER_COLOR = config.TIMER_COLOR || '#e8825a';
-}
-
-        // 🏳️🌈 PRIDE — preservar si no viene en el body
-        if (!newConfig.PRIDE || typeof newConfig.PRIDE !== 'object') {
-            newConfig.PRIDE = config.PRIDE || { ...PRIDE_DEFAULTS };
+                // 🟢 KICK — preservar cookies al guardar config
+        if (newConfig.kick && typeof newConfig.kick === 'object') {
+            const prev = config.kick || {};
+            if (!newConfig.kick.cookies) {
+                newConfig.kick.cookies = prev.cookies || '';
+            }
+            if (!newConfig.kick.sessionToken) {
+                newConfig.kick.sessionToken = prev.sessionToken || '';
+            }
+            if (!newConfig.kick.username) {
+                newConfig.kick.username = prev.username || '';
+            }
+            if (typeof newConfig.kick.connected !== 'boolean') {
+                newConfig.kick.connected = !!prev.connected;
+            }
+            if (typeof newConfig.kick.lastCheck !== 'number') {
+                newConfig.kick.lastCheck = Number(prev.lastCheck) || 0;
+            }
         } else {
-            newConfig.PRIDE = { ...PRIDE_DEFAULTS, ...(config.PRIDE || {}), ...newConfig.PRIDE };
-        }
-
-        // 🚂 HYPE TRAIN — preservar si no viene en el body
-        if (!newConfig.HYPE_TRAIN || typeof newConfig.HYPE_TRAIN !== 'object') {
-            newConfig.HYPE_TRAIN = config.HYPE_TRAIN || { ...HYPE_TRAIN_DEFAULTS };
-        } else {
-            newConfig.HYPE_TRAIN = { ...HYPE_TRAIN_DEFAULTS, ...(config.HYPE_TRAIN || {}), ...newConfig.HYPE_TRAIN };
+            newConfig.kick = config.kick || {
+                cookies: '',
+                sessionToken: '',
+                username: '',
+                connected: false,
+                lastCheck: 0
+            };
         }
 
         const canalesPlanos = newConfig.TWITCH_ACCOUNTS
@@ -2940,6 +1288,7 @@ if (typeof newConfig.TIMER_COLOR !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(newCo
         config = newConfig;
         console.log(`✅ Config guardado en ${CONFIG_PATH}`);
 
+        // 🤖 Recargar pool de IA con la nueva config
         try {
             aiKeyPool.cargarProveedores(config);
             io.emit('ai-status', aiKeyPool.estadoProveedores());
@@ -2947,9 +1296,6 @@ if (typeof newConfig.TIMER_COLOR !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(newCo
         } catch (e) {
             console.error('❌ Error recargando pool IA:', e.message);
         }
-
-        // 🚂 HYPE TRAIN — notificar config nueva
-        try { hypeTrain.onConfigUpdated(getHypeTrainConfig()); } catch (e) {}
 
         cargarMapaGifts();
 
@@ -3029,12 +1375,6 @@ app.get('/youtube-status', (req, res) => {
 });
 
 // ================================================================
-// 🎛️ STREAMDECK
-// ================================================================
-const deck = require('./deck');
-deck.init(app, io);
-
-// ================================================================
 // 🖼️ RUTAS DE PÁGINAS
 // ================================================================
 app.get('/', (req, res) => res.sendFile(path.join(publicDir, 'panel.html')));
@@ -3043,7 +1383,6 @@ app.get('/overlays', (req, res) => res.sendFile(path.join(publicDir, 'overlays.h
 app.get('/moderation', (req, res) => res.sendFile(path.join(publicDir, 'dashboard.html')));
 app.get('/config', (req, res) => res.sendFile(path.join(publicDir, 'config.html')));
 app.get('/crystal', (req, res) => res.sendFile(path.join(publicDir, 'crystal.html')));
-app.get('/valconfig', (req, res) => res.sendFile(path.join(publicDir, 'valconfig.html')));
 
 app.get('/setup.html', (req, res) => res.sendFile(path.join(publicDir, 'setup.html')));
 
@@ -3221,7 +1560,14 @@ async function warnInTwitch(channelName, username, reason) {
 }
 
 async function executeModCommand(command) {
-    const { action, username, reason, seconds, channel } = command;
+    const { action, username, reason, seconds, channel, platform } = command;
+
+    // 🟢 Si es Kick → usar endpoints internos de Kick
+    if (platform === 'kick') {
+        return executeModCommandKick(command);
+    }
+
+    // 🔴 Si no → flujo Twitch (como antes)
     const targetChannel = channel || getAllTwitchChannels()[0] || '';
     switch (action) {
         case 'ban': await banWithAPI(targetChannel, username, reason); break;
@@ -3229,6 +1575,103 @@ async function executeModCommand(command) {
         case 'timeout': await timeoutWithAPI(targetChannel, username, seconds, reason); break;
         case 'warn': await warnInTwitch(targetChannel, username, reason); break;
         default: console.log('Acción desconocida:', action);
+    }
+}
+
+// ================================================================
+// 🛡️ KICK — Ejecutor de comandos de moderación
+// ================================================================
+async function executeModCommandKick(command) {
+    const { action, username, reason, seconds } = command;
+
+    const user = kickCookies.username || config.KICK_USERNAME || getKickUsers()[0] || '';
+    if (!user) {
+        io.emit('mod-command-result', { success: false, message: '❌ Kick: sin username configurado' });
+        return;
+    }
+
+    if (!username) {
+        io.emit('mod-command-result', { success: false, message: '❌ Kick: falta username' });
+        return;
+    }
+
+    try {
+        if (action === 'ban') {
+            console.log(`🛡️ [KICK-MOD] BAN permanente → @${username}`);
+            const r = await kickRequest(`https://kick.com/api/v2/channels/${user}/bans`, {
+                method: 'POST',
+                body: { banned_username: username, permanent: true, reason: reason || 'Baneado' }
+            });
+            if (r.status >= 200 && r.status < 300) {
+                io.emit('mod-command-result', { success: true, message: `✅ Kick: Baneado ${username}` });
+                io.emit('kick-mod-success', { action: 'ban', username });
+            } else {
+                io.emit('mod-command-result', { success: false, message: `❌ Kick: ${r.status} ${r.data?.message || ''}` });
+            }
+            return;
+        }
+
+        if (action === 'timeout') {
+            const minutos = Math.max(1, Math.round((seconds || 600) / 60));
+            console.log(`🛡️ [KICK-MOD] TIMEOUT ${minutos}min → @${username}`);
+            const r = await kickRequest(`https://kick.com/api/v2/channels/${user}/bans`, {
+                method: 'POST',
+                body: { banned_username: username, permanent: false, duration: minutos, reason: reason || 'Timeout' }
+            });
+            if (r.status >= 200 && r.status < 300) {
+                io.emit('mod-command-result', { success: true, message: `✅ Kick: Timeout ${username} (${minutos}min)` });
+                io.emit('kick-mod-success', { action: 'timeout', username, duration: minutos });
+            } else {
+                io.emit('mod-command-result', { success: false, message: `❌ Kick: ${r.status} ${r.data?.message || ''}` });
+            }
+            return;
+        }
+
+        if (action === 'unban') {
+            console.log(`🛡️ [KICK-MOD] UNBAN → @${username}`);
+            const r = await kickRequest(`https://kick.com/api/v2/channels/${user}/bans/${encodeURIComponent(username)}`, {
+                method: 'DELETE'
+            });
+            if (r.status >= 200 && r.status < 300) {
+                io.emit('mod-command-result', { success: true, message: `✅ Kick: Desbaneado ${username}` });
+                io.emit('kick-mod-success', { action: 'unban', username });
+            } else {
+                io.emit('mod-command-result', { success: false, message: `❌ Kick: ${r.status} ${r.data?.message || ''}` });
+            }
+            return;
+        }
+
+        if (action === 'warn') {
+            // Kick no tiene warn nativo → lo simulamos con log
+            console.log(`⚠️ [KICK-MOD] WARN no soportado en Kick (simulado) → @${username}`);
+            io.emit('mod-command-result', { success: false, message: `⚠️ Kick no tiene "warn". Usá timeout o ban.` });
+            return;
+        }
+
+        if (action === 'delete') {
+            const chatroomId = command.chatroomId;
+            const messageId = command.messageId;
+            if (!chatroomId || !messageId) {
+                io.emit('mod-command-result', { success: false, message: '❌ Kick: faltan chatroomId o messageId' });
+                return;
+            }
+            console.log(`🗑️ [KICK-MOD] DELETE ${messageId}`);
+            const r = await kickRequest(`https://kick.com/api/v2/chatrooms/${chatroomId}/messages/${messageId}`, {
+                method: 'DELETE'
+            });
+            if (r.status >= 200 && r.status < 300) {
+                io.emit('mod-command-result', { success: true, message: `✅ Kick: Mensaje borrado` });
+                io.emit('kick-mod-success', { action: 'delete', messageId });
+            } else {
+                io.emit('mod-command-result', { success: false, message: `❌ Kick: ${r.status}` });
+            }
+            return;
+        }
+
+        io.emit('mod-command-result', { success: false, message: `❌ Kick: acción desconocida "${action}"` });
+    } catch (e) {
+        console.error('❌ [KICK-MOD] Error:', e.message);
+        io.emit('mod-command-result', { success: false, message: `❌ Kick: ${e.message}` });
     }
 }
 
@@ -3387,60 +1830,42 @@ async function connectTwitchChannel(channelName, account) {
 
         client.on('message', async (channel, tags, message, self) => {
             if (self) return;
-
-            // 🏳️🌈 Comando !bandera
-            if (handlePrideCommand(message, 'twitch')) return;
-
             const username = tags['display-name'] || tags.username;
             const canal = channel.replace('#', '');
             console.log(`📩 [TWITCH ${canal}] ${username}: ${message}`);
             const avatar = tags['user-id'] ? await getUserAvatar(tags['user-id'], canal) : null;
-                        const msgData = {
+            const msgData = {
                 platform: 'twitch', channel: canal, username, message,
-                                avatar: avatar || null, color: tags.color || '#bf94ff', timestamp: Date.now(),
-                role: inferRole('twitch', tags),
-                msgId: tags.id || null
+                avatar: avatar || null, color: tags.color || '#bf94ff', timestamp: Date.now()
             };
             if (isDuplicateMessage(msgData)) return;
             io.emit('chat-message', msgData);
-            try { aiCohost.agregarAlaMemoria(username, message, config); } catch (e) {}
+            try { aiCohost.agregarAlaMemoria(username, message); } catch (e) {}
             tryEnqueueTTS({
                 text: `${username} dice: ${message}`,
                 type: 'chat',
                 platform: 'twitch',
                 user: username
             });
-           if (geminiLive.procesarComandoChat(username, message, 'twitch', canal)) return;
+
             procesarCoHost(username, message, 'twitch', canal);
         });
 
-                client.on('cheer', async (channel, tags, message, self) => {
+        client.on('cheer', async (channel, tags, message, self) => {
             if (self) return;
             const username = tags['display-name'] || tags.username;
             const bits = parseInt(tags.bits) || 0;
             totalBits += bits;
-            registrarActividad('twitch');
             io.emit('stats-update', { totalDiamonds, totalBits });
             const canal = channel.replace('#', '');
             const avatar = tags['user-id'] ? await getUserAvatar(tags['user-id'], canal) : null;
             const msgData = {
                 platform: 'twitch', channel: canal, username,
                 message: `🎉 Cheer de ${bits} bits: ${message || '¡Gracias!'}`,
-                                avatar: avatar || null, type: 'cheer', bits, color: '#ffcc00', timestamp: Date.now(),
-                role: inferRole('twitch', tags)
+                avatar: avatar || null, type: 'cheer', bits, color: '#ffcc00', timestamp: Date.now()
             };
             if (isDuplicateMessage(msgData)) return;
             io.emit('chat-message', msgData);
-
-            // 🚂 HYPE TRAIN
-            try {
-                hypeTrain.addGift({
-                    giftName: 'Bits',
-                    points: bits,
-                    username,
-                    platform: 'twitch'
-                });
-            } catch (e) { console.error('❌ [HYPE] Error addGift twitch:', e.message); }
         });
 
         client.on('subscription', async (channel, username, method, message, userstate) => {
@@ -3448,9 +1873,8 @@ async function connectTwitchChannel(channelName, account) {
             const avatar = userstate['user-id'] ? await getUserAvatar(userstate['user-id'], canal) : null;
             const msgData = {
                 platform: 'twitch', channel: canal, username,
-                                message: '🌟 ¡Gracias por suscribirte! 🌟',
-                avatar: avatar || null, type: 'sub', timestamp: Date.now(),
-                role: 'subscriber'
+                message: '🌟 ¡Gracias por suscribirte! 🌟',
+                avatar: avatar || null, type: 'sub', timestamp: Date.now()
             };
             if (isDuplicateMessage(msgData)) return;
             io.emit('chat-message', msgData);
@@ -3461,68 +1885,22 @@ async function connectTwitchChannel(channelName, account) {
             const avatar = userstate['user-id'] ? await getUserAvatar(userstate['user-id'], canal) : null;
             const msgData = {
                 platform: 'twitch', channel: canal, username,
-                                                                message: `🌟 ¡Gracias por resuscribirte (${months} meses)! 🌟`,
-                avatar: avatar || null, type: 'resub', months, timestamp: Date.now(),
-                role: 'subscriber'
+                message: `🌟 ¡Gracias por resuscribirte (${months} meses)! 🌟`,
+                avatar: avatar || null, type: 'sub', months, timestamp: Date.now()
             };
             if (isDuplicateMessage(msgData)) return;
             io.emit('chat-message', msgData);
         });
 
-                client.on('raided', async (channel, username, viewers) => {
+        client.on('raided', async (channel, username, viewers) => {
             const canal = channel.replace('#', '');
             const msgData = {
                 platform: 'twitch', channel: canal, username,
-                                message: `🎮 ¡${viewers} personas se unieron al raid! 🎮`,
-                type: 'raid', viewers, timestamp: Date.now(),
-                role: null
+                message: `🎮 ¡${viewers} personas se unieron al raid! 🎮`,
+                type: 'raid', viewers, timestamp: Date.now()
             };
             if (isDuplicateMessage(msgData)) return;
             io.emit('chat-message', msgData);
-        });
-
-        client.on('subgift', async (channel, username, streakMonths, recipient, methods, userstate) => {
-            const canal = channel.replace('#', '');
-            const avatar = userstate['user-id'] ? await getUserAvatar(userstate['user-id'], canal) : null;
-            const msgData = {
-                platform: 'twitch', channel: canal, username,
-                message: `🎁 Regaló una suscripción a ${recipient}`,
-                avatar: avatar || null, type: 'subgift', months: 1,
-                giftSender: username, recipient,
-                timestamp: Date.now(), role: null
-            };
-            if (isDuplicateMessage(msgData)) return;
-            io.emit('chat-message', msgData);
-        });
-
-        client.on('submysterygift', async (channel, username, numbOfSubs, methods, userstate) => {
-            const canal = channel.replace('#', '');
-            const avatar = userstate['user-id'] ? await getUserAvatar(userstate['user-id'], canal) : null;
-            const msgData = {
-                platform: 'twitch', channel: canal, username,
-                message: `🎁 Regaló ${numbOfSubs} suscripciones a la comunidad`,
-                avatar: avatar || null, type: 'submysterygift',
-                amount: numbOfSubs, giftSender: username,
-                timestamp: Date.now(), role: null
-            };
-            if (isDuplicateMessage(msgData)) return;
-            io.emit('chat-message', msgData);
-        });
-
-        client.on('messagedeleted', async (channel, username, deletedMessage, userstate) => {
-            const canal = channel.replace('#', '');
-            const targetMsgId = userstate['target-msg-id'] || null;
-            if (!targetMsgId) return;
-            io.emit('chat-message', {
-                platform: 'twitch', channel: canal,
-                username,
-                message: '',
-                type: 'delete',
-                targetMsgId,
-                targetUser: username,
-                timestamp: Date.now(),
-                role: null
-            });
         });
 
         await client.connect();
@@ -3572,6 +1950,735 @@ async function reconectarTwitch() {
         }
     }
 }
+
+// ================================================================
+// 🟢 KICK API INTERNA — Cookies + Bearer (NO OAuth)
+// ================================================================
+
+// --- Estado en memoria ---
+let kickCookies = {
+    raw: '',
+    sessionToken: '',
+    username: '',
+    connected: false,
+    lastCheck: 0
+};
+
+function cargarKickCookies() {
+    try {
+        const k = config.kick || {};
+        kickCookies.raw = String(k.cookies || '');
+        kickCookies.sessionToken = String(k.sessionToken || '');
+        kickCookies.username = String(k.username || config.KICK_USERNAME || '');
+        kickCookies.connected = !!k.connected;
+        kickCookies.lastCheck = Number(k.lastCheck) || 0;
+        if (kickCookies.raw || kickCookies.sessionToken) {
+            console.log(`🍪 [KICK] Cookies cargadas para: ${kickCookies.username || '(sin user)'}`);
+        } else {
+            console.log('🍪 [KICK] Sin cookies configuradas todavía');
+        }
+    } catch (e) {
+        console.error('❌ [KICK] Error cargando cookies:', e.message);
+    }
+}
+
+function guardarKickCookies() {
+    try {
+        if (!config.kick || typeof config.kick !== 'object') config.kick = {};
+        config.kick.cookies = kickCookies.raw;
+        config.kick.sessionToken = kickCookies.sessionToken;
+        config.kick.username = kickCookies.username;
+        config.kick.connected = kickCookies.connected;
+        config.kick.lastCheck = kickCookies.lastCheck;
+        fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
+        console.log('💾 [KICK] Cookies guardadas en config.json');
+    } catch (e) {
+        console.error('❌ [KICK] Error guardando cookies:', e.message);
+    }
+}
+
+function extraerSessionToken(cookieString) {
+    if (!cookieString) return '';
+    const match = String(cookieString).match(/(?:^|;\s*)session_token=([^;]+)/);
+    if (!match) return '';
+    return decodeURIComponent(match[1]);
+}
+
+function construirCookieHeader() {
+    if (kickCookies.raw) return kickCookies.raw;
+    if (kickCookies.sessionToken) {
+        return `session_token=${encodeURIComponent(kickCookies.sessionToken)}`;
+    }
+    return '';
+}
+
+function actualizarCookiesDesdeRespuesta(setCookieHeaders) {
+    if (!setCookieHeaders || !Array.isArray(setCookieHeaders)) return;
+    let cambio = false;
+    const mapa = new Map();
+
+    if (kickCookies.raw) {
+        for (const parte of kickCookies.raw.split(';')) {
+            const [k, ...v] = parte.trim().split('=');
+            if (k) mapa.set(k, v.join('='));
+        }
+    }
+
+    for (const sc of setCookieHeaders) {
+        const primera = sc.split(';')[0];
+        const [k, ...v] = primera.trim().split('=');
+        if (k && v.length) {
+            mapa.set(k, v.join('='));
+            cambio = true;
+            if (k === 'session_token') {
+                kickCookies.sessionToken = decodeURIComponent(v.join('='));
+            }
+        }
+    }
+
+    if (cambio) {
+        kickCookies.raw = Array.from(mapa.entries())
+            .map(([k, v]) => `${k}=${v}`)
+            .join('; ');
+        console.log('🔄 [KICK] Cookies renovadas desde Set-Cookie');
+        guardarKickCookies();
+    }
+}
+
+async function kickRequest(url, options = {}) {
+    const method = (options.method || 'GET').toUpperCase();
+
+    const headers = {
+        'Accept': 'application/json, text/plain, */*',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8',
+        'x-app-platform': 'web',
+        'sec-ch-ua': '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
+        'sec-ch-ua-mobile': '?0',
+        'sec-ch-ua-platform': '"Windows"',
+        'sec-fetch-dest': 'empty',
+        'sec-fetch-mode': 'cors',
+        'sec-fetch-site': 'same-origin',
+        ...(options.headers || {})
+    };
+
+    const cookieHeader = construirCookieHeader();
+    if (cookieHeader) headers['Cookie'] = cookieHeader;
+
+    if (kickCookies.sessionToken) {
+        headers['Authorization'] = `Bearer ${kickCookies.sessionToken}`;
+    }
+
+    // 🌐 Origin/Referer según el host del endpoint
+    if (url.includes('dashboard.kick.com')) {
+        headers['Origin'] = 'https://dashboard.kick.com';
+        headers['Referer'] = 'https://dashboard.kick.com/';
+    } else if (url.includes('web.kick.com')) {
+        headers['Origin'] = 'https://kick.com';
+        headers['Referer'] = 'https://kick.com/';
+    } else {
+        headers['Origin'] = 'https://kick.com';
+        headers['Referer'] = 'https://kick.com/';
+    }
+
+    // 📦 Content-Type si mandamos body
+    if (options.body !== undefined && options.body !== null) {
+        headers['Content-Type'] = headers['Content-Type'] || 'application/json';
+    }
+
+    const response = await axios({
+        url,
+        method,
+        headers,
+        data: options.body || undefined,
+        validateStatus: () => true,
+        maxRedirects: 5,
+        timeout: 20000
+    });
+
+    const setCookie = response.headers['set-cookie'];
+    if (setCookie) actualizarCookiesDesdeRespuesta(setCookie);
+
+    return response;
+}
+
+// ================================================================
+// 🟢 CACHÉ DE AVATARES DE KICK (con fallback a la API)
+// ================================================================
+const kickAvatarCache = new Map();
+
+async function getKickUserAvatar(slugOrUsername) {
+    if (!slugOrUsername) return null;
+    const key = String(slugOrUsername).toLowerCase().trim();
+    if (kickAvatarCache.has(key)) {
+        return kickAvatarCache.get(key);
+    }
+
+    // Intento 1: canal de Kick (funciona para streamers registrados)
+    try {
+        const r = await kickRequest(`https://kick.com/api/v2/channels/${encodeURIComponent(key)}`);
+        if (r.status === 200) {
+            const pic = r.data?.user?.profile_pic
+                || r.data?.user?.profile_picture
+                || r.data?.profile_pic
+                || null;
+            if (pic) {
+                kickAvatarCache.set(key, pic);
+                return pic;
+            }
+        }
+    } catch (e) {}
+
+    // Fallback: DiceBear (dibujito único por username, consistente)
+    const dicebear = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(key)}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`;
+    kickAvatarCache.set(key, dicebear);
+    return dicebear;
+}
+
+// ================================================================
+// 🟢 BÚSQUEDA DE CATEGORÍAS KICK (subcategories + cache local)
+// ================================================================
+let kickSubcatCache = {
+    lista: [],
+    cargadaEn: 0,
+    cargando: false
+};
+
+const KICK_SUBCAT_TTL = 12 * 60 * 60 * 1000; // 12 horas
+const KICK_SUBCAT_MAX_PAGES = 50;            // ~500 categorías top
+
+async function cargarSubcategoriasKick() {
+    if (kickSubcatCache.cargando) return;
+    if (kickSubcatCache.lista.length > 0 && (Date.now() - kickSubcatCache.cargadaEn) < KICK_SUBCAT_TTL) {
+        return;
+    }
+
+    kickSubcatCache.cargando = true;
+    console.log('🔄 [KICK] Cargando subcategorías top...');
+
+    const todas = new Map();
+
+    try {
+        for (let page = 1; page <= KICK_SUBCAT_MAX_PAGES; page++) {
+            const r = await kickRequest(`https://kick.com/api/v1/subcategories?page=${page}`);
+            if (r.status !== 200) {
+                console.warn(`⚠️ [KICK] Subcat pág ${page} respondió ${r.status}`);
+                break;
+            }
+
+            const items = r.data?.data || [];
+            if (!Array.isArray(items) || items.length === 0) {
+                console.log(`✅ [KICK] Fin de subcategorías en página ${page}`);
+                break;
+            }
+
+            for (const cat of items) {
+                if (cat && cat.id && cat.name) {
+                    todas.set(cat.id, {
+                        id: cat.id,
+                        name: cat.name,
+                        slug: cat.slug || '',
+                        viewers: cat.viewers || 0
+                    });
+                }
+            }
+
+            await new Promise(res => setTimeout(res, 150));
+        }
+
+        kickSubcatCache.lista = Array.from(todas.values());
+        kickSubcatCache.cargadaEn = Date.now();
+        console.log(`✅ [KICK] Subcategorías cargadas: ${kickSubcatCache.lista.length}`);
+
+    } catch (e) {
+        console.error('❌ [KICK] Error cargando subcategorías:', e.message);
+    } finally {
+        kickSubcatCache.cargando = false;
+    }
+}
+
+app.get('/api/kick/categories', async (req, res) => {
+    try {
+        const q = String(req.query.q || '').trim();
+
+        if (kickSubcatCache.lista.length === 0) {
+            await cargarSubcategoriasKick();
+        }
+
+        // Sin query → primeras 30 (ya vienen ordenadas por viewers)
+        if (!q) {
+            return res.json({
+                ok: true,
+                results: kickSubcatCache.lista.slice(0, 30)
+            });
+        }
+
+        // Filtrar localmente
+        const qNorm = q.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+        const filtradas = kickSubcatCache.lista.filter(cat => {
+            const nombre = String(cat.name).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+            return nombre.includes(qNorm);
+        });
+
+        // Ordenar: primero las que empiezan con la query, y entre esas, por viewers
+        filtradas.sort((a, b) => {
+            const aName = a.name.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+            const bName = b.name.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+            const aStart = aName.startsWith(qNorm) ? 0 : 1;
+            const bStart = bName.startsWith(qNorm) ? 0 : 1;
+            if (aStart !== bStart) return aStart - bStart;
+            return (b.viewers || 0) - (a.viewers || 0);
+        });
+
+        res.json({ ok: true, results: filtradas.slice(0, 30) });
+
+    } catch (e) {
+        console.error('❌ [KICK] Error categorías:', e.message);
+        res.json({ ok: false, error: e.message, results: [] });
+    }
+});
+
+
+// ================================================================
+// 🟢 ENDPOINTS KICK
+// ================================================================
+
+app.post('/api/kick/set-cookies', (req, res) => {
+    try {
+        const { cookies, sessionToken, username } = req.body || {};
+        if (!cookies && !sessionToken) {
+            return res.status(400).json({ ok: false, error: 'Falta cookies o sessionToken' });
+        }
+
+        kickCookies.raw = String(cookies || '');
+        kickCookies.sessionToken = String(sessionToken || extraerSessionToken(kickCookies.raw) || '');
+        kickCookies.username = String(username || kickCookies.username || config.KICK_USERNAME || '').replace(/^@/, '');
+        kickCookies.connected = true;
+        kickCookies.lastCheck = Date.now();
+
+        guardarKickCookies();
+        console.log(`✅ [KICK] Cookies guardadas para: ${kickCookies.username || '(sin user)'}`);
+        res.json({ ok: true, username: kickCookies.username });
+    } catch (e) {
+        console.error('❌ [KICK] Error set-cookies:', e.message);
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+app.get('/api/kick/status', async (req, res) => {
+    try {
+        if (!kickCookies.sessionToken && !kickCookies.raw) {
+            return res.json({ ok: true, connected: false, reason: 'Sin cookies configuradas' });
+        }
+        const user = kickCookies.username || config.KICK_USERNAME || getKickUsers()[0] || '';
+        if (!user) {
+            return res.json({ ok: true, connected: false, reason: 'Sin username de Kick' });
+        }
+
+        const r = await kickRequest(`https://kick.com/api/v2/channels/${user}/stream-info`);
+
+        if (r.status === 200) {
+            kickCookies.connected = true;
+            kickCookies.lastCheck = Date.now();
+            guardarKickCookies();
+            return res.json({
+                ok: true,
+                connected: true,
+                username: user,
+                lastCheck: kickCookies.lastCheck,
+                preview: {
+                    title: r.data?.stream_title || '',
+                    category: r.data?.category?.name || ''
+                }
+            });
+        }
+
+        if (r.status === 401 || r.status === 403) {
+            kickCookies.connected = false;
+            guardarKickCookies();
+            return res.json({ ok: true, connected: false, status: r.status, reason: 'Cookies expiradas o inválidas' });
+        }
+
+        res.json({ ok: true, connected: false, status: r.status, reason: 'Respuesta inesperada de Kick' });
+    } catch (e) {
+        console.error('❌ [KICK] Error status:', e.message);
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+app.get('/api/kick/stream-info', async (req, res) => {
+    try {
+        const user = kickCookies.username || config.KICK_USERNAME || getKickUsers()[0] || '';
+        if (!user) return res.status(400).json({ ok: false, error: 'Sin username de Kick' });
+
+        const r = await kickRequest(`https://kick.com/api/v2/channels/${user}/stream-info`);
+        if (r.status !== 200) {
+            return res.status(r.status).json({ ok: false, error: 'Kick respondió ' + r.status, data: r.data });
+        }
+
+        res.json({
+            ok: true,
+            title: r.data?.stream_title || '',
+            categoryId: r.data?.category?.id || null,
+            categoryName: r.data?.category?.name || '',
+            categorySlug: r.data?.category?.slug || '',
+            isLive: r.data?.is_live,
+            viewerCount: r.data?.viewer_count
+        });
+    } catch (e) {
+        console.error('❌ [KICK] Error stream-info GET:', e.message);
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+app.post('/api/kick/stream-info', async (req, res) => {
+    try {
+        const user = kickCookies.username || config.KICK_USERNAME || getKickUsers()[0] || '';
+        if (!user) return res.status(400).json({ ok: false, error: 'Sin username de Kick' });
+
+        const { title, categoryId } = req.body || {};
+        const payload = {};
+        if (typeof title === 'string' && title.trim()) payload.stream_title = title.trim();
+        if (categoryId !== undefined && categoryId !== null && categoryId !== '') {
+            payload.category_id = Number(categoryId);
+        }
+        if (Object.keys(payload).length === 0) {
+            return res.status(400).json({ ok: false, error: 'Nada que actualizar' });
+        }
+
+        const r = await kickRequest(`https://kick.com/api/v2/channels/${user}/stream-info`, {
+            method: 'PATCH',
+            body: payload
+        });
+
+        if (r.status >= 200 && r.status < 300) {
+            console.log('✅ [KICK] Stream info actualizado:', payload);
+            io.emit('kick-stream-updated', payload);
+            return res.json({ ok: true, data: r.data });
+        }
+
+        console.error('❌ [KICK] PATCH falló:', r.status, r.data);
+        res.status(r.status).json({ ok: false, error: 'Kick respondió ' + r.status, data: r.data });
+    } catch (e) {
+        console.error('❌ [KICK] Error stream-info POST:', e.message);
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+// ================================================================
+// 🎬 KICK CLIPS — Crear + Listar
+// ================================================================
+
+// POST /api/kick/create-clip
+// Body: { title, trim_start (seg), trim_duration (seg) }
+app.post('/api/kick/create-clip', async (req, res) => {
+    try {
+        const { title, trim_start, trim_duration } = req.body || {};
+
+        if (!title || typeof title !== 'string' || !title.trim()) {
+            return res.status(400).json({ ok: false, error: 'Falta title' });
+        }
+        const start = Number(trim_start);
+        const dur = Number(trim_duration);
+        if (!Number.isFinite(start) || start < 0) {
+            return res.status(400).json({ ok: false, error: 'trim_start inválido' });
+        }
+        if (!Number.isFinite(dur) || dur < 1 || dur > 180) {
+            return res.status(400).json({ ok: false, error: 'trim_duration debe estar entre 1 y 180' });
+        }
+
+        console.log(`🎬 [KICK CLIP] Creando: "${title}" start=${start}s dur=${dur}s`);
+
+        const createRes = await kickRequest('https://web.kick.com/api/v1/clips', {
+            method: 'POST',
+            body: JSON.stringify({
+                title: title.trim(),
+                trim_duration: dur,
+                trim_start: start
+            })
+        });
+
+        console.log(`🎬 [KICK CLIP] Crear → ${createRes.status}`);
+        if (createRes.status !== 201 && createRes.status !== 200) {
+            console.error('❌ [KICK CLIP] Fallo al crear:', JSON.stringify(createRes.data));
+            return res.status(createRes.status).json({
+                ok: false,
+                step: 'create',
+                status: createRes.status,
+                kick: createRes.data
+            });
+        }
+
+        const clip = createRes.data?.data;
+        if (!clip || !clip.id || !clip.video?.id) {
+            return res.status(500).json({
+                ok: false,
+                step: 'create-missing-fields',
+                kick: createRes.data
+            });
+        }
+
+        const clipId = clip.id;
+        const videoId = clip.video.id;
+        console.log(`🎬 [KICK CLIP] Clip creado: ${clipId} | video=${videoId}`);
+
+        const finalRes = await kickRequest(
+            `https://web.kick.com/api/v1/clips/${clipId}/finalize`,
+            {
+                method: 'POST',
+                body: JSON.stringify({ video_id: videoId })
+            }
+        );
+
+        console.log(`🎬 [KICK CLIP] Finalizar → ${finalRes.status}`);
+        if (finalRes.status !== 200 && finalRes.status !== 201) {
+            console.error('❌ [KICK CLIP] Fallo al finalizar:', JSON.stringify(finalRes.data));
+            return res.json({
+                ok: true,
+                warning: 'Clip creado pero finalize falló',
+                clip: {
+                    id: clipId,
+                    title: clip.title,
+                    duration: clip.duration,
+                    thumbnail: clip.thumbnail_url,
+                    playback: clip.playback_url,
+                    preview: null
+                }
+            });
+        }
+
+        const finalData = finalRes.data?.data || {};
+        const user = kickCookies.username || config.KICK_USERNAME || getKickUsers()[0] || '';
+
+        const result = {
+            ok: true,
+            clip: {
+                id: clipId,
+                title: clip.title,
+                duration: clip.duration,
+                thumbnail: clip.thumbnail_url,
+                playback: clip.playback_url,
+                preview: finalData.preview_url || null,
+                source_duration: finalData.source_duration || null,
+                url: user ? `https://kick.com/${user}?clip=${clipId}` : null,
+                createdAt: Date.now()
+            }
+        };
+
+        console.log(`✅ [KICK CLIP] OK → ${result.clip.url}`);
+        io.emit('kick-clip-created', result.clip);
+        res.json(result);
+
+    } catch (e) {
+        console.error('❌ [KICK CLIP] Error:', e.message);
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+// GET /api/kick/clips — lista de clips del canal
+app.get('/api/kick/clips', async (req, res) => {
+    try {
+        const user = kickCookies.username || config.KICK_USERNAME || getKickUsers()[0] || '';
+        if (!user) return res.status(400).json({ ok: false, error: 'Sin username de Kick' });
+
+        const r = await kickRequest(`https://kick.com/api/v2/channels/${user}/clips`);
+
+        if (r.status !== 200) {
+            return res.status(r.status).json({
+                ok: false,
+                status: r.status,
+                kick: r.data
+            });
+        }
+
+        const clips = Array.isArray(r.data?.clips) ? r.data.clips : (Array.isArray(r.data) ? r.data : []);
+
+        res.json({
+            ok: true,
+            clips: clips.map(c => ({
+                id: c.id,
+                title: c.title,
+                duration: c.duration,
+                views: c.views_count || c.views || 0,
+                thumbnail: c.thumbnail_url || c.thumbnail || null,
+                playback: c.playback_url || null,
+                createdAt: c.created_at || c.createdAt || null,
+                creator: c.creator?.username || c.creator?.slug || null
+            }))
+        });
+
+    } catch (e) {
+        console.error('❌ [KICK CLIPS] Error listando:', e.message);
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+
+// ================================================================
+// 🛡️ KICK — MODERACIÓN (Ban, Timeout, Unban, Delete Message)
+// Endpoints verificados empíricamente el 2026-09-21
+// ================================================================
+
+// POST /api/kick/mod/ban
+// Body: { username, permanent, duration, reason }
+app.post('/api/kick/mod/ban', async (req, res) => {
+    try {
+        const user = kickCookies.username || config.KICK_USERNAME || getKickUsers()[0] || '';
+        if (!user) return res.status(400).json({ ok: false, error: 'Sin username de Kick' });
+
+        const {
+            username,
+            permanent = false,
+            duration = 5,
+            reason = ''
+        } = req.body || {};
+
+        if (!username) {
+            return res.status(400).json({ ok: false, error: 'Falta username' });
+        }
+
+        const body = {
+            banned_username: String(username).replace(/^@/, '').trim(),
+            permanent: !!permanent
+        };
+
+        if (!permanent) {
+            body.duration = Number(duration);
+            if (!Number.isFinite(body.duration) || body.duration <= 0) {
+                return res.status(400).json({ ok: false, error: 'duration inválida (en minutos)' });
+            }
+        }
+
+        if (reason && String(reason).trim()) {
+            body.reason = String(reason).trim();
+        }
+
+        console.log(`🛡️ [KICK-MOD] ${permanent ? 'BAN PERM' : `TIMEOUT ${body.duration}min`} → @${body.banned_username}`);
+
+        const r = await kickRequest(`https://kick.com/api/v2/channels/${user}/bans`, {
+            method: 'POST',
+            body
+        });
+
+        if (r.status >= 200 && r.status < 300) {
+            console.log('✅ [KICK-MOD] Ban/timeout OK:', r.data);
+            io.emit('kick-mod-success', { action: 'ban', data: r.data });
+            return res.json({ ok: true, data: r.data?.data || r.data });
+        }
+
+        console.error('❌ [KICK-MOD] Error ban:', r.status, r.data);
+        res.status(r.status).json({ ok: false, error: 'Kick respondió ' + r.status, kick: r.data });
+    } catch (e) {
+        console.error('❌ [KICK-MOD] Error en ban:', e.message);
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+// DELETE /api/kick/mod/unban/:username
+app.delete('/api/kick/mod/unban/:username', async (req, res) => {
+    try {
+        const user = kickCookies.username || config.KICK_USERNAME || getKickUsers()[0] || '';
+        if (!user) return res.status(400).json({ ok: false, error: 'Sin username de Kick' });
+
+        const target = String(req.params.username || '').replace(/^@/, '').trim();
+        if (!target) return res.status(400).json({ ok: false, error: 'Falta username' });
+
+        console.log(`🛡️ [KICK-MOD] UNBAN → @${target}`);
+
+        const r = await kickRequest(`https://kick.com/api/v2/channels/${user}/bans/${encodeURIComponent(target)}`, {
+            method: 'DELETE'
+        });
+
+        if (r.status >= 200 && r.status < 300) {
+            console.log('✅ [KICK-MOD] Unban OK:', r.data);
+            io.emit('kick-mod-success', { action: 'unban', username: target, data: r.data });
+            return res.json({ ok: true, data: r.data });
+        }
+
+        console.error('❌ [KICK-MOD] Error unban:', r.status, r.data);
+        res.status(r.status).json({ ok: false, error: 'Kick respondió ' + r.status, kick: r.data });
+    } catch (e) {
+        console.error('❌ [KICK-MOD] Error en unban:', e.message);
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+// GET /api/kick/mod/bans
+app.get('/api/kick/mod/bans', async (req, res) => {
+    try {
+        const user = kickCookies.username || config.KICK_USERNAME || getKickUsers()[0] || '';
+        if (!user) return res.status(400).json({ ok: false, error: 'Sin username de Kick' });
+
+        const r = await kickRequest(`https://kick.com/api/v2/channels/${user}/bans`);
+
+        if (r.status !== 200) {
+            return res.status(r.status).json({ ok: false, error: 'Kick respondió ' + r.status, kick: r.data });
+        }
+
+        const bans = Array.isArray(r.data) ? r.data : [];
+        res.json({
+            ok: true,
+            bans: bans.map(b => ({
+                userId: b.banned_user?.id || null,
+                username: b.banned_user?.username || null,
+                bannedBy: b.banned_by?.username || null,
+                reason: b.ban?.reason || '',
+                permanent: !!b.ban?.permanent,
+                bannedAt: b.ban?.banned_at || null,
+                expiresAt: b.ban?.expires_at || null
+            }))
+        });
+    } catch (e) {
+        console.error('❌ [KICK-MOD] Error listando bans:', e.message);
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+// DELETE /api/kick/mod/message/:messageId
+// Body opcional: { chatroomId }
+app.delete('/api/kick/mod/message/:messageId', async (req, res) => {
+    try {
+        const messageId = String(req.params.messageId || '').trim();
+        if (!messageId) return res.status(400).json({ ok: false, error: 'Falta messageId' });
+
+        const chatroomId = req.body?.chatroomId || req.query.chatroomId || null;
+        if (!chatroomId) {
+            return res.status(400).json({ ok: false, error: 'Falta chatroomId' });
+        }
+
+        console.log(`🛡️ [KICK-MOD] DELETE message ${messageId} en chatroom ${chatroomId}`);
+
+        const r = await kickRequest(`https://kick.com/api/v2/chatrooms/${chatroomId}/messages/${messageId}`, {
+            method: 'DELETE'
+        });
+
+        if (r.status >= 200 && r.status < 300) {
+            console.log('✅ [KICK-MOD] Mensaje borrado');
+            io.emit('kick-mod-success', { action: 'delete-message', messageId });
+            return res.json({ ok: true, data: r.data });
+        }
+
+        console.error('❌ [KICK-MOD] Error delete:', r.status, r.data);
+        res.status(r.status).json({ ok: false, error: 'Kick respondió ' + r.status, kick: r.data });
+    } catch (e) {
+        console.error('❌ [KICK-MOD] Error en delete message:', e.message);
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+
+// --- Cargar cookies al arrancar ---
+cargarKickCookies();
+
+// --- Precargar subcategorías (async, no bloquea) ---
+setTimeout(async () => {
+    try {
+        await cargarSubcategoriasKick();
+    } catch (e) {
+        console.error('❌ [KICK] Error precargando subcategorías:', e.message);
+    }
+}, 2000);
+
 
 // ================================================================
 // 🔥 KICK
@@ -3637,7 +2744,7 @@ async function connectKick() {
         }));
     });
 
-    kickWs.on('message', (raw) => {
+                kickWs.on('message', async (raw) => {
         try {
             const msg = JSON.parse(raw.toString());
 
@@ -3648,17 +2755,24 @@ async function connectKick() {
 
             if (msg.event === 'App\\Events\\ChatMessageEvent') {
                 const payload = typeof msg.data === 'string' ? JSON.parse(msg.data) : msg.data;
-                if (payload && payload.sender && payload.content) {
-                    // 🏳️🌈 Comando !bandera
-                    if (handlePrideCommand(payload.content, 'kick')) return;
 
+
+                if (payload && payload.sender && payload.content) {
                     const kickUsername = payload.sender.username || 'Usuario';
+                    const avatarKick = payload.sender.profile_pic
+                        || await getKickUserAvatar(payload.sender.slug || payload.sender.username)
+                        || KICK_DEFAULT_AVATAR;
+
                     broadcastMessage({
-                        platform: 'kick', channel: kickUser,
+                        platform: 'kick',
+                        channel: kickUser,
                         username: kickUsername,
                         message: payload.content,
-                        avatar: payload.sender.profile_pic || KICK_DEFAULT_AVATAR,
-                        role: inferRole('kick', payload.sender)
+                        avatar: avatarKick,
+                        messageId: payload.id || null,
+                        userId: payload.sender.id || null,
+                        senderSlug: payload.sender.slug || null,
+                        chatroomId: chatroomId || null
                     });
 
                     tryEnqueueTTS({
@@ -3667,7 +2781,7 @@ async function connectKick() {
                         platform: 'kick',
                         user: kickUsername
                     });
-                  if (geminiLive.procesarComandoChat(kickUsername, payload.content, 'kick', kickUser)) return;
+
                     procesarCoHost(kickUsername, payload.content, 'kick', kickUser);
                 }
             }
@@ -3678,25 +2792,9 @@ async function connectKick() {
                     broadcastMessage({
                         platform: 'kick', channel: kickUser,
                         username: payload.sender.username,
-                                                                        message: `🎁 Envió ${payload.gift?.name || 'un regalo'}`,
-                        avatar: payload.sender.profile_pic || KICK_DEFAULT_AVATAR,
-                        role: inferRole('kick', payload.sender),
-                        type: 'gift',
-                        giftName: payload.gift?.name || 'Regalo',
-                        giftAmount: Number(payload.gift?.amount) || 1
+                        message: `🎁 Envió ${payload.gift?.name || 'un regalo'}`,
+                        avatar: payload.sender.profile_pic || KICK_DEFAULT_AVATAR
                     });
-
-                    // 🚂 HYPE TRAIN
-                    try {
-                        const giftName = payload.gift?.name || 'Gift';
-                        const giftAmount = Number(payload.gift?.amount) || 1;
-                        hypeTrain.addGift({
-                            giftName,
-                            points: giftAmount,
-                            username: payload.sender.username,
-                            platform: 'kick'
-                        });
-                    } catch (e) { console.error('❌ [HYPE] Error addGift kick:', e.message); }
                 }
             }
         } catch (e) {}
@@ -3744,24 +2842,6 @@ io.on('connection', (socket) => {
             socket.emit('youtube-canales-ok', { ok: false, error: err.message });
         }
     });
-    socket.on('tiktok-reconnect', async ({ username } = {}) => {
-        try {
-            if (!isPlatformEnabled('tiktok')) {
-                socket.emit('tiktok-reconnect-result', { ok: false, error: 'TikTok deshabilitado' });
-                return;
-            }
-            const user = (username || config.TIKTOK_USER_ID || '').trim().replace(/^@/, '');
-            if (!user) {
-                socket.emit('tiktok-reconnect-result', { ok: false, error: 'Sin username' });
-                return;
-            }
-            await tiktokChat.setUsuarios([user]);
-            socket.emit('tiktok-reconnect-result', { ok: true, username: user });
-            console.log(`🎵 [TIKTOK] Reconectado vía socket a @${user}`);
-        } catch (err) {
-            socket.emit('tiktok-reconnect-result', { ok: false, error: err.message });
-        }
-    });
 
     socket.on('tiktok-get-stats', () => { socket.emit('tiktok-stats-all', tiktokChat.getAllStats()); });
     socket.on('tiktok-reset-stats', (usuario) => { tiktokChat.resetStats(usuario || undefined); });
@@ -3803,71 +2883,10 @@ io.on('connection', (socket) => {
         }
     });
 
-    // ============================================================
-    //  🏳️🌈 PRIDE — Socket.io
-    // ============================================================
-    socket.on('pride:show', (data = {}) => {
-        const payload = {
-            id: data.id || null,
-            nombre: data.nombre || null,
-            ts: Date.now()
-        };
-        io.emit('pride:show', payload);
-        console.log('🏳️🌈 [PRIDE] pride:show →', payload);
-    });
-
-    // ============================================================
-    //  🚂 HYPE TRAIN — Socket.io
-    // ============================================================
-    socket.emit('hype-train:config', getHypeTrainConfig());
-    socket.emit('hype-train:update', hypeTrain.getState());
-
-    socket.on('hype-train:request-config', () => {
-        socket.emit('hype-train:config', getHypeTrainConfig());
-        socket.emit('hype-train:update', hypeTrain.getState());
-    });
-
-    socket.on('hype-train:ended', (data = {}) => {
-        console.log('🚂 [HYPE] Cliente reportó fin:', data);
-        io.emit('hype-train:end', data);
-    });
-
     socket.emit('ai-status', aiKeyPool.estadoProveedores());
-
-    // Enviar config actual de Pride al conectar
-    socket.emit('pride:config-updated', getPrideConfig());
 
     socket.on('disconnect', () => { console.log(`💻 Navegador desconectado: ${socket.id}`); });
 });
-
-// ================================================================
-// 📼 DETECCIÓN DE FIN DE SESIÓN POR INACTIVIDAD
-// ================================================================
-const SESSION_IDLE_MS = 30 * 60 * 1000; // 30 minutos
-const lastActivityByPlatform = { tiktok: 0, twitch: 0, kick: 0, youtube: 0, velora: 0 };
-
-const _registrarActividadOriginal = registrarActividad;
-registrarActividad = function(plataforma) {
-    if (plataforma && lastActivityByPlatform[plataforma] !== undefined) {
-        lastActivityByPlatform[plataforma] = Date.now();
-    }
-    _registrarActividadOriginal(plataforma);
-};
-
-setInterval(() => {
-    if (!sessionState.activa) return;
-
-    const ahora = Date.now();
-    const plataformasConActividad = Object.values(lastActivityByPlatform).filter(t => t > 0);
-    const ultimaActividad = plataformasConActividad.length > 0
-        ? Math.max(...plataformasConActividad)
-        : sessionState.inicio;
-
-    if (ahora - ultimaActividad > SESSION_IDLE_MS) {
-        console.log('📼 [SESIÓN] Detectada inactividad prolongada, cerrando sesión...');
-        cerrarSesion('inactividad');
-    }
-}, 60000);
 
 // ================================================================
 // 🛑 CIERRE LIMPIO
@@ -3878,16 +2897,12 @@ async function shutdown(reason = 'unknown') {
     shuttingDown = true;
     console.log(`\n🛑 Cerrando servidor (${reason})...`);
 
-        try { guardarJarState(); } catch (e) {}
-    try { hypeTrain.destroy(); } catch (e) {}
-	try { guardarTimerState(); } catch (e) {}
-    try { cerrarSesion('shutdown'); } catch (e) {}
+    try { guardarJarState(); } catch (e) {}
 
     if (kickWs) { try { kickWs.close(); } catch {} try { kickWs.terminate(); } catch {} }
     if (kickReconnectTimer) clearTimeout(kickReconnectTimer);
     try { tiktokChat.detenerTodo(); } catch {}
     try { youtubeChat.stopAll(); } catch {}
-    try { await tiktokProxy.stop(); } catch (e) {}
 
     for (const [key, entry] of twitchChannels.entries()) {
         try { await entry.client.disconnect(); } catch {}

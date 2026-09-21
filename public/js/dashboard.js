@@ -53,27 +53,16 @@ function getFlagByLang(lang) {
   return flags[lang] || '🌐';
 }
 
-/* ════════════════════════════════════════════════════════════
-   DETECCIÓN DE IDIOMA MEJORADA
-   ════════════════════════════════════════════════════════════ */
 function detectLanguage(text) {
   if (!text) return 'en';
   const clean = String(text).trim();
   if (clean.length === 0) return 'en';
-
-  // Solo números / símbolos / puntuación → no traducir
   if (/^[\d\s.,!?¿¡@#$%^&*()_\-+=\[\]{};:'"<>/\\|`~]+$/.test(clean)) return 'es';
-
-  // Solo emojis → no traducir
   try {
     if (/^[\p{Emoji}\p{Emoji_Component}\s]+$/u.test(clean)) return 'es';
   } catch (e) {}
-
-  // Menos de 3 palabras → no traducir (gg, hola, jaja)
   const words = clean.toLowerCase().split(/\s+/).filter(Boolean);
   if (words.length < 3) return 'es';
-
-  // Alfabetos no latinos
   if (/[\u3040-\u30FF]/.test(clean)) return 'ja';
   if (/[\u4E00-\u9FFF]/.test(clean)) return 'zh-CN';
   if (/[\uAC00-\uD7AF]/.test(clean)) return 'ko';
@@ -81,11 +70,7 @@ function detectLanguage(text) {
   if (/[\u0400-\u04FF]/.test(clean)) return 'ru';
   if (/[ăâđêôơư]/i.test(clean)) return 'vi';
   if (/[\u0E00-\u0E7F]/.test(clean)) return 'th';
-
-  // Caracteres típicos español → español
   if (/[ñáéíóúü¿¡]/i.test(clean)) return 'es';
-
-  // Diccionario español
   const spanishWords = [
     'el','la','los','las','un','una','unos','unas','es','son','está','están','estoy','estás','estamos',
     'y','o','pero','porque','qué','cómo','dónde','quién','cuándo','cuál',
@@ -98,7 +83,6 @@ function detectLanguage(text) {
   ];
   const spanishHits = words.filter(w => spanishWords.includes(w)).length;
   if (spanishHits >= 1 && (spanishHits / words.length) >= 0.25) return 'es';
-
   return 'en';
 }
 
@@ -188,14 +172,12 @@ function isDuplicateMessage(msg) {
   const last = recentMessages.get(key);
   if (last && (now - last) < 8000) return true;
   recentMessages.set(key, now);
-
   if (recentMessages.size > 500) {
     const cutoff = now - 8000;
     for (const [k, t] of recentMessages) {
       if (t < cutoff) recentMessages.delete(k);
     }
   }
-
   return false;
 }
 
@@ -1054,9 +1036,6 @@ function renderTablasYouTube() {
   renderTabla('topChattersTable', chattersArr, 'count', '💬');
 }
 
-/* ════════════════════════════════════════════════════════════
-   TABLAS CON ICONOS REMIXICON (sin emojis)
-   ════════════════════════════════════════════════════════════ */
 function renderTabla(tbodyId, datos, campoValor, emoji) {
   const tbody = document.getElementById(tbodyId);
   if (!tbody) return;
@@ -1163,9 +1142,6 @@ function resolvePrediction(index) {
   socket.emit('resolve-twitch-prediction', { predictionId: currentPrediction.id, winningOutcomeId: winningId });
 }
 
-/* ════════════════════════════════════════════════════════════
-   ADD MESSAGE TO FEED — Joins mini-pill + timestamp + auto-clean
-   ════════════════════════════════════════════════════════════ */
 function addMessageToFeed(msg) {
   if (!msg || !msg.username) return;
   const feed = document.getElementById('liveChat');
@@ -1178,7 +1154,6 @@ function addMessageToFeed(msg) {
   const emptyMsg = feed.querySelector('.chat-empty');
   if (emptyMsg) emptyMsg.remove();
 
-  // ─── Mensaje "se unió" (mini-pill verde) ───
   if (isJoin) {
     const entry = document.createElement('div');
     entry.className = `chat-message join-message platform-${platform}`;
@@ -1215,7 +1190,6 @@ function addMessageToFeed(msg) {
     return;
   }
 
-  // ─── Mensaje normal ───
   const entry = document.createElement('div');
   entry.className = `chat-message platform-${platform}`;
   entry.dataset.timestamp = Date.now();
@@ -1242,20 +1216,37 @@ function addMessageToFeed(msg) {
     <div class="message">...</div>
   `;
 
-  const modActions = document.createElement('div');
+    const modActions = document.createElement('div');
   modActions.className = 'mod-actions';
-  modActions.innerHTML = `
-    <button class="mod-btn" data-mod-action="ban"><i class="ri-forbid-2-line"></i></button>
-    <button class="mod-btn" data-mod-action="timeout"><i class="ri-time-line"></i></button>
-    <button class="mod-btn" data-mod-action="warn"><i class="ri-alert-line"></i></button>
-  `;
+
+  const msgPlatform = (msg.platform || 'twitch').toLowerCase();
+
+  // 🟢 Para Kick: botones distintos (Ban / Timeout / Unban / Delete)
+  if (msgPlatform === 'kick') {
+    modActions.innerHTML = `
+      <button class="mod-btn" data-mod-action="ban" title="Ban permanente"><i class="ri-forbid-2-line"></i></button>
+      <button class="mod-btn" data-mod-action="timeout" title="Timeout 10min"><i class="ri-time-line"></i></button>
+      <button class="mod-btn" data-mod-action="unban" title="Unban"><i class="ri-checkbox-circle-line"></i></button>
+      <button class="mod-btn" data-mod-action="delete" title="Borrar mensaje"><i class="ri-delete-bin-line"></i></button>
+    `;
+  } else {
+    modActions.innerHTML = `
+      <button class="mod-btn" data-mod-action="ban" title="Ban"><i class="ri-forbid-2-line"></i></button>
+      <button class="mod-btn" data-mod-action="timeout" title="Timeout"><i class="ri-time-line"></i></button>
+      <button class="mod-btn" data-mod-action="warn" title="Advertir"><i class="ri-alert-line"></i></button>
+    `;
+  }
+
   modActions.querySelectorAll('[data-mod-action]').forEach(btn => {
     btn.addEventListener('click', () => {
       const action = btn.dataset.modAction;
       const username = msg.username;
-      if (action === 'ban') quickBan(username);
-      else if (action === 'timeout') quickTimeout(username);
-      else if (action === 'warn') quickWarn(username);
+      const platform = msgPlatform;
+      if (action === 'ban') quickBan(username, platform);
+      else if (action === 'timeout') quickTimeout(username, platform);
+      else if (action === 'warn') quickWarn(username, platform);
+      else if (action === 'unban') quickUnban(username, platform);
+      else if (action === 'delete') quickDelete(msg.messageId, msg.chatroomId);
     });
   });
 
@@ -1271,7 +1262,6 @@ function addMessageToFeed(msg) {
 
     const messageEl = contentDiv.querySelector('.message');
 
-  // Si el mensaje trae emotes parseados, render directo (sin traducir)
   if (Array.isArray(msg.parts) && msg.parts.length > 0) {
     messageEl.innerHTML = msg.parts.map(p => {
       if (p.type === 'emote') {
@@ -1295,9 +1285,6 @@ function addMessageToFeed(msg) {
   }
 }
 
-/* ════════════════════════════════════════════════════════════
-   AUTO-LIMPIEZA DE MENSAJES (>5 min)
-   ════════════════════════════════════════════════════════════ */
 const MENSAJE_MAX_EDAD_MS = 5 * 60 * 1000;
 const LIMPIEZA_INTERVALO_MS = 30 * 1000;
 
@@ -1326,9 +1313,27 @@ function updateStats() {
 }
 
 function getChannel() { return document.getElementById('actionChannelSelect').value; }
-function quickBan(u) { socket.emit('mod-command', { action: 'ban', username: u, reason: 'Ban rápido', channel: getChannel() }); stats.bans++; stats.actions++; updateStats(); }
-function quickTimeout(u) { socket.emit('mod-command', { action: 'timeout', username: u, seconds: 600, channel: getChannel() }); stats.actions++; updateStats(); }
-function quickWarn(u) { socket.emit('mod-command', { action: 'warn', username: u, channel: getChannel() }); stats.actions++; updateStats(); }
+
+function quickBan(u, platform) {
+  socket.emit('mod-command', { action: 'ban', username: u, reason: 'Ban rápido', channel: getChannel(), platform: platform || 'twitch' });
+  stats.bans++; stats.actions++; updateStats();
+}
+function quickTimeout(u, platform) {
+  socket.emit('mod-command', { action: 'timeout', username: u, seconds: 600, channel: getChannel(), platform: platform || 'twitch' });
+  stats.actions++; updateStats();
+}
+function quickWarn(u, platform) {
+  socket.emit('mod-command', { action: 'warn', username: u, channel: getChannel(), platform: platform || 'twitch' });
+  stats.actions++; updateStats();
+}
+function quickUnban(u, platform) {
+  socket.emit('mod-command', { action: 'unban', username: u, channel: getChannel(), platform: platform || 'twitch' });
+  stats.actions++; updateStats();
+}
+function quickDelete(messageId, chatroomId) {
+  socket.emit('mod-command', { action: 'delete', messageId, chatroomId, platform: 'kick' });
+  stats.actions++; updateStats();
+}
 
 function banUser() {
   const u = document.getElementById('username').value;
@@ -1398,6 +1403,232 @@ function changeTitle() {
   socket.emit('change-title', { channel: getSelectedChannel(), title });
 }
 
+let kickDashCategories = [];
+
+function escapeHtmlKickDash(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
+
+async function kickDashInit() {
+  const badge = document.getElementById('kickDashBadge');
+  const info = document.getElementById('kickDashInfo');
+  const box = document.getElementById('kickStreamInfoBox');
+  const editor = document.getElementById('kickDashEditor');
+  const notConnected = document.getElementById('kickDashNotConnected');
+
+  if (!badge) return;
+
+  try {
+    const r = await fetch(`${window.SERVER_BASE}/api/kick/status`);
+    const data = await r.json();
+
+    if (data.connected) {
+      badge.textContent = 'CONECTADO';
+      badge.style.background = 'rgba(83, 252, 24, 0.12)';
+      badge.style.color = '#53fc18';
+      badge.style.borderColor = 'rgba(83, 252, 24, 0.4)';
+
+      info.textContent = `Cuenta: ${data.username || 'togikirei'}`;
+      info.style.color = 'var(--text)';
+
+      if (box) box.style.display = 'flex';
+      if (editor) editor.style.display = 'block';
+      if (notConnected) notConnected.style.display = 'none';
+
+      kickDashRecargar();
+    } else {
+      badge.textContent = 'NO CONECTADO';
+      badge.style.background = '';
+      badge.style.color = '';
+      badge.style.borderColor = '';
+
+      info.textContent = data.reason || 'Sin cuenta de Kick conectada.';
+      info.style.color = 'var(--text-muted)';
+
+      if (box) box.style.display = 'none';
+      if (editor) editor.style.display = 'none';
+      if (notConnected) notConnected.style.display = 'block';
+    }
+  } catch (e) {
+    badge.textContent = 'ERROR';
+    info.textContent = 'No se pudo consultar el estado de Kick: ' + e.message;
+    info.style.color = 'var(--danger)';
+  }
+}
+
+async function kickDashRecargar() {
+  try {
+    const r = await fetch(`${window.SERVER_BASE}/api/kick/stream-info`);
+    const data = await r.json();
+    if (!data.ok) return;
+
+    const t = document.getElementById('kickCurrentTitle');
+    const c = document.getElementById('kickCurrentCategory');
+    const titleInput = document.getElementById('kickDashTitle');
+
+    if (t) t.textContent = data.title || '(sin título)';
+    if (c) c.textContent = data.categoryName ? `${data.categoryName} · ${data.categoryId || ''}` : '(sin categoría)';
+    if (titleInput && !titleInput.matches(':focus')) titleInput.value = data.title || '';
+  } catch (e) {
+    console.error('Kick recargar error:', e);
+  }
+}
+
+async function kickDashChangeTitle() {
+  const titleInput = document.getElementById('kickDashTitle');
+  const resultEl = document.getElementById('kickDashTitleResult');
+  const title = (titleInput?.value || '').trim();
+
+  if (!title) {
+    resultEl.innerHTML = '<span style="color:var(--warning)">Escribe un título</span>';
+    return;
+  }
+
+  resultEl.innerHTML = '<span style="color:var(--text-dim)">Cambiando…</span>';
+
+  try {
+    const r = await fetch(`${window.SERVER_BASE}/api/kick/stream-info`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title })
+    });
+    const data = await r.json();
+
+    if (data.ok) {
+      resultEl.innerHTML = '<span style="color:var(--success)">✅ Título actualizado en Kick</span>';
+      setTimeout(kickDashRecargar, 500);
+    } else {
+      resultEl.innerHTML = `<span style="color:var(--danger)">❌ ${escapeHtmlKickDash(data.error || 'Error desconocido')}</span>`;
+    }
+  } catch (e) {
+    resultEl.innerHTML = `<span style="color:var(--danger)">❌ ${escapeHtmlKickDash(e.message)}</span>`;
+  }
+}
+
+let kickDashSearchTimer = null;
+
+function kickDashSearchCategory(q) {
+  clearTimeout(kickDashSearchTimer);
+  const dd = document.getElementById('kickDashCategoryDropdown');
+
+  q = (q || '').trim();
+  if (q.length < 2) {
+    dd.classList.remove('open');
+    kickDashCategories = [];
+    return;
+  }
+
+  kickDashSearchTimer = setTimeout(async () => {
+    try {
+      const r = await fetch(`${window.SERVER_BASE}/api/kick/categories?q=${encodeURIComponent(q)}`);
+      const data = await r.json();
+
+      if (!data.ok || !Array.isArray(data.results) || data.results.length === 0) {
+        dd.innerHTML = '<div class="category-empty">Sin resultados</div>';
+        dd.classList.add('open');
+        kickDashCategories = [];
+        return;
+      }
+
+      kickDashCategories = data.results;
+
+      dd.innerHTML = data.results.map((cat, i) => `
+        <div class="category-item" onclick="kickDashPickCategory(${i})">
+          <div style="width:26px;height:36px;border-radius:3px;background:var(--bg-hover);display:flex;align-items:center;justify-content:center;">
+            <i class="ri-live-fill" style="color:#53fc18;opacity:0.6;"></i>
+          </div>
+          <div class="category-item-info">
+            <div class="category-item-name">${escapeHtmlKickDash(cat.name)}</div>
+            <div class="category-item-id">ID: ${cat.id}</div>
+          </div>
+        </div>
+      `).join('');
+      dd.classList.add('open');
+    } catch (e) {
+      dd.innerHTML = `<div class="category-empty">Error: ${escapeHtmlKickDash(e.message)}</div>`;
+      dd.classList.add('open');
+    }
+  }, 300);
+}
+
+function kickDashPickCategory(i) {
+  const cat = kickDashCategories[i];
+  if (!cat) return;
+  document.getElementById('kickDashCategorySearch').value = cat.name;
+  document.getElementById('kickDashSelectedCategoryId').value = cat.id;
+  document.getElementById('kickDashSelectedCategoryName').value = cat.name;
+  document.getElementById('kickDashCategoryDropdown').classList.remove('open');
+}
+
+async function kickDashChangeCategory() {
+  const id = document.getElementById('kickDashSelectedCategoryId').value;
+  const name = document.getElementById('kickDashSelectedCategoryName').value;
+  const resultEl = document.getElementById('kickDashCategoryResult');
+
+  if (!id) {
+    resultEl.innerHTML = '<span style="color:var(--warning)">Selecciona una categoría de la lista</span>';
+    return;
+  }
+
+  resultEl.innerHTML = '<span style="color:var(--text-dim)">Cambiando…</span>';
+
+  try {
+    const r = await fetch(`${window.SERVER_BASE}/api/kick/stream-info`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ categoryId: Number(id) })
+    });
+    const data = await r.json();
+
+    if (data.ok) {
+      resultEl.innerHTML = `<span style="color:var(--success)">✅ Categoría cambiada a "${escapeHtmlKickDash(name)}"</span>`;
+      setTimeout(kickDashRecargar, 500);
+    } else {
+      resultEl.innerHTML = `<span style="color:var(--danger)">❌ ${escapeHtmlKickDash(data.error || 'Error desconocido')}</span>`;
+    }
+  } catch (e) {
+    resultEl.innerHTML = `<span style="color:var(--danger)">❌ ${escapeHtmlKickDash(e.message)}</span>`;
+  }
+}
+
+document.addEventListener('click', (e) => {
+  const dd = document.getElementById('kickDashCategoryDropdown');
+  const input = document.getElementById('kickDashCategorySearch');
+  if (!dd || !input) return;
+  if (!dd.contains(e.target) && e.target !== input) dd.classList.remove('open');
+});
+
+// ============================================
+// PESTAÑAS DE PLATAFORMA (Twitch / Kick)
+// ============================================
+const LS_KEY_PLATFORM_TAB = 'dashboard:platformTab';
+
+function cambiarTabPlataforma(platform) {
+  const tabs = document.querySelectorAll('.platform-tab');
+  const contents = document.querySelectorAll('.platform-tab-content');
+
+  tabs.forEach(t => t.classList.toggle('active', t.dataset.platform === platform));
+
+  contents.forEach(c => c.classList.add('hidden'));
+  const target = document.getElementById(`tab-content-${platform}`);
+  if (target) target.classList.remove('hidden');
+
+  try { localStorage.setItem(LS_KEY_PLATFORM_TAB, platform); } catch (e) {}
+
+  console.log(`🔄 Pestaña cambiada a: ${platform}`);
+}
+
+function initPlatformTabs() {
+  let saved = 'twitch';
+  try {
+    const s = localStorage.getItem(LS_KEY_PLATFORM_TAB);
+    if (s === 'twitch' || s === 'kick') saved = s;
+  } catch (e) {}
+  cambiarTabPlataforma(saved);
+}
+
 // ============================================
 // INICIALIZACIÓN
 // ============================================
@@ -1409,6 +1640,112 @@ renderTablasTikTok();
 renderTablasYouTube();
 applyLayout();
 initSidebar();
+initPlatformTabs();
 
 loadTikTokViews().then(() => loadTikTokView());
 setupTikTokRefreshShortcuts();
+
+kickDashInit();
+setInterval(kickDashInit, 30000);
+
+// ================================================================
+// 🎬 KICK — Crear Clip vía navegador
+// ================================================================
+(function initKickClipCreator() {
+    const btnOpen = document.getElementById('kickCreateClipBtn');
+    const modal = document.getElementById('kickClipModal');
+    const inputTitle = document.getElementById('kickClipTitle');
+    const btnCancel = document.getElementById('kickClipCancel');
+    const btnCreate = document.getElementById('kickClipCreate');
+    const status = document.getElementById('kickClipStatus');
+    const result = document.getElementById('kickClipResult');
+
+    if (!btnOpen || !modal) {
+        console.warn('⚠️ [KICK-CLIP] No encontré los elementos del modal en el DOM');
+        return;
+    }
+
+    function abrirModal() {
+        inputTitle.value = '';
+        status.textContent = '';
+        btnCreate.disabled = false;
+        btnCreate.textContent = 'Crear';
+        modal.style.display = 'flex';
+        setTimeout(() => inputTitle.focus(), 100);
+    }
+
+    function cerrarModal() {
+        modal.style.display = 'none';
+    }
+
+    btnOpen.addEventListener('click', abrirModal);
+    btnCancel.addEventListener('click', cerrarModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) cerrarModal();
+    });
+
+    btnCreate.addEventListener('click', async () => {
+        const titulo = inputTitle.value.trim();
+        if (!titulo) {
+            status.textContent = '⚠️ El título es obligatorio';
+            status.style.color = '#ffb800';
+            return;
+        }
+
+        btnCreate.disabled = true;
+        btnCreate.textContent = '⏳ Creando...';
+        status.textContent = 'Esto puede tardar 10-15 segundos...';
+        status.style.color = '#a0a5ab';
+
+        try {
+            const cfg = await fetch('/get-config').then(r => r.json());
+            const username = cfg.KICK_USERS?.[0] || cfg.KICK_USERNAME || '';
+
+            if (!username) {
+                throw new Error('No hay usuario de Kick configurado');
+            }
+
+            if (!ipcRenderer) {
+                throw new Error('ipcRenderer no está disponible (¿nodeIntegration desactivado?)');
+            }
+
+            console.log('🎬 [KICK-CLIP] Invocando IPC con:', { titulo, username });
+
+            const r = await ipcRenderer.invoke('kick:create-clip-via-browser', {
+                title: titulo,
+                username: username
+            });
+
+            console.log('🎬 [KICK-CLIP] Respuesta del main:', r);
+
+            if (!r.ok) {
+                throw new Error(r.error || 'Error desconocido');
+            }
+
+            status.textContent = '✅ Clip creado correctamente';
+            status.style.color = '#53fc18';
+            btnCreate.textContent = '✅ Hecho';
+
+            if (result) {
+                result.textContent = '✅ Clip creado. Aparecerá en kick.com en unos segundos.';
+                result.style.color = '#53fc18';
+                result.style.display = 'block';
+            }
+
+            setTimeout(cerrarModal, 2000);
+
+        } catch (err) {
+            console.error('❌ [KICK-CLIP] Error:', err);
+            status.textContent = '❌ ' + err.message;
+            status.style.color = '#ff4757';
+            btnCreate.disabled = false;
+            btnCreate.textContent = 'Reintentar';
+
+            if (result) {
+                result.textContent = '❌ Error: ' + err.message;
+                result.style.color = '#ff4757';
+                result.style.display = 'block';
+            }
+        }
+    });
+})();

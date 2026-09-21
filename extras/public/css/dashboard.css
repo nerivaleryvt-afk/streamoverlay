@@ -1250,3 +1250,86 @@ input:focus, select:focus {
     color: black;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   PESTAÑAS DE PLATAFORMA (Twitch / Kick)
+   ═══════════════════════════════════════════════════════════ */
+
+.platform-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  padding: 3px;
+}
+
+.platform-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--r-pill);
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+}
+
+.platform-tab i {
+  font-size: 13px;
+  transition: transform 0.18s, color 0.18s;
+}
+
+.platform-tab:hover {
+  color: var(--text);
+  background: var(--bg-hover);
+}
+.platform-tab:hover i { transform: scale(1.1); }
+
+/* Estado activo — Twitch */
+.platform-tab[data-platform="twitch"].active {
+  background: rgba(167, 139, 250, 0.15);
+  border-color: rgba(167, 139, 250, 0.45);
+  color: #a78bfa;
+  box-shadow: 0 0 12px rgba(167, 139, 250, 0.25);
+}
+.platform-tab[data-platform="twitch"].active i { color: #a78bfa; }
+
+/* Estado activo — Kick */
+.platform-tab[data-platform="kick"].active {
+  background: rgba(83, 252, 24, 0.12);
+  border-color: rgba(83, 252, 24, 0.45);
+  color: #53fc18;
+  box-shadow: 0 0 12px rgba(83, 252, 24, 0.25);
+}
+.platform-tab[data-platform="kick"].active i { color: #53fc18; }
+
+.header-sep {
+  width: 1px;
+  height: 22px;
+  background: var(--border-strong);
+  margin: 0 6px;
+  flex-shrink: 0;
+}
+
+/* Contenido de cada tab */
+.platform-tab-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: tabFadeIn 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.platform-tab-content.hidden { display: none; }
+
+@keyframes tabFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

@@ -139,22 +139,34 @@
   </div>
 </div>
 
+<!-- ✅ PRIMERO server-url.js (define window.SERVER_BASE) -->
+<script src="/js/server-url.js"></script>
+<!-- ✅ DESPUÉS socket.io -->
 <script src="/socket.io/socket.io.js"></script>
 <script>
   // ============================================================
   //  CONFIGURACIÓN (se puede sobreescribir desde el servidor)
   // ============================================================
   const CONFIG = {
-    mode: 'rotate',           // 'rotate' | 'fixed' | 'chat'
-    fixedId: 'pride',         // bandera fija cuando mode === 'fixed'
-    rotateMs: 6000,           // tiempo por bandera
-    folder: 'HD 1080p',       // 'HD 1080p' | '512px Icons' | '32px Full Palette' | '16px Full Palette' | '16px Pico 8 Palette'
+    mode: 'rotate',
+    fixedId: 'pride',
+    rotateMs: 6000,
+    folder: 'HD 1080p',
     showName: true,
     showMeaning: true,
     showColors: true,
-    soloBandera: false,       // si true, oculta todo el texto
-    enabled: null             // array de ids a mostrar, null = todas
+    soloBandera: false,
+    enabled: null
   };
+
+  // ============================================================
+  //  HELPERS DE URL
+  // ============================================================
+  function apiUrl(path) {
+    const base = window.SERVER_BASE || window.location.origin || 'http://127.0.0.1:3000';
+    const clean = path.startsWith('/') ? path : '/' + path;
+    return base.replace(/\/$/, '') + clean;
+  }
 
   // ============================================================
   //  CARGA DE DATOS
@@ -172,21 +184,21 @@
   const meanEl    = document.getElementById('meaning');
   const colorsEl  = document.getElementById('colors');
 
-  // Codifica la carpeta para URL
   function folderPath() {
     return '/img/Pride%20Flags/' + encodeURIComponent(CONFIG.folder) + '/';
   }
 
   async function cargar() {
     try {
-      const r = await fetch('/pride-explain.json');
+      const r = await fetch(apiUrl('/pride-explain.json'));
+      if (!r.ok) throw new Error('HTTP ' + r.status);
       EXPLAIN = await r.json();
+      console.log('[pride] cargadas', Object.keys(EXPLAIN).length, 'banderas');
     } catch (e) {
-      console.error('No se pudo cargar pride-explain.json', e);
+      console.error('[pride] No se pudo cargar pride-explain.json:', e);
       return;
     }
 
-    // Orden fijo de presentación
     const orden = [
       'pride', 'progress-pride', 'intersex-progress-pride',
       'trans-pride', 'non-binary-pride', 'genderfluid-pride',
@@ -204,7 +216,7 @@
       .map(id => ({ id, ...EXPLAIN[id] }));
 
     if (ITEMS.length === 0) {
-      console.warn('No hay banderas para mostrar');
+      console.warn('[pride] No hay banderas para mostrar');
       hideCard();
       return;
     }
@@ -217,7 +229,7 @@
   // ============================================================
   function render(item) {
     if (!item || !item.file) {
-      console.warn('render() sin item válido, ignorando');
+      console.warn('[pride] render() sin item válido, ignorando');
       return;
     }
 
@@ -269,7 +281,6 @@
     }
 
     if (CONFIG.mode === 'chat') {
-      // no rota; se queda oculto hasta que llegue un !bandera
       hideCard();
       return;
     }
@@ -292,7 +303,16 @@
   // ============================================================
   //  SOCKET.IO — comandos del chat
   // ============================================================
-  const socket = io();
+  // ✅ Socket conectado a SERVER_BASE explícito (evita problemas de localhost/::1)
+  const socket = io(window.SERVER_BASE || undefined, {
+    transports: ['websocket', 'polling'],
+    reconnection: true,
+    reconnectionDelay: 2000,
+    reconnectionAttempts: Infinity
+  });
+
+  socket.on('connect', () => console.log('[pride] socket conectado'));
+  socket.on('connect_error', (e) => console.warn('[pride] socket error:', e.message));
 
   socket.on('pride:config-updated', (newCfg) => {
     if (!newCfg || typeof newCfg !== 'object') return;
@@ -311,7 +331,6 @@
     }
     if (!item) return;
 
-    // Pausa la rotación
     if (timer) { clearInterval(timer); timer = null; }
 
     hideCard();
@@ -323,7 +342,6 @@
         if (CONFIG.mode === 'rotate') aplicarModo();
         else if (CONFIG.mode === 'chat') hideCard();
         else {
-          // fixed: vuelve a la fija
           const fija = ITEMS.find(i => i.id === CONFIG.fixedId) || ITEMS[0];
           if (fija) {
             render(fija);
@@ -343,6 +361,7 @@
   if (params.has('folder')) CONFIG.folder      = params.get('folder');
   if (params.has('solo'))   CONFIG.soloBandera = params.get('solo') === '1';
 
+  console.log('[pride] SERVER_BASE =', window.SERVER_BASE);
   cargar();
 </script>
 

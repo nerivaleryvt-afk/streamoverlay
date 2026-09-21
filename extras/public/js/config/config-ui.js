@@ -21,6 +21,9 @@ function abrirSubpagina(id) {
     if (id === 'aiSubpage' && typeof actualizarEstadosProveedores === 'function') {
         actualizarEstadosProveedores();
     }
+    if (id === 'kickSubpage' && typeof kickCargarEstado === 'function') {
+        kickCargarEstado();
+    }
 }
 
 function cerrarSubpagina(id) {

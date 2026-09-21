@@ -60,7 +60,12 @@ function getCurrentValues() {
         },
         aiCohost: getAiCohostValues(),
         crystalStyle: document.getElementById('crystalStyle').value || 'jar',
-        crystalMeta: parseInt(document.getElementById('crystalMeta').value, 10) || 500
+        crystalMeta: parseInt(document.getElementById('crystalMeta').value, 10) || 500,
+                kick: {
+            connected: !!(currentServerConfig?.kick?.connected),
+            username: currentServerConfig?.kick?.username || (currentServerConfig?.KICK_USERS?.[0] || ''),
+            lastCheck: currentServerConfig?.kick?.lastCheck || 0
+        }
     };
 }
 
@@ -128,6 +133,8 @@ function applyValues(v) {
 
     document.getElementById('crystalStyle').value = v.crystalStyle || 'jar';
     document.getElementById('crystalMeta').value = v.crystalMeta || 500;
+
+        // 🟢 Kick — no necesita campos especiales en el form (login embebido)
 }
 
 function saveToLocalStorage(values) {
@@ -221,7 +228,12 @@ function extractFromServerConfig(config) {
         tts: config.TTS || {},
         aiCohost,
         crystalStyle: config.CRYSTAL_STYLE || 'jar',
-        crystalMeta: typeof config.JAR_META === 'number' ? config.JAR_META : 500
+        crystalMeta: typeof config.JAR_META === 'number' ? config.JAR_META : 500,
+                kick: {
+            connected: !!(config.kick && config.kick.connected),
+            username: (config.kick && config.kick.username) || (config.KICK_USERS?.[0] || config.KICK_USERNAME || ''),
+            lastCheck: (config.kick && config.kick.lastCheck) || 0
+        }
     };
 }
 
@@ -357,6 +369,8 @@ async function saveConfig() {
             proveedores: proveedoresFinales
         }
     });
+
+        // 🟢 Kick — no sobrescribir las cookies guardadas por el login embebido
 
     try {
         const response = await fetch(`${window.SERVER_BASE}/save-config`, {

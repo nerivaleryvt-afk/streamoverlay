@@ -1,6 +1,13 @@
 // ═══════════════════════════════════════════════════════════════
-//  overlays.js — Lógica de la galería de overlays
+//  overlays.js — Lógica de la galería de overlays (CORREGIDO)
 // ═══════════════════════════════════════════════════════════════
+
+// ✅ Helper central: construye URLs absolutas al server
+function apiUrl(path) {
+  const base = window.SERVER_BASE || window.location.origin || 'http://localhost:3000';
+  const clean = path.startsWith('/') ? path : '/' + path;
+  return base.replace(/\/$/, '') + clean;
+}
 
 const OVERLAY_CONFIGS = {
   'top-donadores': {
@@ -156,10 +163,15 @@ function actualizarHero() {
   const custom = Object.keys(OVERLAY_CONFIGS).length + 4;
   const live = document.querySelectorAll('.overlay-card.live').length;
 
-  document.getElementById('heroTotal').textContent = total;
-  document.getElementById('heroCustom').textContent = custom;
-  document.getElementById('heroLive').textContent = live;
-  document.getElementById('countAll').textContent = total;
+  const elTotal = document.getElementById('heroTotal');
+  const elCustom = document.getElementById('heroCustom');
+  const elLive = document.getElementById('heroLive');
+  const elCountAll = document.getElementById('countAll');
+
+  if (elTotal) elTotal.textContent = total;
+  if (elCustom) elCustom.textContent = custom;
+  if (elLive) elLive.textContent = live;
+  if (elCountAll) elCountAll.textContent = total;
 }
 
 async function copiarTodasUrls() {
@@ -238,33 +250,25 @@ async function copiarUrl(path) {
 
 // ═══════════════════════════════════════════════════════════════
 //  PREVIEWS — Thumbnails estáticos
-//  No cargamos iframes. Cada card tiene un thumbnail con icono
-//  de categoría + URL. Click → abre overlay real en pestaña nueva.
 // ═══════════════════════════════════════════════════════════════
 
 function renderizarThumbnails() {
   document.querySelectorAll('.overlay-card').forEach(card => {
     const previewBox = card.querySelector('.preview-box');
     if (!previewBox) return;
-
-    // Si ya tiene un placeholder propio (TTS) lo dejamos tal cual
     if (previewBox.querySelector('.preview-placeholder')) return;
 
-    // Icono del card
     const iconoEl = card.querySelector('.card-icon i');
     const iconoClase = iconoEl ? iconoEl.className : 'ri-apps-2-line';
 
-    // URL del overlay
     const path = card.dataset.path
       || previewBox.querySelector('.url-text')?.textContent
       || '';
 
-    // Limpiar contenido antiguo (iframes, hints, footers)
     previewBox
       .querySelectorAll('iframe, .preview-frame, .preview-empty-hint, .preview-footer')
       .forEach(el => el.remove());
 
-    // Crear thumbnail
     const thumb = document.createElement('div');
     thumb.className = 'preview-thumb';
     thumb.innerHTML = `
@@ -276,7 +280,6 @@ function renderizarThumbnails() {
     `;
     previewBox.appendChild(thumb);
 
-    // Click → abrir overlay
     previewBox.onclick = (e) => {
       e.stopPropagation();
       if (path) window.open(path, '_blank');
@@ -297,9 +300,11 @@ async function abrirConfig(overlayKey, titulo) {
 
   let actuales = {};
   try {
-    const r = await fetch(`${window.SERVER_BASE}/api/themes/${overlayKey}`);
-    actuales = await r.json() || {};
-  } catch (e) {}
+    const r = await fetch(apiUrl(`/api/themes/${overlayKey}`));
+    if (r.ok) actuales = await r.json() || {};
+  } catch (e) {
+    console.warn('[temas] No se pudo leer', e);
+  }
 
   valoresActuales = { ...actuales };
   const body = document.getElementById('drawerBody');
@@ -390,7 +395,7 @@ function cerrarDrawer() {
 async function guardarConfig() {
   if (!overlayActual) return;
   try {
-    const r = await fetch(`${window.SERVER_BASE}/api/themes/${overlayActual}`, {
+    const r = await fetch(apiUrl(`/api/themes/${overlayActual}`), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(valoresActuales)
@@ -405,7 +410,7 @@ async function resetearConfig() {
   if (!overlayActual) return;
   if (!confirm('¿Resetear los colores de este overlay?')) return;
   try {
-    await fetch(`${window.SERVER_BASE}/api/themes/${overlayActual}`, { method: 'DELETE' });
+    await fetch(apiUrl(`/api/themes/${overlayActual}`), { method: 'DELETE' });
     mostrarToast('Colores reseteados');
     cerrarDrawer();
   } catch (e) { mostrarToast('Error'); }
@@ -430,7 +435,7 @@ function aplicarPresetLocal(name) {
 async function resetearCristal() {
   if (!confirm('¿Resetear la meta?\n\nSe borrarán TODOS los diamantes y el top donador.')) return;
   try {
-    const r = await fetch(`${window.SERVER_BASE}/api/jar-state/reset`, { method: 'POST' });
+    const r = await fetch(apiUrl('/api/jar-state/reset'), { method: 'POST' });
     const data = await r.json();
     if (data.success) mostrarToast('Meta reseteada');
     else mostrarToast('Error al resetear');
@@ -472,15 +477,17 @@ const PRIDE_FOLDERS = [
 
 async function abrirConfigPride() {
   try {
-    const r = await fetch(`${window.SERVER_BASE}/api/pride/config`);
+    const r = await fetch(apiUrl('/api/pride/config'));
     const data = await r.json();
     if (data && data.ok && data.config) prideConfig = { ...prideConfig, ...data.config };
   } catch (e) {}
 
   try {
-    const r = await fetch('/pride-explain.json');
+    const r = await fetch(apiUrl('/pride-explain.json'));
+    if (!r.ok) throw new Error('HTTP ' + r.status);
     prideExplain = await r.json();
   } catch (e) {
+    console.error('[pride] No se pudo cargar pride-explain.json:', e);
     mostrarToast('No se pudo cargar pride-explain.json');
     return;
   }
@@ -647,7 +654,7 @@ async function guardarConfigPride() {
   prideConfig.enabled = enabled.length > 0 ? enabled : null;
 
   try {
-    const r = await fetch(`${window.SERVER_BASE}/api/pride/config`, {
+    const r = await fetch(apiUrl('/api/pride/config'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(prideConfig)
@@ -667,7 +674,7 @@ async function guardarConfigPride() {
 async function resetearConfigPride() {
   if (!confirm('¿Resetear la configuración de banderas Pride?')) return;
   try {
-    await fetch(`${window.SERVER_BASE}/api/pride/config`, { method: 'DELETE' });
+    await fetch(apiUrl('/api/pride/config'), { method: 'DELETE' });
     mostrarToast('Configuración reseteada');
     if (document.getElementById('prideDrawer').classList.contains('show')) {
       cerrarConfigPride();
@@ -707,7 +714,7 @@ const HYPE_THEMES = [
 
 async function abrirConfigHype() {
   try {
-    const r = await fetch(`${window.SERVER_BASE}/api/hype-train/config`);
+    const r = await fetch(apiUrl('/api/hype-train/config'));
     const data = await r.json();
     if (data && data.ok && data.config) hypeConfig = { ...hypeConfig, ...data.config };
   } catch (e) {}
@@ -988,7 +995,7 @@ async function guardarConfigHype() {
   };
 
   try {
-    const r = await fetch(`${window.SERVER_BASE}/api/hype-train/config`, {
+    const r = await fetch(apiUrl('/api/hype-train/config'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -1009,7 +1016,7 @@ async function guardarConfigHype() {
 async function resetHypeConfig() {
   if (!confirm('¿Resetear la configuración del Hype Train a valores por defecto?')) return;
   try {
-    const r = await fetch(`${window.SERVER_BASE}/api/hype-train/config`, { method: 'DELETE' });
+    const r = await fetch(apiUrl('/api/hype-train/config'), { method: 'DELETE' });
     const data = await r.json();
     if (data.ok) {
       hypeConfig = { ...data.config };
@@ -1021,7 +1028,7 @@ async function resetHypeConfig() {
 
 async function hypeStart() {
   try {
-    const r = await fetch(`${window.SERVER_BASE}/api/hype-train/start`, { method: 'POST' });
+    const r = await fetch(apiUrl('/api/hype-train/start'), { method: 'POST' });
     const data = await r.json();
     if (data.ok) mostrarToast('🚂 Tren arrancado');
     else mostrarToast('Error al arrancar');
@@ -1030,7 +1037,7 @@ async function hypeStart() {
 
 async function hypeEnd() {
   try {
-    const r = await fetch(`${window.SERVER_BASE}/api/hype-train/end`, { method: 'POST' });
+    const r = await fetch(apiUrl('/api/hype-train/end'), { method: 'POST' });
     const data = await r.json();
     if (data.ok) mostrarToast('🏁 Tren terminado');
     else mostrarToast('Error al terminar');
@@ -1040,7 +1047,7 @@ async function hypeEnd() {
 async function hypeReset() {
   if (!confirm('¿Resetear el estado del tren? Se perderán puntos y nivel.')) return;
   try {
-    const r = await fetch(`${window.SERVER_BASE}/api/hype-train/reset`, { method: 'POST' });
+    const r = await fetch(apiUrl('/api/hype-train/reset'), { method: 'POST' });
     const data = await r.json();
     if (data.ok) mostrarToast('🔄 Tren reseteado');
   } catch (e) { mostrarToast('Error'); }
@@ -1052,7 +1059,7 @@ let hypeStatePollTimer = null;
 
 async function actualizarHypeEstado() {
   try {
-    const r = await fetch(`${window.SERVER_BASE}/api/hype-train/state`);
+    const r = await fetch(apiUrl('/api/hype-train/state'));
     const data = await r.json();
     if (!data.ok || !data.state) return;
     const s = data.state;
@@ -1128,7 +1135,7 @@ let timerConfig = {
 
 async function abrirConfigTimer() {
   try {
-    const r = await fetch(`${window.SERVER_BASE}/get-config`);
+    const r = await fetch(apiUrl('/get-config'));
     const cfg = await r.json();
     timerConfig.modo          = cfg.TIMER_MODO          || 'duracion';
     timerConfig.duracionMin   = cfg.TIMER_DURACION_MIN  || 240;
@@ -1288,9 +1295,9 @@ async function guardarConfigTimer() {
   }
 
   try {
-    const configActual = await (await fetch(`${window.SERVER_BASE}/get-config`)).json();
+    const configActual = await (await fetch(apiUrl('/get-config'))).json();
 
-    const r1 = await fetch(`${window.SERVER_BASE}/save-config`, {
+    const r1 = await fetch(apiUrl('/save-config'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -1321,7 +1328,7 @@ async function arrancarTimerAhora() {
   }
 
   try {
-    const r = await fetch(`${window.SERVER_BASE}/api/timer-state/start`, {
+    const r = await fetch(apiUrl('/api/timer-state/start'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -1342,7 +1349,7 @@ async function arrancarTimerAhora() {
 async function resetearConfigTimer() {
   if (!confirm('¿Reiniciar el timer? Se borra el tiempo sumado por el chat.')) return;
   try {
-    const r = await fetch(`${window.SERVER_BASE}/api/timer-state/reset`, { method: 'POST' });
+    const r = await fetch(apiUrl('/api/timer-state/reset'), { method: 'POST' });
     const d = await r.json();
     if (d.success) {
       mostrarToast('Timer reiniciado');
@@ -1379,7 +1386,7 @@ async function cargarInfoCustomOverlay() {
   const badge = document.getElementById('customOverlayStatus');
   if (!badge) return;
   try {
-    const r = await fetch(`${window.SERVER_BASE}/api/custom-overlay/info`);
+    const r = await fetch(apiUrl('/api/custom-overlay/info'));
     const data = await r.json();
     if (data.exists) {
       const fecha = data.date ? new Date(data.date).toLocaleDateString('es-ES') : '';
@@ -1399,7 +1406,7 @@ async function subirCustomOverlay(file) {
   if (!/\.zip$/i.test(file.name)) { mostrarToast('El archivo debe ser .zip'); return; }
   try {
     mostrarToast('Subiendo...');
-    const r = await fetch(`${window.SERVER_BASE}/api/custom-overlay/upload`, {
+    const r = await fetch(apiUrl('/api/custom-overlay/upload'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/zip' },
       body: file
@@ -1419,7 +1426,7 @@ async function subirCustomOverlay(file) {
 async function borrarCustomOverlay() {
   if (!confirm('¿Eliminar el overlay personalizado actual?')) return;
   try {
-    const r = await fetch(`${window.SERVER_BASE}/api/custom-overlay`, { method: 'DELETE' });
+    const r = await fetch(apiUrl('/api/custom-overlay'), { method: 'DELETE' });
     const data = await r.json();
     if (data.ok) {
       mostrarToast('Overlay eliminado');

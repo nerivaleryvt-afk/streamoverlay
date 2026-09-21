@@ -326,6 +326,7 @@
                 </div>
             </div>
 
+                        <!-- ═══════════ SUBPÁGINA: KICK ═══════════ -->
             <!-- ═══════════ SUBPÁGINA: KICK ═══════════ -->
             <div id="kickSubpage">
                 <button class="subpage-back-btn" type="button" onclick="cerrarSubpagina('kickSubpage')">
@@ -335,19 +336,85 @@
                     <div class="section-head-icon" style="--sh-color:#53fc18"><i class="ri-live-fill"></i></div>
                     <div class="section-head-text">
                         <h3>Kick</h3>
-                        <p>Solo el nombre de usuario. Sin tokens ni APIs.</p>
+                        <p>Lee el chat de Kick y conecta tu cuenta para controlar el stream desde el Dashboard.</p>
                     </div>
                 </div>
+
+                <!-- ─── USUARIOS DEL CHAT ─── -->
                 <div class="input-group">
                     <div class="label-row">
-                        <label>Kick Users:</label>
+                        <label>Kick Users (chat):</label>
                         <span class="label-hint">0 o más</span>
                     </div>
                     <div id="kickUsersList" class="multi-list"></div>
                     <button class="add-item-btn" type="button" onclick="addKickUser()">
                         <i class="ri-add-line"></i> Añadir otro usuario de Kick
                     </button>
+                    <div class="field-help">
+                        <i class="ri-information-line"></i>
+                        Escribe los canales cuyo chat quieres leer en el overlay. Si no usas el chat de Kick, déjalo vacío.
+                    </div>
                 </div>
+
+                <!-- ─── CONECTAR CUENTA ─── -->
+                <div class="section-divider"><span>Conectar tu cuenta de Kick</span></div>
+
+                <div class="guide-banner">
+                    <i class="ri-information-line"></i>
+                    <div>
+                        <h3>¿Para qué sirve conectar tu cuenta?</h3>
+                        <p>
+                            Con tu cuenta conectada podrás <b>cambiar el título</b>, <b>la categoría</b> y
+                            <b>moderar</b> tu chat de Kick desde el <b>Dashboard de Toki</b>, sin tener
+                            que ir a la web de Kick.
+                        </p>
+                        <p style="margin-top:8px;">
+                            <b>Este paso solo se hace una vez.</b> Después, tu sesión queda guardada.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="provider-block" style="margin-bottom:16px; background: rgba(0, 217, 255, 0.04); border-left: 3px solid #00d9ff;">
+                    <div class="provider-name" style="margin-bottom:10px;">
+                        <i class="ri-guide-line" style="color:#00d9ff; font-size:16px;"></i>
+                        <b style="font-size:13px;">Cómo conectar (4 pasos)</b>
+                    </div>
+                    <ol style="margin: 0; padding-left: 22px; font-size:12.5px; line-height: 1.9; color: var(--text-2);">
+                        <li>Pulsa el botón verde <b>"Conectar con Kick"</b> aquí abajo.</li>
+                        <li>Se abrirá una <b>ventana nueva</b> con la página de Kick.</li>
+                        <li>Inicia sesión con tu <b>usuario y contraseña</b> de Kick, como siempre.</li>
+                        <li>Espera 2 segundos. La ventana se <b>cerrará sola</b> y verás <b>"CONECTADO"</b> en el estado.</li>
+                    </ol>
+                    <div class="field-help" style="margin-top:12px;">
+                        <i class="ri-lock-line" style="color:#53fc18;"></i>
+                        <span><b>Privacidad:</b> tu sesión se guarda en tu propia PC. Nadie más la ve.</span>
+                    </div>
+                </div>
+
+                <!-- Estado de conexión -->
+                <div class="provider-block" style="margin-bottom:16px;">
+                    <div class="provider-header">
+                        <div class="provider-name">
+                            <i class="ri-plug-line" style="color:#53fc18"></i>
+                            Estado de la conexión
+                            <span class="provider-priority" id="kickStatusBadge">cargando…</span>
+                        </div>
+                    </div>
+                    <div id="kickStatusInfo" class="test-result" style="margin-top:0;"></div>
+                    <div class="provider-actions">
+                        <button class="btn-test" type="button" id="btnKickConnect" onclick="kickConectarEmbedded()">
+                            <i class="ri-link"></i> Conectar con Kick
+                        </button>
+                        <button class="btn-test" type="button" id="btnKickDisconnect" onclick="kickDesconectar()">
+                            <i class="ri-plug-fill"></i> Desconectar
+                        </button>
+                    </div>
+                    <div class="field-help" style="margin-top:12px;">
+                        <i class="ri-information-line"></i>
+                        <span>Una vez conectado, controla tu stream desde el <b>Dashboard</b> → sección Kick.</span>
+                    </div>
+                </div>
+
                 <div class="subpage-actions">
                     <button class="main-btn" type="button" onclick="cerrarSubpagina('kickSubpage')">
                         <i class="ri-check-line"></i> Listo
@@ -691,6 +758,44 @@
 <div id="modalKeyOpenRouter" class="modal"><div class="modal-content"><div class="modal-header"><h3>API Key de OpenRouter</h3><button class="close-btn" onclick="closeModal('modalKeyOpenRouter')">&times;</button></div><div class="alert-box info">OpenRouter es <b>gratis</b> con 20+ modelos.</div><a href="https://openrouter.ai/keys" target="_blank" class="external-link">Ir a OpenRouter</a></div></div>
 
 <div id="modalKeyAgnes" class="modal"><div class="modal-content"><div class="modal-header"><h3>API Key de Agnes</h3><button class="close-btn" onclick="closeModal('modalKeyAgnes')">&times;</button></div><div class="alert-box info">Agnes 2.5 Flash es <b>gratis</b>.</div><a href="https://agnes-ai.com/" target="_blank" class="external-link">Ir a Agnes</a></div></div>
+
+<div id="modalKickSetup" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Configurar la App de Kick</h3>
+            <button class="close-btn" onclick="closeModal('modalKickSetup')">&times;</button>
+        </div>
+        <div class="alert-box info">
+            Kick usa <b>OAuth 2.0</b>. Necesitas crear una app una sola vez para obtener tu <code>Client ID</code> y <code>Client Secret</code>.
+        </div>
+        <div class="modal-step">
+            <h4><span>1</span> Abre el panel de desarrollador</h4>
+            <p>Ve a <b>kick.com/settings/developer</b> e inicia sesión con tu cuenta de Kick.</p>
+        </div>
+        <div class="modal-step">
+            <h4><span>2</span> Crea una nueva App</h4>
+            <p>Pulsa <b>Create New Application</b>. Ponle un nombre, por ejemplo <code>TogiPanel</code>.</p>
+        </div>
+        <div class="modal-step">
+            <h4><span>3</span> Configura la Redirect URL</h4>
+            <p>Pega exactamente esto:</p>
+            <p><code>http://localhost:3000/auth/kick/callback</code></p>
+        </div>
+        <div class="modal-step">
+            <h4><span>4</span> Marca los scopes</h4>
+            <ul>
+                <li><code>Leer información del canal</code></li>
+                <li><code>Actualizar información del canal</code></li>
+                <li><code>Escribir en el feed del chat</code> (opcional)</li>
+            </ul>
+        </div>
+        <div class="modal-step">
+            <h4><span>5</span> Copia las credenciales</h4>
+            <p>Kick te dará el <b>Client ID</b> y el <b>Client Secret</b>. Pégalos en los campos de arriba.</p>
+        </div>
+        <a href="https://kick.com/settings/developer" target="_blank" class="external-link">Ir al panel de Kick</a>
+    </div>
+</div>
 
 </body>
 </html>
