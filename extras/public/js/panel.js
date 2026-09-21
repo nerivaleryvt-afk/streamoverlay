@@ -738,6 +738,159 @@ function ocultarIp(ev) {
 }
 
 /* ──────────────────────────────────────────────
+   AUTO-UPDATE
+   ────────────────────────────────────────────── */
+let updateState = { version: null, ready: false, dismissed: false };
+
+function updateMostrar() {
+  const banner = $('update-banner');
+  if (banner) banner.style.display = 'flex';
+}
+
+function updateOcultar() {
+  const banner = $('update-banner');
+  if (banner) banner.style.display = 'none';
+  updateState.dismissed = true;
+}
+
+function updateAccion() {
+  const banner = $('update-banner');
+  if (!banner) return;
+  const btn = $('update-banner-action');
+  if (!btn) return;
+
+  if (updateState.ready) {
+    // Ya descargado → instalar
+    try {
+      const { ipcRenderer } = require('electron');
+      ipcRenderer.invoke('update:install');
+    } catch (e) {
+      showToast('Error al instalar', 'err');
+    }
+  } else {
+    // Descargar
+    btn.disabled = true;
+    btn.innerHTML = '<i class="ri-loader-4-line"></i><span>Descargando...</span>';
+    try {
+      const { ipcRenderer } = require('electron');
+      ipcRenderer.invoke('update:download');
+    } catch (e) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="ri-download-2-line"></i><span>Descargar</span>';
+    }
+  }
+}
+
+function initUpdaterUI() {
+  let ipcRenderer;
+  try {
+    ipcRenderer = require('electron').ipcRenderer;
+  } catch (e) {
+    console.log('🔄 Updater: no disponible (modo navegador)');
+    return;
+  }
+
+  ipcRenderer.on('update:available', (event, info) => {
+    console.log('🔄 Update disponible:', info.version);
+    updateState.version = info.version;
+    updateState.ready = false;
+    updateState.dismissed = false;
+
+    const banner = $('update-banner');
+    if (banner) banner.classList.remove('is-ready', 'is-error');
+
+    const title = $('update-banner-title');
+    if (title) title.textContent = 'Nueva versión ' + info.version + ' disponible';
+
+    const sub = $('update-banner-sub');
+    if (sub) sub.textContent = 'Descargando en segundo plano...';
+
+    const progressWrap = $('update-banner-progress');
+    if (progressWrap) progressWrap.style.display = 'block';
+
+    const icon = banner ? banner.querySelector('.update-banner-icon i') : null;
+    if (icon) icon.className = 'ri-download-cloud-2-line';
+
+    const btn = $('update-banner-action');
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<i class="ri-loader-4-line"></i><span>Descargando...</span>';
+    }
+
+    updateMostrar();
+  });
+
+  ipcRenderer.on('update:progress', (event, p) => {
+    const sub = $('update-banner-sub');
+    if (sub) sub.textContent = 'Descargando... ' + p.percent + '% · ' + p.mbps + ' MB/s';
+
+    const bar = $('update-banner-progress-bar');
+    if (bar) bar.style.width = p.percent + '%';
+  });
+
+  ipcRenderer.on('update:ready', (event, info) => {
+    console.log('🔄 Update listo para instalar:', info.version);
+    updateState.version = info.version;
+    updateState.ready = true;
+
+    const banner = $('update-banner');
+    if (banner) {
+      banner.classList.add('is-ready');
+      banner.classList.remove('is-error');
+    }
+
+    const title = $('update-banner-title');
+    if (title) title.textContent = '✅ Actualización ' + info.version + ' lista';
+
+    const sub = $('update-banner-sub');
+    if (sub) sub.textContent = 'Reiniciá la app para aplicar los cambios.';
+
+    const progressWrap = $('update-banner-progress');
+    if (progressWrap) progressWrap.style.display = 'none';
+
+    const icon = banner ? banner.querySelector('.update-banner-icon i') : null;
+    if (icon) icon.className = 'ri-checkbox-circle-line';
+
+    const btn = $('update-banner-action');
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="ri-restart-line"></i><span>Reiniciar ahora</span>';
+    }
+
+    // Si el usuario la había ocultado antes, no la volvemos a mostrar de prepo
+    if (!updateState.dismissed) updateMostrar();
+    else updateMostrar(); // igual la mostramos porque ya está lista
+  });
+
+  ipcRenderer.on('update:error', (event, msg) => {
+    console.error('🔄 Update error:', msg);
+    const banner = $('update-banner');
+    if (banner) {
+      banner.classList.add('is-error');
+      banner.classList.remove('is-ready');
+    }
+    const title = $('update-banner-title');
+    if (title) title.textContent = 'Error al actualizar';
+    const sub = $('update-banner-sub');
+    if (sub) sub.textContent = msg;
+    const btn = $('update-banner-action');
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="ri-refresh-line"></i><span>Reintentar</span>';
+      btn.onclick = () => {
+        try { require('electron').ipcRenderer.invoke('update:check'); } catch (e) {}
+      };
+    }
+    updateMostrar();
+  });
+
+  // Chequeo manual al abrir el panel (además del automático de main.js)
+  setTimeout(() => {
+    try { ipcRenderer.invoke('update:check'); } catch (e) {}
+  }, 3000);
+}
+
+/* ──────────────────────────────────────────────
    NAVEGACIÓN + RESTART
    ────────────────────────────────────────────── */
 function goTo(path) { window.location.href = window.SERVER_BASE + path; }
@@ -1070,6 +1223,8 @@ setInterval(() => {
   renderHero();
   renderSummary();
   renderPlatforms();
+
+  initUpdaterUI();
 
   if (typeof io !== 'undefined') {
     initSocket();

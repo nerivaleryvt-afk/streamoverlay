@@ -563,6 +563,12 @@ socket.on('jar-meta-updated', ({ meta: nuevaMeta }) => {
   }
 });
 
+socket.on('crystal-style-updated', ({ style }) => {
+  if (typeof style === 'string') {
+    aplicarEstiloCristal(style);
+  }
+});
+
 socket.on('theme-updated', ({ overlay, vars }) => {
   if (overlay !== 'crystal') return;
   if (!vars || Object.keys(vars).length === 0) {

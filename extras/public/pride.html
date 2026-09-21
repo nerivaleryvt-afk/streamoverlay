@@ -355,14 +355,34 @@
   // ============================================================
   //  INIT
   // ============================================================
-  const params = new URLSearchParams(location.search);
+    const params = new URLSearchParams(location.search);
   if (params.has('mode'))   CONFIG.mode        = params.get('mode');
   if (params.has('id'))     CONFIG.fixedId     = params.get('id');
   if (params.has('folder')) CONFIG.folder      = params.get('folder');
   if (params.has('solo'))   CONFIG.soloBandera = params.get('solo') === '1';
 
   console.log('[pride] SERVER_BASE =', window.SERVER_BASE);
-  cargar();
+
+  // 🟢 Pedir config al server ANTES de cargar las banderas
+  async function cargarConfigServidor() {
+    try {
+      const r = await fetch(apiUrl('/api/pride/config'));
+      if (!r.ok) return;
+      const data = await r.json();
+      const cfg = (data && data.config) ? data.config : data;
+      if (cfg && typeof cfg === 'object') {
+        Object.assign(CONFIG, cfg);
+        console.log('[pride] Config del servidor:', cfg);
+      }
+    } catch (e) {
+      console.warn('[pride] No se pudo leer config del server:', e.message);
+    }
+  }
+
+  (async () => {
+    await cargarConfigServidor();
+    cargar();
+  })();
 </script>
 
 </body>

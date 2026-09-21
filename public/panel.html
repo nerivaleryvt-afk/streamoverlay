@@ -84,7 +84,30 @@
   <!-- ═══════════════════════════════════════════════════════
        CONTENIDO PRINCIPAL
        ═══════════════════════════════════════════════════════ -->
-  <main class="main">
+    <main class="main">
+
+    <!-- 🔄 BANNER DE ACTUALIZACIÓN -->
+    <div class="update-banner" id="update-banner" style="display:none;">
+      <div class="update-banner-icon">
+        <i class="ri-download-cloud-2-line"></i>
+      </div>
+      <div class="update-banner-body">
+        <div class="update-banner-title" id="update-banner-title">Actualización disponible</div>
+        <div class="update-banner-sub" id="update-banner-sub">Preparando...</div>
+        <div class="update-banner-progress" id="update-banner-progress" style="display:none;">
+          <div class="update-banner-progress-bar" id="update-banner-progress-bar"></div>
+        </div>
+      </div>
+      <div class="update-banner-actions">
+        <button class="update-banner-btn primary" id="update-banner-action" onclick="updateAccion()">
+          <i class="ri-download-2-line"></i>
+          <span>Descargar</span>
+        </button>
+        <button class="update-banner-btn" onclick="updateOcultar()" title="Ocultar">
+          <i class="ri-close-line"></i>
+        </button>
+      </div>
+    </div>
 
     <!-- TOP BAR -->
     <div class="top-bar animate-in">

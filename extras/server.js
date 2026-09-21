@@ -481,6 +481,34 @@ app.delete('/api/themes/:overlay', (req, res) => {
 });
 
 // ================================================================
+// 💎 CRISTAL — Config del estilo (jar / bar)
+// ================================================================
+app.get('/api/crystal/config', (req, res) => {
+    res.json({
+        ok: true,
+        style: config.CRYSTAL_STYLE || 'jar',
+        meta: config.JAR_META || 500
+    });
+});
+
+app.post('/api/crystal/style', (req, res) => {
+    try {
+        const { style } = req.body || {};
+        if (!['jar', 'bar'].includes(style)) {
+            return res.status(400).json({ ok: false, error: 'style debe ser "jar" o "bar"' });
+        }
+        config.CRYSTAL_STYLE = style;
+        fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
+        io.emit('crystal-style-updated', { style });
+        console.log(`💎 [CRISTAL] Estilo actualizado: ${style}`);
+        res.json({ ok: true, style });
+    } catch (e) {
+        console.error('❌ [CRISTAL] Error cambiando estilo:', e.message);
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+// ================================================================
 // 📁 CONFIGURACIÓN
 // ================================================================
 function normalizarOauth(t) {
@@ -565,8 +593,12 @@ function loadConfig() {
             }
         }
 
-        if (typeof parsed.JAR_META !== 'number' || parsed.JAR_META < 1) {
+                if (typeof parsed.JAR_META !== 'number' || parsed.JAR_META < 1) {
             parsed.JAR_META = 500;
+        }
+
+        if (typeof parsed.CRYSTAL_STYLE !== 'string' || !['jar', 'bar'].includes(parsed.CRYSTAL_STYLE)) {
+            parsed.CRYSTAL_STYLE = 'jar';
         }
 
                         // 🟢 KICK — defaults con cookies (NUEVO)
@@ -833,6 +865,10 @@ const TIKTOK_DEFAULT_AVATAR = 'https://i.imgur.com/OmnpuQH.png';
 const KICK_DEFAULT_AVATAR = 'https://i.imgur.com/OmnpuQH.png';
 const YOUTUBE_DEFAULT_AVATAR = 'https://i.imgur.com/OmnpuQH.png';
 const recentMessages = new Map();
+
+// 🔧 Módulos externos montados más abajo
+let geminiLive = null;
+let geminiText = null;
 
 function isDuplicateMessage(msg) {
     if (!msg || !msg.username || !msg.message) return false;
@@ -1167,8 +1203,9 @@ app.get('/get-config', (req, res) => {
         ENABLE_CENSORSHIP: config.ENABLE_CENSORSHIP || false,
         channels: getAllTwitchChannels(),
         CONTROL_URL: config.CONTROL_URL || 'https://livecenter.tiktok.com/live_monitor',
-        TTS: config.TTS || {},
+                TTS: config.TTS || {},
         JAR_META: config.JAR_META || 500,
+        CRYSTAL_STYLE: config.CRYSTAL_STYLE || 'jar',
                 kick: {
             connected: !!(kickCookies && kickCookies.connected),
             username: (kickCookies && kickCookies.username) || config.KICK_USERNAME || '',
@@ -1244,8 +1281,12 @@ app.post('/save-config', (req, res) => {
             newConfig.aiCohost = config.aiCohost || {};
         }
 
-        if (typeof newConfig.JAR_META !== 'number' || newConfig.JAR_META < 1) {
+                if (typeof newConfig.JAR_META !== 'number' || newConfig.JAR_META < 1) {
             newConfig.JAR_META = config.JAR_META || 500;
+        }
+
+        if (typeof newConfig.CRYSTAL_STYLE !== 'string' || !['jar', 'bar'].includes(newConfig.CRYSTAL_STYLE)) {
+            newConfig.CRYSTAL_STYLE = config.CRYSTAL_STYLE || 'jar';
         }
 
                 // 🟢 KICK — preservar cookies al guardar config
@@ -1392,6 +1433,16 @@ app.get('/top-shares',      (req, res) => res.sendFile(path.join(publicDir, 'top
 app.get('/follows',         (req, res) => res.sendFile(path.join(publicDir, 'follows.html')));
 app.get('/last-follower',   (req, res) => res.sendFile(path.join(publicDir, 'last-follower.html')));
 app.get('/stats',           (req, res) => res.sendFile(path.join(publicDir, 'stats.html')));
+// ─── Páginas nuevas (faltaban) ───
+app.get('/valconfig',          (req, res) => res.sendFile(path.join(publicDir, 'valconfig.html')));
+app.get('/deck',               (req, res) => res.sendFile(path.join(publicDir, 'deck.html')));
+app.get('/gemini-live.html',   (req, res) => res.sendFile(path.join(publicDir, 'gemini-live.html')));
+app.get('/gemini-audio.html',  (req, res) => res.sendFile(path.join(publicDir, 'gemini-audio.html')));
+app.get('/gemini-overlay.html',(req, res) => res.sendFile(path.join(publicDir, 'gemini-overlay.html')));
+app.get('/hype-train',         (req, res) => res.sendFile(path.join(publicDir, 'hype-train.html')));
+app.get('/pride',              (req, res) => res.sendFile(path.join(publicDir, 'pride.html')));
+app.get('/stream-timer.html',  (req, res) => res.sendFile(path.join(publicDir, 'stream-timer.html')));
+app.get('/overlay-custom',     (req, res) => res.sendFile(path.join(publicDir, 'overlay-custom.html')));
 
 // ================================================================
 // 📡 FUNCIONES TWITCH
@@ -2808,6 +2859,605 @@ async function connectKick() {
     kickWs.on('error', (err) => {
         console.error('❌ [KICK] Error WebSocket:', err.message);
     });
+}
+// ================================================================
+// 🔧 RUTAS AutoStream + TikTok Views + OBS Info
+// ================================================================
+// 🔍 DIAGNÓSTICO — variables de entorno críticas
+console.log('=== DIAGNÓSTICO AUTOSTREAM ===');
+console.log('APPDATA:', process.env.APPDATA);
+console.log('USERPROFILE:', process.env.USERPROFILE);
+console.log('__dirname:', __dirname);
+console.log('node version:', process.version);
+console.log('===============================');
+
+let streamlabsToken = null;
+let tiktokStream = null;
+let tiktokProxy = null;
+
+try {
+    streamlabsToken = require('./streamlabs-token');
+    console.log('✅ [AutoStream] streamlabs-token.js cargado OK');
+} catch (e) {
+    console.error('❌ [AutoStream] streamlabs-token.js FALLÓ:', e.message);
+    console.error(e.stack);
+}
+
+try {
+    tiktokStream = require('./tiktok-stream');
+    console.log('✅ [AutoStream] tiktok-stream.js cargado OK');
+} catch (e) {
+    console.error('❌ [AutoStream] tiktok-stream.js FALLÓ:', e.message);
+    console.error(e.stack);
+}
+
+try {
+    tiktokProxy = require('./tiktok-proxy');
+    console.log('✅ [AutoStream] tiktok-proxy.js cargado OK');
+} catch (e) {
+    console.error('❌ [AutoStream] tiktok-proxy.js FALLÓ:', e.message);
+    console.error(e.stack);
+}
+console.log('===============================');
+
+// ─── AutoStream: cuentas de Streamlabs Desktop ───
+app.get('/api/tiktok/streamlabs-accounts', async (req, res) => {
+    try {
+        if (!streamlabsToken) {
+            return res.status(500).json({
+                ok: false,
+                error: 'streamlabs-token.js no cargó. Revisá la consola del server.',
+                accounts: []
+            });
+        }
+
+        console.log('📺 [AutoStream] Leyendo tokens de Streamlabs...');
+        console.log('   APPDATA actual:', process.env.APPDATA);
+
+        let tokens = [];
+        try {
+            tokens = streamlabsToken.readStreamlabsTokens();
+        } catch (e) {
+            console.error('❌ [AutoStream] readStreamlabsTokens() tiró excepción:', e.message);
+            return res.json({ ok: false, error: 'Error leyendo tokens: ' + e.message, accounts: [] });
+        }
+
+        console.log(`📺 [AutoStream] Tokens encontrados: ${tokens.length}`);
+
+        if (tokens.length === 0) {
+            return res.json({ ok: true, accounts: [] });
+        }
+
+        const cuentas = [];
+        for (const t of tokens) {
+            let info = null;
+            try {
+                if (tiktokStream) {
+                    info = await tiktokStream.getAccountInfo(t.apiToken);
+                }
+            } catch (e) {
+                console.warn(`⚠️ [AutoStream] info falló para ${t.username}:`, e.message);
+            }
+
+            const username = (info && info.user && info.user.username) || t.username;
+            const nickname = (info && info.user && info.user.nickname) || username;
+            const canBeLive = !!(info && info.can_be_live);
+            const invalid = !info;
+
+            cuentas.push({
+                apiToken: t.apiToken,
+                username,
+                nickname,
+                canBeLive,
+                invalid,
+                error: invalid ? 'Token inválido o expirado' : (canBeLive ? null : 'La cuenta no puede emitir')
+            });
+        }
+
+        console.log(`📺 [AutoStream] Cuentas válidas: ${cuentas.filter(c => c.canBeLive && !c.invalid).length}`);
+        res.json({ ok: true, accounts: cuentas });
+    } catch (e) {
+        console.error('❌ [/api/tiktok/streamlabs-accounts]', e.message);
+        res.json({ ok: false, error: e.message, accounts: [] });
+    }
+});
+
+// ─── AutoStream: estado del proxy RTMP ───
+app.get('/api/tiktok/proxy/status', (req, res) => {
+    try {
+        if (!tiktokProxy) {
+            return res.json({ ok: true, state: { status: 'idle', username: null, lastReconnect: null, error: 'tiktok-proxy no cargado' } });
+        }
+        const state = tiktokProxy.getState();
+        res.json({ ok: true, state });
+    } catch (e) {
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+// ─── AutoStream: iniciar proxy ───
+app.post('/api/tiktok/proxy/start', async (req, res) => {
+    try {
+        if (!tiktokProxy) {
+            return res.status(500).json({ ok: false, error: 'tiktok-proxy.js no cargó' });
+        }
+        const { token, title } = req.body || {};
+        if (!token) return res.status(400).json({ ok: false, error: 'Falta token' });
+
+        console.log(`▶️ [AutoStream] START solicitado: title="${title || ''}"`);
+        const r = await tiktokProxy.start(token, title || 'TogiPanel Stream');
+        res.json(r);
+    } catch (e) {
+        console.error('❌ [/api/tiktok/proxy/start]', e.message);
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+// ─── AutoStream: detener proxy ───
+app.post('/api/tiktok/proxy/stop', async (req, res) => {
+    try {
+        if (!tiktokProxy) {
+            return res.json({ ok: true });
+        }
+        console.log('⏹️ [AutoStream] STOP solicitado');
+        const r = await tiktokProxy.stop();
+        res.json(r);
+    } catch (e) {
+        console.error('❌ [/api/tiktok/proxy/stop]', e.message);
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+// ─── OBS Info (RTMP LAN + key + QR) ───
+app.get('/api/obs-info', (req, res) => {
+    try {
+        const nets = os.networkInterfaces();
+        let lanIp = '127.0.0.1';
+        for (const name of Object.keys(nets)) {
+            for (const net of nets[name] || []) {
+                if (net.family === 'IPv4' && !net.internal) {
+                    if (/^192\.168\./.test(net.address) ||
+                        /^10\./.test(net.address) ||
+                        /^172\.(1[6-9]|2\d|3[01])\./.test(net.address)) {
+                        lanIp = net.address;
+                        break;
+                    }
+                }
+            }
+        }
+
+        const proxyState = tiktokProxy ? tiktokProxy.getState() : { status: 'idle' };
+
+        res.json({
+            ok: true,
+            lanIp,
+            lanUrl: `rtmp://${lanIp}:1935/live`,
+            localUrl: 'rtmp://localhost:1935/live',
+            key: 'togipanel',
+            status: proxyState.status === 'streaming' ? 'online' : 'offline',
+            statusLabel: proxyState.status === 'streaming' ? 'Emitiendo' : 'RTMP listo'
+        });
+    } catch (e) {
+        console.error('❌ [/api/obs-info]', e.message);
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+// ─── TikTok Views (multi-cuenta) ───
+const TIKTOK_VIEWS_DEFAULT = [
+    { id: 'slot1', name: 'Cuenta 1', username: '', url: 'https://livecenter.tiktok.com/live_monitor', partition: 'persist:tiktok-slot-1' },
+    { id: 'slot2', name: 'Cuenta 2', username: '', url: 'https://livecenter.tiktok.com/live_monitor', partition: 'persist:tiktok-slot-2' },
+    { id: 'slot3', name: 'Cuenta 3', username: '', url: 'https://livecenter.tiktok.com/live_monitor', partition: 'persist:tiktok-slot-3' }
+];
+
+app.get('/api/tiktok/views', (req, res) => {
+    try {
+        const views = (Array.isArray(config.TIKTOK_VIEWS) && config.TIKTOK_VIEWS.length > 0)
+            ? config.TIKTOK_VIEWS
+            : TIKTOK_VIEWS_DEFAULT;
+        const active = config.TIKTOK_ACTIVE_VIEW || views[0].id;
+        res.json({ ok: true, views, active });
+    } catch (e) {
+        res.json({ ok: false, error: e.message, views: TIKTOK_VIEWS_DEFAULT, active: 'slot1' });
+    }
+});
+
+app.post('/api/tiktok/rename-view', (req, res) => {
+    try {
+        const { id, name } = req.body || {};
+        if (!id || !name) return res.status(400).json({ ok: false, error: 'Faltan id o name' });
+        if (!Array.isArray(config.TIKTOK_VIEWS)) config.TIKTOK_VIEWS = [...TIKTOK_VIEWS_DEFAULT];
+        const v = config.TIKTOK_VIEWS.find(x => x.id === id);
+        if (v) {
+            v.name = String(name).slice(0, 40);
+            try { fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2)); } catch (e) {}
+            io.emit('tiktok:view-renamed', { id, name: v.name });
+        }
+        res.json({ ok: true });
+    } catch (e) {
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+app.post('/api/tiktok/set-username', (req, res) => {
+    try {
+        const { id, username } = req.body || {};
+        if (!id) return res.status(400).json({ ok: false, error: 'Falta id' });
+        if (!Array.isArray(config.TIKTOK_VIEWS)) config.TIKTOK_VIEWS = [...TIKTOK_VIEWS_DEFAULT];
+        const v = config.TIKTOK_VIEWS.find(x => x.id === id);
+        if (v) {
+            v.username = String(username || '').replace(/^@/, '').slice(0, 60);
+            try { fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2)); } catch (e) {}
+            io.emit('tiktok:username-changed', { id, username: v.username });
+        }
+        res.json({ ok: true, username: v?.username || '' });
+    } catch (e) {
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+app.post('/api/tiktok/active-view', (req, res) => {
+    try {
+        const { id } = req.body || {};
+        if (!id) return res.status(400).json({ ok: false, error: 'Falta id' });
+        config.TIKTOK_ACTIVE_VIEW = id;
+        try { fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2)); } catch (e) {}
+        io.emit('tiktok:active-view-changed', { id });
+        res.json({ ok: true });
+    } catch (e) {
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+// ─── Stubs para overlays sin implementar ───
+app.get('/api/hype-train/state', (req, res) => {
+    res.json({
+        ok: true,
+        active: false,
+        level: 0,
+        progress: 0,
+        goal: 0,
+        expiresAt: null
+    });
+});
+
+app.get('/api/custom-overlay/info', (req, res) => {
+    res.json({
+        ok: true,
+        overlay: null
+    });
+});
+
+// ================================================================
+// 🏳️ PRIDE — Config de banderas
+// ================================================================
+const PRIDE_CONFIG_PATH = IS_PACKAGED
+    ? path.join(USER_DATA_DIR, 'pride-config.json')
+    : path.join(__dirname, 'pride-config.json');
+
+const PRIDE_DEFAULTS = {
+    mode: 'rotate',              // 'rotate' | 'fixed' | 'chat'
+    fixedId: 'pride',
+    rotateMs: 6000,
+    folder: 'HD 1080p',
+    showName: true,
+    showMeaning: true,
+    showColors: true,
+    soloBandera: false,
+    enabled: null
+};
+
+function cargarPrideConfig() {
+    try {
+        if (fs.existsSync(PRIDE_CONFIG_PATH)) {
+            const raw = fs.readFileSync(PRIDE_CONFIG_PATH, 'utf8');
+            const parsed = JSON.parse(raw);
+            return { ...PRIDE_DEFAULTS, ...(parsed || {}) };
+        }
+    } catch (e) {
+        console.error('❌ [PRIDE] Error cargando config:', e.message);
+    }
+    return { ...PRIDE_DEFAULTS };
+}
+
+function guardarPrideConfig(cfg) {
+    try {
+        fs.writeFileSync(PRIDE_CONFIG_PATH, JSON.stringify(cfg, null, 2));
+        return true;
+    } catch (e) {
+        console.error('❌ [PRIDE] Error guardando config:', e.message);
+        return false;
+    }
+}
+
+// GET → devuelve { ok: true, config: {...} }  (así lo espera overlays.js)
+app.get('/api/pride/config', (req, res) => {
+    try {
+        const cfg = cargarPrideConfig();
+        res.json({ ok: true, config: cfg });
+    } catch (e) {
+        console.error('❌ [PRIDE] Error GET config:', e.message);
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+// POST → recibe el objeto plano, guarda y emite pride:config-updated
+app.post('/api/pride/config', (req, res) => {
+    try {
+        const actual = cargarPrideConfig();
+        const body = req.body || {};
+        const nuevo = { ...actual, ...body };
+
+        // Sanitizar tipos
+        if (!['rotate', 'fixed', 'chat'].includes(nuevo.mode)) nuevo.mode = 'rotate';
+        if (typeof nuevo.fixedId !== 'string' || !nuevo.fixedId) nuevo.fixedId = 'pride';
+        if (typeof nuevo.rotateMs !== 'number' || nuevo.rotateMs < 1000) nuevo.rotateMs = 6000;
+        if (typeof nuevo.folder !== 'string' || !nuevo.folder) nuevo.folder = 'HD 1080p';
+        nuevo.showName    = nuevo.showName    !== false;
+        nuevo.showMeaning = nuevo.showMeaning !== false;
+        nuevo.showColors  = nuevo.showColors  !== false;
+        nuevo.soloBandera = nuevo.soloBandera === true;
+        if (!Array.isArray(nuevo.enabled)) nuevo.enabled = null;
+
+        if (guardarPrideConfig(nuevo)) {
+            // ⚠️ DOS PUNTOS → coincide con pride.html
+            io.emit('pride:config-updated', nuevo);
+            console.log(`🏳️ [PRIDE] Config actualizada → mode=${nuevo.mode} fixedId=${nuevo.fixedId} rotateMs=${nuevo.rotateMs}`);
+            res.json({ ok: true, config: nuevo });
+        } else {
+            res.status(500).json({ ok: false, error: 'No se pudo guardar' });
+        }
+    } catch (e) {
+        console.error('❌ [PRIDE] Error POST config:', e.message);
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+// DELETE → resetea a defaults (así lo llama resetearConfigPride en overlays.js)
+app.delete('/api/pride/config', (req, res) => {
+    try {
+        guardarPrideConfig(PRIDE_DEFAULTS);
+        io.emit('pride:config-updated', PRIDE_DEFAULTS);
+        console.log(`🏳️ [PRIDE] Config reseteada a defaults`);
+        res.json({ ok: true, config: PRIDE_DEFAULTS });
+    } catch (e) {
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+// ================================================================
+// 🔧 PÁGINAS HTML QUE FALTABAN
+// ================================================================
+app.get('/valconfig',           (req, res) => res.sendFile(path.join(publicDir, 'valconfig.html')));
+app.get('/deck',                (req, res) => res.sendFile(path.join(publicDir, 'deck.html')));
+app.get('/gemini-live.html',    (req, res) => res.sendFile(path.join(publicDir, 'gemini-live.html')));
+app.get('/gemini-audio.html',   (req, res) => res.sendFile(path.join(publicDir, 'gemini-audio.html')));
+app.get('/gemini-overlay.html', (req, res) => res.sendFile(path.join(publicDir, 'gemini-overlay.html')));
+app.get('/hype-train',          (req, res) => res.sendFile(path.join(publicDir, 'hype-train.html')));
+app.get('/pride',               (req, res) => res.sendFile(path.join(publicDir, 'pride.html')));
+app.get('/stream-timer.html',   (req, res) => res.sendFile(path.join(publicDir, 'stream-timer.html')));
+app.get('/overlay-custom',      (req, res) => res.sendFile(path.join(publicDir, 'overlay-custom.html')));
+
+// ================================================================
+// 🔧 APIs QUE FALTABAN
+// ================================================================
+
+// ─── Stubs de timer-state y last-stream ───
+app.get('/api/timer-state', (req, res) => {
+    res.json({
+        ok: true,
+        active: false,
+        startedAt: null,
+        endsAt: null,
+        elapsed: 0,
+        remaining: 0,
+        running: false
+    });
+});
+
+app.get('/api/last-stream', (req, res) => {
+    res.json({
+        ok: true,
+        lastStream: null
+    });
+});
+
+// ─── Valorant Config API ───
+try {
+    const registerValConfig = require('./valconfig');
+    registerValConfig(app);
+    console.log('🎮 [VALCONFIG] Rutas montadas OK');
+} catch (e) {
+    console.error('❌ [VALCONFIG] No se pudo montar:', e.message);
+}
+
+// ─── Custom Overlay API ───
+try {
+    const registerCustomOverlay = require('./custom-overlay');
+    registerCustomOverlay(app);
+    console.log('🎨 [CUSTOM-OVERLAY] Rutas montadas OK');
+} catch (e) {
+    console.error('❌ [CUSTOM-OVERLAY] No se pudo montar:', e.message);
+}
+
+// ─── Velora API ───
+try {
+    const registerVelora = require('./velora');
+    if (typeof registerVelora === 'function') {
+        registerVelora(app, io);
+        console.log('📡 [VELORA] Rutas montadas OK');
+    } else {
+        console.error('❌ [VELORA] velora.js no exporta una función');
+    }
+} catch (e) {
+    console.error('❌ [VELORA] No se pudo montar:', e.message);
+}
+
+// ─── Gemini Live API ───
+try {
+    geminiLive = require('./gemini-live');
+    if (geminiLive && typeof geminiLive.init === 'function') {
+        geminiLive.init(io, config);
+        console.log('🤖 [GEMINI-LIVE] Módulo montado OK');
+    } else {
+        console.error('❌ [GEMINI-LIVE] gemini-live.js no exporta init()');
+    }
+} catch (e) {
+    console.error('❌ [GEMINI-LIVE] No se pudo montar:', e.message);
+}
+
+// ─── Gemini Text API ───
+try {
+    geminiText = require('./gemini-text');
+    if (geminiText && typeof geminiText.init === 'function') {
+        geminiText.init(io, config);
+        console.log('📚 [GEMINI-TEXT] Módulo montado OK');
+    } else {
+        console.error('❌ [GEMINI-TEXT] gemini-text.js no exporta init()');
+    }
+} catch (e) {
+    console.error('❌ [GEMINI-TEXT] No se pudo montar:', e.message);
+}
+
+// ─── Rutas HTTP de Gemini (las que pide el HTML) ───
+app.get('/api/gemini-live/config', (req, res) => {
+    try {
+        const cfg = geminiLive.cargarConfig();
+        const safe = { ...cfg };
+        if (Array.isArray(safe.apiKeys) && safe.apiKeys.length > 0) {
+            safe.apiKeys = safe.apiKeys.map(() => '***');
+        }
+        if (safe.apiKey) safe.apiKey = '***';
+        res.json({ ok: true, config: safe });
+    } catch (e) {
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+app.post('/api/gemini-live/config', (req, res) => {
+    try {
+        const cfg = geminiLive.cargarConfig();
+        const body = req.body || {};
+        if (body.apiKeys && Array.isArray(body.apiKeys)) {
+            cfg.apiKeys = body.apiKeys.map(k => String(k || '').trim()).filter(Boolean);
+            if (cfg.apiKeys.length > 0) cfg.apiKey = cfg.apiKeys[0];
+        } else if (body.apiKey) {
+            cfg.apiKey = String(body.apiKey).trim();
+            cfg.apiKeys = [cfg.apiKey];
+        }
+        if (typeof body.voz === 'string') cfg.voz = body.voz;
+        if (typeof body.comandoChat === 'string') cfg.comandoChat = body.comandoChat;
+        if (typeof body.palabraClave === 'string') cfg.palabraClave = body.palabraClave;
+        if (typeof body.pronombre === 'string') cfg.pronombre = body.pronombre;
+        if (typeof body.pronombrePersonalizado === 'string') cfg.pronombrePersonalizado = body.pronombrePersonalizado;
+        geminiLive.guardarConfig(cfg);
+        res.json({ ok: true });
+    } catch (e) {
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+app.get('/api/gemini-live/status', (req, res) => {
+    try {
+        const est = geminiLive.estado();
+        res.json({ ok: true, ...est });
+    } catch (e) {
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+app.get('/api/gemini-text/config', (req, res) => {
+    try {
+        if (!geminiText) return res.status(500).json({ ok: false, error: 'gemini-text no cargado' });
+        const cfg = geminiText.cargarConfig();
+        const safe = { ...cfg };
+        if (Array.isArray(safe.apiKeys) && safe.apiKeys.length > 0) {
+            safe.apiKeys = safe.apiKeys.map(() => '***');
+        }
+        if (safe.apiKey) safe.apiKey = '***';
+        res.json({ ok: true, config: safe });
+    } catch (e) {
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+app.post('/api/gemini-text/config', (req, res) => {
+    try {
+        if (!geminiText) return res.status(500).json({ ok: false, error: 'gemini-text no cargado' });
+        const cfg = geminiText.cargarConfig();
+        const body = req.body || {};
+        if (body.apiKeys && Array.isArray(body.apiKeys)) {
+            cfg.apiKeys = body.apiKeys.map(k => String(k || '').trim()).filter(Boolean);
+            if (cfg.apiKeys.length > 0) cfg.apiKey = cfg.apiKeys[0];
+        } else if (body.apiKey) {
+            cfg.apiKey = String(body.apiKey).trim();
+            cfg.apiKeys = [cfg.apiKey];
+        }
+        if (typeof body.modelo === 'string' && body.modelo.trim()) cfg.modelo = body.modelo.trim();
+        if (typeof body.intervaloResumenMs === 'number' && body.intervaloResumenMs >= 60000) {
+            cfg.intervaloResumenMs = body.intervaloResumenMs;
+        }
+        if (typeof body.activo === 'boolean') cfg.activo = body.activo;
+        geminiText.guardarConfig(cfg);
+        res.json({ ok: true });
+    } catch (e) {
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+app.get('/api/gemini-text/status', (req, res) => {
+    try {
+        if (!geminiText) return res.status(500).json({ ok: false, error: 'gemini-text no cargado' });
+        const est = geminiText.estado();
+        res.json({ ok: true, ...est });
+    } catch (e) {
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+app.post('/api/gemini-text/buscar', async (req, res) => {
+    try {
+        if (!geminiText) return res.status(500).json({ ok: false, error: 'gemini-text no cargado' });
+        const { query, contexto } = req.body || {};
+        if (!query) return res.status(400).json({ ok: false, error: 'Falta query' });
+        const r = await geminiText.buscar(query, contexto);
+        res.json(r);
+    } catch (e) {
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+app.post('/api/gemini-text/resumen', async (req, res) => {
+    try {
+        if (!geminiText) return res.status(500).json({ ok: false, error: 'gemini-text no cargado' });
+        const r = await geminiText.generarResumen([], '');
+        res.json({ ok: !!r, texto: r || '' });
+    } catch (e) {
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+app.post('/api/gemini-text/olvidar-resumenes', (req, res) => {
+    try {
+        if (!geminiText) return res.status(500).json({ ok: false, error: 'gemini-text no cargado' });
+        if (io) io.emit('gemini-text:olvidar-resumenes');
+        res.json({ ok: true });
+    } catch (e) {
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+// ─── Deck (StreamDeck web) ───
+try {
+    const deckModule = require('./deck');
+    if (deckModule && typeof deckModule.init === 'function') {
+        deckModule.init(app, io);
+        console.log('🎛️ [DECK] Rutas montadas OK');
+    } else {
+        console.error('❌ [DECK] deck.js no exporta init()');
+    }
+} catch (e) {
+    console.error('❌ [DECK] No se pudo montar:', e.message);
 }
 
 // ================================================================
