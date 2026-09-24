@@ -1124,4 +1124,125 @@ function init(app, io) {
   console.log('[deck] Móvil:  http://' + lanIP + ':3000/deck?t=' + deckConfig.token);
 }
 
-module.exports = { init };
+// ════════════════════════════════════════════════════════════
+// 🔌 EXPORTS PARA OTROS MÓDULOS (stream-health, stream-keys)
+// ════════════════════════════════════════════════════════════
+
+// Cliente OBS crudo (para stream-health)
+function getObsClient() {
+  return obsWs;
+}
+
+// Aplicar server + key a OBS normal (horizontal)
+// Aplicar server + key a OBS normal (horizontal)
+async function setStreamSettings(server, key) {
+  try {
+    if (!obsWs) return { ok: false, error: 'OBS no conectado' };
+    if (!server || !key) return { ok: false, error: 'Falta server o key' };
+
+    // 1) Leer config actual
+    let currentSettings = null;
+    let tipoActual = 'rtmp_common';
+    try {
+      const current = await obsWs.call('GetStreamServiceSettings');
+      currentSettings = current && current.streamServiceSettings ? current.streamServiceSettings : {};
+      if (current && typeof current.streamServiceType === 'string') {
+        tipoActual = current.streamServiceType;
+      }
+      console.log('🔑 [DECK] OBS tipo actual: ' + tipoActual);
+      console.log('🔑 [DECK] OBS settings actuales:', JSON.stringify(currentSettings));
+    } catch (e) {
+      console.warn('[DECK] No pude leer el tipo actual:', e.message);
+    }
+
+    // 2) Si OBS no está en Personalizado, avisar
+    if (tipoActual !== 'rtmp_custom') {
+      const msg = 'OBS está en modo "' + tipoActual + '". Andá a OBS → Configuración → Emisión → Servicio: Personalizado..., UNA vez, y volvé a intentar.';
+      console.warn('⚠️ [DECK] ' + msg);
+      return { ok: false, error: msg };
+    }
+
+    // 3) Construir settings completos
+    const nuevosSettings = Object.assign({}, currentSettings, {
+      server: server,
+      key: key,
+      use_auth: false
+    });
+
+    console.log('🔑 [DECK] Aplicando settings:', JSON.stringify(nuevosSettings));
+
+    // ⚠️ OBS WebSocket 5.x: el request correcto es SetStreamServiceSettings
+    //    (SetStreamSettings era de la API v4 y ya NO EXISTE)
+    await obsWs.call('SetStreamServiceSettings', {
+      streamServiceType: 'rtmp_custom',
+      streamServiceSettings: nuevosSettings
+    });
+
+    console.log('✅ [DECK] Stream settings aplicados a OBS: ' + server);
+    return { ok: true };
+  } catch (e) {
+    console.error('❌ [DECK] Error en SetStreamSettings:', e.message);
+    return { ok: false, error: e.message };
+  }
+}
+
+// Arrancar stream en OBS normal
+async function startObsStream() {
+  try {
+    if (!obsWs) return { ok: false, error: 'OBS no conectado' };
+    await obsWs.call('StartStream');
+    console.log('▶️ [DECK] Stream iniciado en OBS');
+    return { ok: true };
+  } catch (e) {
+    console.error('❌ [DECK] Error en StartStream:', e.message);
+    return { ok: false, error: e.message };
+  }
+}
+
+// Detener stream en OBS normal
+async function stopObsStream() {
+  try {
+    if (!obsWs) return { ok: false, error: 'OBS no conectado' };
+    await obsWs.call('StopStream');
+    console.log('⏹️ [DECK] Stream detenido en OBS');
+    return { ok: true };
+  } catch (e) {
+    console.error('❌ [DECK] Error en StopStream:', e.message);
+    return { ok: false, error: e.message };
+  }
+}
+
+// Estado del stream de OBS (activo o no)
+async function getObsStreamStatus() {
+  try {
+    if (!obsWs) return { ok: false, active: false, error: 'OBS no conectado' };
+    const status = await obsWs.call('GetStreamStatus');
+    return {
+      ok: true,
+      active: !!status.outputActive,
+      duration: status.outputDuration || 0,
+      bytes: status.outputBytes || 0
+    };
+  } catch (e) {
+    return { ok: false, active: false, error: e.message };
+  }
+}
+
+// ═══ Aitum Vertical — exports ═══
+// (Las funciones ya existen más arriba en el archivo,
+//  acá solo las exponemos para que stream-keys pueda usarlas)
+
+module.exports = {
+  init,
+  getObsClient,
+  setStreamSettings,
+  startObsStream,
+  stopObsStream,
+  getObsStreamStatus,
+  // Aitum
+  aitumUpdateStreamKey,
+  aitumUpdateStreamServer,
+  aitumStartStreaming,
+  aitumStopStreaming,
+  aitumGetStatus
+};

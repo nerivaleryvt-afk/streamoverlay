@@ -143,11 +143,139 @@
         </div>
       </div>
 
-      <div class="stats-bar" id="section-overview">
-        <div class="stat-item"><div class="stat-value" id="totalMessages">0</div><div class="stat-label">Mensajes</div></div>
-        <div class="stat-item"><div class="stat-value" id="totalBans">0</div><div class="stat-label">Baneos</div></div>
-        <div class="stat-item"><div class="stat-value" id="totalBits">0</div><div class="stat-label">Bits</div></div>
-        <div class="stat-item"><div class="stat-value" id="totalActions">0</div><div class="stat-label">Acciones</div></div>
+                        <!-- ═══════════════════════════════════════════════════════ -->
+      <!-- 🔑 STREAM KEYS + 🚀 CONTROL DE STREAM                  -->
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <div class="stream-tools-wrapper" id="streamToolsWrapper">
+
+        <!-- Header colapsable -->
+        <div class="stream-tools-header" onclick="toggleStreamTools()">
+          <div class="stream-tools-title">
+            <i class="ri-tools-line"></i>
+            <span>Herramientas de Stream</span>
+          </div>
+          <button class="stream-tools-toggle" id="streamToolsToggle" title="Mostrar/Ocultar">
+            <i class="ri-arrow-up-s-line" id="streamToolsToggleIcon"></i>
+            <span id="streamToolsToggleText">Ocultar</span>
+          </button>
+        </div>
+
+        <!-- Contenido colapsable -->
+        <div class="stream-tools-row" id="streamToolsRow">
+
+          <!-- ─── Card: STREAM KEYS ─── -->
+          <div class="tool-card" id="streamKeysCard">
+            <div class="tool-card-header">
+              <div class="tool-card-title">
+                <i class="ri-key-2-line"></i>
+                <span>Stream Keys</span>
+              </div>
+              <div class="tool-card-tabs" id="streamKeysTabs">
+                <button class="tool-tab active" data-target="obs" onclick="skCambiarTab('obs')">
+                  <i class="ri-computer-line"></i> OBS
+                </button>
+                <button class="tool-tab" data-target="aitum" onclick="skCambiarTab('aitum')">
+                  <i class="ri-smartphone-line"></i> Aitum
+                </button>
+              </div>
+            </div>
+
+            <div class="tool-card-body" id="streamKeysBody">
+              <div class="tool-empty" id="streamKeysEmpty">
+                <i class="ri-loader-4-line"></i>
+                <span>Cargando...</span>
+              </div>
+            </div>
+
+            <div class="tool-card-footer">
+              <button class="tool-btn primary" onclick="skAbrirModal()">
+                <i class="ri-add-line"></i> Agregar clave
+              </button>
+            </div>
+          </div>
+
+          <!-- ─── Card: CONTROL DE STREAM ─── -->
+          <div class="tool-card" id="streamControlCard">
+            <div class="tool-card-header">
+              <div class="tool-card-title">
+                <i class="ri-rocket-2-line"></i>
+                <span>Control de Stream</span>
+              </div>
+            </div>
+
+            <div class="tool-card-body">
+              <!-- Columna Horizontal (OBS) -->
+              <div class="sc-column" data-target="obs">
+                <div class="sc-column-header">
+                  <div class="sc-icon"><i class="ri-computer-line"></i></div>
+                  <div class="sc-info">
+                    <div class="sc-name">Horizontal</div>
+                    <div class="sc-sub">OBS normal · 1920×1080</div>
+                  </div>
+                  <div class="sc-status" id="scStatusObs">
+                    <span class="sc-dot"></span>
+                    <span>—</span>
+                  </div>
+                </div>
+                <div class="sc-actions">
+                  <button class="sc-btn start" onclick="scIniciar('obs')">
+                    <i class="ri-play-fill"></i> Iniciar
+                  </button>
+                  <button class="sc-btn stop" onclick="scDetener('obs')">
+                    <i class="ri-stop-fill"></i> Detener
+                  </button>
+                </div>
+              </div>
+
+              <!-- Columna Vertical (Aitum) -->
+              <div class="sc-column" data-target="aitum">
+                <div class="sc-column-header">
+                  <div class="sc-icon"><i class="ri-smartphone-line"></i></div>
+                  <div class="sc-info">
+                    <div class="sc-name">Vertical</div>
+                    <div class="sc-sub">Aitum · 1080×1920</div>
+                  </div>
+                  <div class="sc-status" id="scStatusAitum">
+                    <span class="sc-dot"></span>
+                    <span>—</span>
+                  </div>
+                </div>
+                <div class="sc-actions">
+                  <button class="sc-btn start" onclick="scIniciar('aitum')">
+                    <i class="ri-play-fill"></i> Iniciar
+                  </button>
+                  <button class="sc-btn stop" onclick="scDetener('aitum')">
+                    <i class="ri-stop-fill"></i> Detener
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /stream-tools-row -->
+
+      </div><!-- /stream-tools-wrapper -->
+
+      <div class="overview-row" id="section-overview">
+
+        <!-- Lado izquierdo: los 4 stats en grid 2x2 -->
+        <div class="stats-bar">
+          <div class="stat-item"><div class="stat-value" id="totalMessages">0</div><div class="stat-label">Mensajes</div></div>
+          <div class="stat-item"><div class="stat-value" id="totalBans">0</div><div class="stat-label">Baneos</div></div>
+          <div class="stat-item"><div class="stat-value" id="totalBits">0</div><div class="stat-label">Bits</div></div>
+          <div class="stat-item"><div class="stat-value" id="totalActions">0</div><div class="stat-label">Acciones</div></div>
+        </div>
+
+        <!-- Lado derecho: pulso del stream -->
+        <div class="stream-health-slot">
+          <iframe
+            src="/stream-health.html?embed=1"
+            frameborder="0"
+            scrolling="no"
+            title="Pulso del Stream"
+          ></iframe>
+        </div>
+
       </div>
 
       <div class="main-layout" id="mainLayout">

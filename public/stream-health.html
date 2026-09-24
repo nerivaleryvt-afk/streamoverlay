@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pulso del Stream · Toki</title>
+
+<link rel="preconnect" href="https://api.fontshare.com">
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600,700,900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+
+<script src="/js/server-url.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+
+<style>
+:root {
+  --lima: #b8ff00;
+  --lima-soft: rgba(184, 255, 0, 0.10);
+  --lima-border: rgba(184, 255, 0, 0.35);
+  --rosa: #ff0080;
+  --rosa-soft: rgba(255, 0, 128, 0.10);
+  --rosa-border: rgba(255, 0, 128, 0.35);
+  --cian: #00d9ff;
+  --warn: #fbbf24;
+  --err: #f87171;
+  --bg-card: #12121b;
+  --bg-elevated: #181824;
+  --border: rgba(255, 255, 255, 0.06);
+  --border-strong: rgba(255, 255, 255, 0.12);
+  --text: #f0edf9;
+  --text-dim: #a8a4b8;
+  --text-muted: #6f6c80;
+  --font-ui: 'Satoshi', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  font-family: var(--font-ui);
+  color: var(--text);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+body.embed {
+  background: var(--bg-card);
+}
+
+/* ═══ CONTENEDOR ═══ */
+.sh-card {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(180deg, var(--bg-card) 0%, #0c0c14 100%);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.3s;
+}
+
+body.embed .sh-card {
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+
+.sh-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--sh-accent, var(--border-strong));
+  transition: background 0.4s;
+}
+
+.sh-card[data-color="lima"] { --sh-accent: var(--lima); }
+.sh-card[data-color="ambar"] { --sh-accent: var(--warn); }
+.sh-card[data-color="rosa"] { --sh-accent: var(--rosa); }
+.sh-card[data-color="gris"] { --sh-accent: var(--border-strong); }
+
+/* ═══ HEADER ═══ */
+.sh-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.sh-head-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--lima-soft);
+  border: 1px solid var(--lima-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: var(--lima);
+  flex-shrink: 0;
+  transition: all 0.3s;
+}
+
+.sh-card[data-color="ambar"] .sh-head-icon {
+  background: rgba(251, 191, 36, 0.10);
+  border-color: rgba(251, 191, 36, 0.35);
+  color: var(--warn);
+}
+.sh-card[data-color="rosa"] .sh-head-icon {
+  background: var(--rosa-soft);
+  border-color: var(--rosa-border);
+  color: var(--rosa);
+}
+.sh-card[data-color="gris"] .sh-head-icon {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--border);
+  color: var(--text-muted);
+}
+
+.sh-head-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  flex: 1;
+}
+
+.sh-head-title {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+.sh-head-sub {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: -0.01em;
+}
+
+.sh-head-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: all 0.3s;
+}
+
+.sh-head-status .sh-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.sh-card[data-color="lima"] .sh-head-status {
+  color: var(--lima);
+  border-color: var(--lima-border);
+  background: var(--lima-soft);
+}
+.sh-card[data-color="lima"] .sh-head-status .sh-dot {
+  animation: pulse 2s infinite;
+  box-shadow: 0 0 0 0 currentColor;
+}
+.sh-card[data-color="ambar"] .sh-head-status {
+  color: var(--warn);
+  border-color: rgba(251, 191, 36, 0.35);
+  background: rgba(251, 191, 36, 0.08);
+}
+.sh-card[data-color="rosa"] .sh-head-status {
+  color: var(--rosa);
+  border-color: var(--rosa-border);
+  background: var(--rosa-soft);
+}
+.sh-card[data-color="rosa"] .sh-head-status .sh-dot {
+  animation: pulseRosa 1.2s infinite;
+  box-shadow: 0 0 0 0 currentColor;
+}
+
+@keyframes pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(184, 255, 0, 0.5); }
+  70%  { box-shadow: 0 0 0 6px rgba(184, 255, 0, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(184, 255, 0, 0); }
+}
+@keyframes pulseRosa {
+  0%   { box-shadow: 0 0 0 0 rgba(255, 0, 128, 0.6); }
+  70%  { box-shadow: 0 0 0 8px rgba(255, 0, 128, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 0, 128, 0); }
+}
+
+/* ═══ GRÁFICO ELECTROCARDIOGRAMA ═══ */
+.sh-graph {
+  flex: 1;
+  min-height: 60px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+  padding: 6px 8px 4px;
+  gap: 2px;
+}
+
+.sh-graph::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: 100% 25%;
+  pointer-events: none;
+}
+
+.sh-bar {
+  flex: 1;
+  min-width: 2px;
+  border-radius: 1.5px;
+  background: var(--sh-accent, var(--border-strong));
+  transition: height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+              background 0.3s;
+  height: 0%;
+  opacity: 0.85;
+  position: relative;
+}
+
+.sh-bar.latest {
+  opacity: 1;
+  box-shadow: 0 0 8px var(--sh-accent, transparent);
+}
+
+.sh-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10.5px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* ═══ STATS EN LÍNEA ═══ */
+.sh-stats {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.sh-stat {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  font-family: var(--font-mono);
+}
+
+.sh-stat-label {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.sh-stat-value {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.sh-stat-unit {
+  font-size: 10px;
+  color: var(--text-dim);
+  font-weight: 600;
+}
+
+.sh-stat.warn .sh-stat-value { color: var(--warn); }
+.sh-stat.err .sh-stat-value { color: var(--err); }
+.sh-stat.ok .sh-stat-value { color: var(--lima); }
+
+/* ═══ RECOMENDACIÓN DE BITRATE ═══ */
+.sh-hint {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 11px;
+  border-radius: 7px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.35;
+  border: 1px solid transparent;
+  flex-shrink: 0;
+  transition: all 0.3s;
+}
+
+.sh-hint i {
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.sh-hint.ok {
+  background: var(--lima-soft);
+  border-color: var(--lima-border);
+  color: var(--lima);
+}
+.sh-hint.warn {
+  background: rgba(251, 191, 36, 0.08);
+  border-color: rgba(251, 191, 36, 0.35);
+  color: var(--warn);
+}
+.sh-hint.err {
+  background: var(--rosa-soft);
+  border-color: var(--rosa-border);
+  color: var(--rosa);
+}
+.sh-hint.info {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: var(--border);
+  color: var(--text-muted);
+}
+
+/* ═══ ESTADO OFFLINE (OBS desconectado) ═══ */
+.sh-offline {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 20px 14px;
+  text-align: center;
+}
+
+.sh-offline-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: var(--text-muted);
+}
+
+.sh-offline-text {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-dim);
+  line-height: 1.4;
+}
+
+.sh-offline-sub {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+/* ═══ MODO EMBED (más compacto) ═══ */
+body.embed .sh-card {
+  padding: 12px 14px;
+  gap: 8px;
+}
+body.embed .sh-head-icon {
+  width: 28px;
+  height: 28px;
+  font-size: 14px;
+  border-radius: 7px;
+}
+body.embed .sh-head-title { font-size: 10px; }
+body.embed .sh-graph { min-height: 50px; }
+body.embed .sh-stat-value { font-size: 12px; }
+body.embed .sh-hint { font-size: 10px; padding: 6px 10px; }
+</style>
+</head>
+<body>
+
+<div class="sh-card" id="shCard" data-color="gris">
+
+  <!-- Header -->
+  <div class="sh-head">
+    <div class="sh-head-icon">
+      <i class="ri-heart-pulse-line"></i>
+    </div>
+    <div class="sh-head-text">
+      <div class="sh-head-title">Pulso del Stream</div>
+      <div class="sh-head-sub" id="shSub">esperando obs...</div>
+    </div>
+    <div class="sh-head-status" id="shStatus">
+      <span class="sh-dot"></span>
+      <span id="shStatusText">OFF</span>
+    </div>
+  </div>
+
+  <!-- Gráfico -->
+  <div class="sh-graph" id="shGraph">
+    <div class="sh-empty" id="shEmpty">sin datos todavía</div>
+  </div>
+
+  <!-- Stats -->
+  <div class="sh-stats">
+    <div class="sh-stat">
+      <span class="sh-stat-label">Bit</span>
+      <span class="sh-stat-value" id="shBitrate">—</span>
+      <span class="sh-stat-unit">Mbps</span>
+    </div>
+    <div class="sh-stat">
+      <span class="sh-stat-label">FPS</span>
+      <span class="sh-stat-value" id="shFps">—</span>
+    </div>
+    <div class="sh-stat" id="shDropsWrap">
+      <span class="sh-stat-label">Drops</span>
+      <span class="sh-stat-value" id="shDrops">—</span>
+      <span class="sh-stat-unit">%</span>
+    </div>
+    <div class="sh-stat">
+      <span class="sh-stat-label">CPU</span>
+      <span class="sh-stat-value" id="shCpu">—</span>
+      <span class="sh-stat-unit">%</span>
+    </div>
+  </div>
+
+  <!-- Hint de bitrate -->
+  <div class="sh-hint info" id="shHint">
+    <i class="ri-information-line"></i>
+    <span id="shHintText">Conectá OBS para ver el pulso del stream</span>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  // ═══ DETECTAR MODO EMBED ═══
+  const params = new URLSearchParams(window.location.search);
+  const isEmbed = params.get('embed') === '1';
+  if (isEmbed) document.body.classList.add('embed');
+
+  // ═══ REFS DOM ═══
+  const card        = document.getElementById('shCard');
+  const subEl       = document.getElementById('shSub');
+  const statusText  = document.getElementById('shStatusText');
+    const graphEl     = document.getElementById('shGraph');
+  const bitrateEl   = document.getElementById('shBitrate');
+  const fpsEl       = document.getElementById('shFps');
+  const dropsEl     = document.getElementById('shDrops');
+  const dropsWrap   = document.getElementById('shDropsWrap');
+  const cpuEl       = document.getElementById('shCpu');
+  const hintEl      = document.getElementById('shHint');
+  const hintTextEl  = document.getElementById('shHintText');
+
+  // ═══ CONSTANTES ═══
+  const MAX_BARS = 40;
+  const TIKTOK_IDEAL_MIN = 3000;
+  const TIKTOK_IDEAL_MAX = 5000;
+  const TIKTOK_SOFT_MIN  = 2500;
+  const TIKTOK_SOFT_MAX  = 6000;
+
+  // Escala visual: máximo visual del gráfico en Mbps
+  const VISUAL_MAX_MBPS = 8000;
+
+  // ═══ ESTADO ═══
+  let barras = [];
+  let ultimaMuestra = null;
+
+  // ═══ SOCKET ═══
+  const socket = io(window.SERVER_BASE || undefined, {
+    transports: ['websocket', 'polling']
+  });
+
+  socket.on('connect', () => {
+    console.log('[stream-health] socket conectado');
+  });
+
+  socket.on('disconnect', () => {
+    console.warn('[stream-health] socket desconectado');
+    setOffline('Servidor desconectado');
+  });
+
+  // ═══ RECIBIR ACTUALIZACIONES ═══
+  socket.on('stream-health:update', (data) => {
+    if (!data || !data.ok) return;
+    ultimaMuestra = data;
+
+    // ¿OBS no conectado?
+    if (!data.obsConectado) {
+      setOffline('OBS no conectado');
+      return;
+    }
+
+    // ¿OBS conectado pero sin stream activo?
+    if (!data.activo) {
+      setStandby();
+      return;
+    }
+
+    // Stream activo → render
+    setLive(data);
+  });
+
+  // ═══ ESTADOS ═══
+
+  function setOffline(msg) {
+    card.dataset.color = 'gris';
+    statusText.textContent = 'OFF';
+    subEl.textContent = msg.toLowerCase();
+    clearGraph();
+    bitrateEl.textContent = '—';
+    fpsEl.textContent = '—';
+    dropsEl.textContent = '—';
+    dropsWrap.classList.remove('warn', 'err');
+    cpuEl.textContent = '—';
+    hintEl.className = 'sh-hint info';
+    hintTextEl.textContent = 'Conectá OBS para ver el pulso del stream';
+  }
+
+  function setStandby() {
+    card.dataset.color = 'ambar';
+    statusText.textContent = 'STANDBY';
+    subEl.textContent = 'obs conectado · sin stream';
+    clearGraph();
+    bitrateEl.textContent = '—';
+    fpsEl.textContent = '—';
+    dropsEl.textContent = '—';
+    dropsWrap.classList.remove('warn', 'err');
+    cpuEl.textContent = '—';
+    hintEl.className = 'sh-hint info';
+    hintTextEl.textContent = 'Iniciá el stream para ver el pulso';
+  }
+
+  function setLive(data) {
+    card.dataset.color = data.color || 'lima';
+    statusText.textContent = 'LIVE';
+    subEl.textContent = `${data.resolucionSalida || ''} · ${formatDuracion(data.duracionMs)}`;
+
+    // Stats
+    bitrateEl.textContent = (data.bitrateMbps || 0).toFixed(1);
+    fpsEl.textContent = Math.round(data.fpsReal || data.fpsObjetivo || 0);
+    dropsEl.textContent = (data.dropsPct || 0).toFixed(2);
+
+    dropsWrap.classList.remove('warn', 'err');
+    if (data.dropsPct >= 1) dropsWrap.classList.add('err');
+    else if (data.dropsPct >= 0.3) dropsWrap.classList.add('warn');
+
+    cpuEl.textContent = Math.round(data.cpu || 0);
+
+    // Barras
+    renderGraph(data.history || []);
+
+    // Hint de bitrate para TikTok
+    renderBitrateHint(data);
+  }
+
+  // ═══ GRÁFICO ═══
+
+  function renderGraph(history) {
+    if (!history || history.length === 0) return;
+
+    // Ocultar mensaje "sin datos" si existe
+    const emptyMsg = graphEl.querySelector('.sh-empty');
+    if (emptyMsg) emptyMsg.style.display = 'none';
+
+    // Valores del bitrate (últimos MAX_BARS)
+    const valores = history.slice(-MAX_BARS).map(h => Number(h.bitrateMbps) || 0);
+    const faltantes = MAX_BARS - valores.length;
+    const datos = new Array(faltantes).fill(0).concat(valores);
+
+    // Crear barras si no existen o si el DOM se vació
+    const hayBarras = barras.length === MAX_BARS && graphEl.contains(barras[0]);
+    if (!hayBarras) {
+      graphEl.innerHTML = '';
+      barras = [];
+      for (let i = 0; i < MAX_BARS; i++) {
+        const b = document.createElement('div');
+        b.className = 'sh-bar';
+        graphEl.appendChild(b);
+        barras.push(b);
+      }
+    }
+
+    // Altura mínima visual (para que se vean las barras aunque bitrate sea bajo)
+    const MIN_VISUAL_PCT = 6;
+
+    for (let i = 0; i < datos.length; i++) {
+      const v = datos[i];
+      let pct = (v / VISUAL_MAX_MBPS) * 100;
+      if (v > 0 && pct < MIN_VISUAL_PCT) pct = MIN_VISUAL_PCT;
+      pct = Math.max(0, Math.min(100, pct));
+
+      const b = barras[i];
+      b.style.height = pct + '%';
+
+      const esUltima = (i === datos.length - 1);
+      b.classList.toggle('latest', esUltima && v > 0);
+    }
+  }
+
+  function clearGraph() {
+    graphEl.innerHTML = '<div class="sh-empty">sin datos todavía</div>';
+    barras = [];
+  }
+
+  // ═══ HINT DE BITRATE ═══
+
+  function renderBitrateHint(data) {
+    const mbps = data.bitrateMbps || 0;
+    const kbps = mbps * 1000;
+
+    // Detección simple: si el server nos avisa que hay proxy TikTok activo
+    // Por ahora usamos un flag que el server puede mandar en el futuro:
+    // data.plataforma = 'tiktok' | 'twitch' | 'kick' | 'youtube' | null
+    const plataforma = data.plataforma || null;
+
+    // Sin plataforma detectada → mostramos valores generales
+    if (!plataforma) {
+      hintEl.className = 'sh-hint info';
+      hintTextEl.textContent = 'Bitrate actual: ' + Math.round(kbps) + ' kbps';
+      return;
+    }
+
+    // Reglas específicas para TikTok
+    if (plataforma === 'tiktok') {
+      if (kbps < TIKTOK_SOFT_MIN) {
+        hintEl.className = 'sh-hint err';
+        hintTextEl.textContent = 'TikTok: bitrate muy bajo. Subí a 3500+ kbps';
+        return;
+      }
+      if (kbps < TIKTOK_IDEAL_MIN) {
+        hintEl.className = 'sh-hint warn';
+        hintTextEl.textContent = 'TikTok: aceptable, pero 4000+ se ve mejor';
+        return;
+      }
+      if (kbps <= TIKTOK_IDEAL_MAX) {
+        hintEl.className = 'sh-hint ok';
+        hintTextEl.textContent = 'Bitrate ideal para TikTok (' + Math.round(kbps) + ' kbps)';
+        return;
+      }
+      if (kbps <= TIKTOK_SOFT_MAX) {
+        hintEl.className = 'sh-hint warn';
+        hintTextEl.textContent = 'TikTok: un poco alto. Recomendado: 5000 kbps';
+        return;
+      }
+      hintEl.className = 'sh-hint err';
+      hintTextEl.textContent = 'TikTok: ' + Math.round(kbps) + ' kbps puede laggear. Bajá a 5000';
+      return;
+    }
+
+    // Otras plataformas (Twitch, Kick, YouTube)
+    hintEl.className = 'sh-hint info';
+    hintTextEl.textContent = 'Bitrate actual: ' + Math.round(kbps) + ' kbps';
+  }
+
+  // ═══ HELPERS ═══
+
+  function formatDuracion(ms) {
+    if (!ms || ms < 0) return '00:00:00';
+    const s = Math.floor(ms / 1000);
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = s % 60;
+    return String(h).padStart(2, '0') + ':' +
+           String(m).padStart(2, '0') + ':' +
+           String(sec).padStart(2, '0');
+  }
+
+  // ═══ ARRANQUE ═══
+  setOffline('Esperando conexión');
+
+  console.log('[stream-health] cliente cargado · embed=' + isEmbed);
+})();
+</script>
+
+</body>
+</html>

@@ -1749,3 +1749,524 @@ setInterval(kickDashInit, 30000);
         }
     });
 })();
+// ════════════════════════════════════════════════════════════════
+// 🔑 STREAM KEYS + 🚀 STREAM CONTROL
+// ════════════════════════════════════════════════════════════════
+
+(function initStreamTools() {
+  'use strict';
+
+  // ─── Estado ───
+  let skTabActual = 'obs';   // 'obs' | 'aitum'
+  let skServersCache = null; // catálogo de servers por plataforma
+  let skEstado = { obs: {}, aitum: {} };
+
+  // ─── Helper para URLs ───
+  const apiURL = (path) => (window.SERVER_BASE || '') + path;
+
+  // ─── Escapar HTML ───
+  function esc(s) {
+    return String(s || '').replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+
+  // ─── Iconos por plataforma ───
+  function iconoPlataforma(platform) {
+    const map = {
+      twitch:  { icon: 'ri-twitch-fill',    color: '#a78bfa' },
+      kick:    { icon: 'ri-live-fill',      color: '#53fc18' },
+      youtube: { icon: 'ri-youtube-fill',   color: '#ff3b3b' },
+      velora:  { icon: 'ri-broadcast-line', color: '#00d9ff' },
+      tiktok:  { icon: 'ri-tiktok-fill',    color: '#ff0080' }
+    };
+    return map[platform] || { icon: 'ri-global-line', color: '#b8ff00' };
+  }
+
+  // ─── Cargar catálogo de servers ───
+  async function skCargarServers() {
+    if (skServersCache) return skServersCache;
+    try {
+      const r = await fetch(apiURL('/api/stream-keys/servers'));
+      const data = await r.json();
+      skServersCache = data.servers || {};
+      return skServersCache;
+    } catch (e) {
+      console.warn('[stream-keys] No se pudo cargar servidores:', e);
+      skServersCache = {};
+      return {};
+    }
+  }
+
+  // ─── Cargar y renderizar lista de keys ───
+  async function skRecargar() {
+    try {
+      const r = await fetch(apiURL('/api/stream-keys'));
+      const data = await r.json();
+      if (!data.ok) return;
+      skEstado = data.keys || { obs: {}, aitum: {} };
+      skRender();
+    } catch (e) {
+      console.warn('[stream-keys] Error cargando:', e);
+    }
+  }
+
+  function skRender() {
+    const body = document.getElementById('streamKeysBody');
+    if (!body) return;
+
+    const target = skTabActual;
+    const keys = skEstado[target] || {};
+    const lista = Object.values(keys);
+
+    if (lista.length === 0) {
+      body.innerHTML = `
+        <div class="tool-empty">
+          <i class="ri-key-2-line"></i>
+          <span>No hay claves guardadas para ${target === 'obs' ? 'OBS' : 'Aitum'}</span>
+        </div>
+      `;
+      return;
+    }
+
+    body.innerHTML = lista.map(k => {
+      const meta = iconoPlataforma(k.platform);
+      return `
+        <div class="sk-item">
+          <div class="sk-item-head">
+            <div class="sk-item-platform">
+              <i class="${meta.icon}" style="color: ${meta.color}"></i>
+              <span>${esc(k.label)}</span>
+            </div>
+            <div class="sk-item-actions">
+              <button class="sk-item-btn apply" onclick="skAplicar('${target}', '${esc(k.platform)}')" title="Aplicar a ${target === 'obs' ? 'OBS' : 'Aitum'}">
+                <i class="ri-play-circle-line"></i>
+              </button>
+              <button class="sk-item-btn" onclick="skEditar('${target}', '${esc(k.platform)}')" title="Editar">
+                <i class="ri-pencil-line"></i>
+              </button>
+              <button class="sk-item-btn delete" onclick="skEliminar('${target}', '${esc(k.platform)}')" title="Eliminar">
+                <i class="ri-delete-bin-line"></i>
+              </button>
+            </div>
+          </div>
+          <div class="sk-item-info">
+            <strong>Server</strong><span>${esc(k.server)}</span>
+            <strong>Key</strong><span>${esc(k.keyPreview)}</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // ─── Cambiar tab (OBS / Aitum) ───
+  window.skCambiarTab = function(target) {
+    if (!['obs', 'aitum'].includes(target)) return;
+    skTabActual = target;
+
+    document.querySelectorAll('#streamKeysTabs .tool-tab').forEach(t => {
+      t.classList.toggle('active', t.dataset.target === target);
+    });
+
+    skRender();
+  };
+
+  // ─── Abrir modal para agregar/editar ───
+  window.skAbrirModal = function(target, platform, datos) {
+    target = target || skTabActual;
+    platform = platform || 'twitch';
+
+    // Crear modal si no existe
+    let modal = document.getElementById('skModalBack');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'skModalBack';
+      modal.className = 'sk-modal-back';
+      modal.innerHTML = `
+        <div class="sk-modal">
+          <button class="sk-modal-close" onclick="skCerrarModal()">
+            <i class="ri-close-line"></i>
+          </button>
+          <h3><i class="ri-key-2-line"></i> <span id="skModalTitle">Agregar clave</span></h3>
+
+          <div class="sk-field">
+            <label>Destino</label>
+            <select id="skInputTarget">
+              <option value="obs">OBS (Horizontal)</option>
+              <option value="aitum">Aitum (Vertical)</option>
+            </select>
+          </div>
+
+          <div class="sk-field">
+            <label>Plataforma</label>
+            <select id="skInputPlatform" onchange="skOnPlatformChange()">
+              <option value="twitch">Twitch</option>
+              <option value="kick">Kick</option>
+              <option value="youtube">YouTube</option>
+              <option value="velora">Velora</option>
+              <option value="tiktok">TikTok (Aitum)</option>
+            </select>
+          </div>
+
+          <div class="sk-field">
+            <label>Servidor RTMP</label>
+            <div class="sk-field-row">
+              <select id="skInputServerSelect" onchange="skOnServerSelectChange()">
+                <!-- se llena por JS -->
+              </select>
+              <button type="button" onclick="skDetectarTwitch()" title="Detectar mejor server (Twitch)">
+                <i class="ri-global-line"></i>
+              </button>
+            </div>
+            <input type="text" id="skInputServer" placeholder="rtmp://..." style="margin-top: 6px;">
+            <div class="sk-field-hint" id="skServerHint">Podés elegir de la lista o escribir uno custom</div>
+          </div>
+
+          <div class="sk-field">
+            <label>Clave de transmisión</label>
+            <input type="password" id="skInputKey" placeholder="live_xxxxx..." autocomplete="off" spellcheck="false">
+            <div class="sk-field-hint">Solo se muestra una vista previa después de guardar</div>
+          </div>
+
+          <div class="sk-field">
+            <label>Etiqueta (opcional)</label>
+            <input type="text" id="skInputLabel" placeholder="Ej: Twitch principal" autocomplete="off">
+          </div>
+
+          <div class="sk-modal-actions">
+            <button onclick="skCerrarModal()">Cancelar</button>
+            <button class="primary" onclick="skGuardar()">
+              <i class="ri-save-line"></i> Guardar
+            </button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+
+      // Cerrar al hacer click en el fondo
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) skCerrarModal();
+      });
+    }
+
+    // Rellenar campos
+    document.getElementById('skModalTitle').textContent = datos ? 'Editar clave' : 'Agregar clave';
+    document.getElementById('skInputTarget').value = target;
+    document.getElementById('skInputPlatform').value = platform;
+    document.getElementById('skInputServer').value = datos?.server || '';
+    document.getElementById('skInputKey').value = ''; // nunca mostramos la key real
+    document.getElementById('skInputLabel').value = datos?.label || '';
+
+    // Cargar servidores conocidos para la plataforma
+    skOnPlatformChange();
+
+    modal.classList.add('show');
+  };
+
+  // ─── Cerrar modal ───
+  window.skCerrarModal = function() {
+    const modal = document.getElementById('skModalBack');
+    if (modal) modal.classList.remove('show');
+  };
+
+  // ─── Cuando cambia la plataforma en el modal ───
+  window.skOnPlatformChange = async function() {
+    const platform = document.getElementById('skInputPlatform').value;
+    const select = document.getElementById('skInputServerSelect');
+    const input = document.getElementById('skInputServer');
+
+    const servers = await skCargarServers();
+    const lista = servers[platform] || [];
+
+    if (lista.length === 0) {
+      select.innerHTML = '<option value="">— Custom —</option>';
+      select.disabled = true;
+    } else {
+      select.disabled = false;
+      select.innerHTML = lista.map(s =>
+        `<option value="${esc(s.value)}">${esc(s.label)}</option>`
+      ).join('') + '<option value="__custom__">— Custom —</option>';
+      // Preseleccionar el primero si el input está vacío
+      if (!input.value) {
+        input.value = lista[0].value;
+      }
+    }
+  };
+
+  // ─── Cuando cambia el select de servidores ───
+  window.skOnServerSelectChange = function() {
+    const select = document.getElementById('skInputServerSelect');
+    const input = document.getElementById('skInputServer');
+    if (select.value && select.value !== '__custom__') {
+      input.value = select.value;
+    }
+  };
+
+  // ─── Detectar server Twitch ───
+    window.skDetectarTwitch = async function() {
+    const hint = document.getElementById('skServerHint');
+    const input = document.getElementById('skInputServer');
+
+    hint.textContent = 'Detectando mejor server...';
+    hint.style.color = 'var(--primary)';
+
+    try {
+      const r = await fetch(apiURL('/api/stream-keys/detect/twitch'));
+      const data = await r.json();
+
+      if (!data.ok) {
+        hint.textContent = 'Error: ' + (data.error || 'desconocido');
+        hint.style.color = 'var(--danger)';
+        return;
+      }
+
+      // Debug: mostramos qué llegó
+      console.log('[detect/twitch] servidores:', data.servers ? data.servers.length : 0);
+      console.log('[detect/twitch] recommended:', data.recommended);
+
+      // 1) Si el backend ya marcó uno como recomendado → usar ese
+      let elegido = data.recommended;
+
+      // 2) Si no, buscar en la lista el que tenga recommended=true
+      if (!elegido && Array.isArray(data.servers)) {
+        elegido = data.servers.find(s => s && s.recommended) || null;
+      }
+
+      // 3) Si sigue sin haber → usar el primero de la lista como fallback
+      if (!elegido && Array.isArray(data.servers) && data.servers.length > 0) {
+        elegido = data.servers[0];
+        console.log('[detect/twitch] Fallback: usando el primero de la lista');
+      }
+
+      // 4) Si hay elegido y tiene URL → aplicarlo
+      if (elegido && elegido.urlTemplate) {
+        // urlTemplate: "rtmp://live-scl.twitch.tv/app/{stream_key}" → "rtmp://live-scl.twitch.tv/app"
+        const urlLimpia = elegido.urlTemplate.replace('/{stream_key}', '').replace('{stream_key}', '');
+        input.value = urlLimpia;
+        hint.textContent = (elegido.recommended ? '✅ Recomendado: ' : '📍 Usando: ') + (elegido.name || urlLimpia);
+        hint.style.color = elegido.recommended ? 'var(--primary)' : 'var(--warn)';
+      } else {
+        hint.textContent = 'No se pudo detectar ningún server de Twitch';
+        hint.style.color = 'var(--danger)';
+      }
+    } catch (e) {
+      console.error('[detect/twitch] Error:', e);
+      hint.textContent = 'Error: ' + e.message;
+      hint.style.color = 'var(--danger)';
+    }
+  };
+
+  // ─── Guardar key ───
+  window.skGuardar = async function() {
+    const target = document.getElementById('skInputTarget').value;
+    const platform = document.getElementById('skInputPlatform').value;
+    const server = document.getElementById('skInputServer').value.trim();
+    const key = document.getElementById('skInputKey').value.trim();
+    const label = document.getElementById('skInputLabel').value.trim();
+
+    if (!server) { alert('Falta el servidor'); return; }
+    if (!key) { alert('Falta la clave'); return; }
+
+    try {
+      const r = await fetch(apiURL('/api/stream-keys'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ target, platform, server, key, label })
+      });
+      const data = await r.json();
+
+      if (data.ok) {
+        skCerrarModal();
+        await skRecargar();
+      } else {
+        alert('Error: ' + (data.error || 'desconocido'));
+      }
+    } catch (e) {
+      alert('Error de red: ' + e.message);
+    }
+  };
+
+  // ─── Editar key existente ───
+  window.skEditar = function(target, platform) {
+    const datos = skEstado[target]?.[platform];
+    if (!datos) return;
+    skAbrirModal(target, platform, datos);
+  };
+
+  // ─── Eliminar key ───
+  window.skEliminar = async function(target, platform) {
+    if (!confirm(`¿Eliminar la clave de ${platform} en ${target === 'obs' ? 'OBS' : 'Aitum'}?`)) return;
+    try {
+      const r = await fetch(apiURL(`/api/stream-keys/${target}/${platform}`), { method: 'DELETE' });
+      const data = await r.json();
+      if (data.ok) await skRecargar();
+    } catch (e) {
+      alert('Error: ' + e.message);
+    }
+  };
+
+  // ─── Aplicar key a OBS o Aitum ───
+  window.skAplicar = async function(target, platform) {
+    const label = target === 'obs' ? 'OBS' : 'Aitum';
+    if (!confirm(`¿Aplicar la clave de ${platform} a ${label}?`)) return;
+
+    try {
+      const r = await fetch(apiURL('/api/stream-keys/apply'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ target, platform })
+      });
+      const data = await r.json();
+
+      if (data.ok) {
+        // Feedback visual simple
+        const card = document.getElementById('streamKeysCard');
+        if (card) {
+          card.style.borderColor = 'var(--primary)';
+          setTimeout(() => { card.style.borderColor = ''; }, 800);
+        }
+      } else {
+        alert('Error: ' + (data.error || 'desconocido'));
+      }
+    } catch (e) {
+      alert('Error de red: ' + e.message);
+    }
+  };
+
+  // ═══════════════════════════════════════════════════════════════
+  // 🚀 STREAM CONTROL
+  // ═══════════════════════════════════════════════════════════════
+
+  function scRenderEstado(target, activo) {
+    const col = document.querySelector(`.sc-column[data-target="${target}"]`);
+    const status = document.getElementById(`scStatus${target === 'obs' ? 'Obs' : 'Aitum'}`);
+    if (!col || !status) return;
+
+    col.classList.toggle('live', activo);
+    const dot = status.querySelector('.sc-dot');
+    const text = status.querySelector('span:last-child');
+
+    if (activo) {
+      if (text) text.textContent = 'LIVE';
+    } else {
+      if (text) text.textContent = 'Detenido';
+    }
+  }
+
+  window.scIniciar = async function(target) {
+    const label = target === 'obs' ? 'OBS (Horizontal)' : 'Aitum (Vertical)';
+    if (!confirm(`¿Iniciar stream en ${label}?`)) return;
+
+    try {
+      const r = await fetch(apiURL('/api/stream-control/start'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ target })
+      });
+      const data = await r.json();
+
+      if (data.ok) {
+        scRenderEstado(target, true);
+      } else {
+        alert('Error: ' + (data.error || 'desconocido'));
+      }
+    } catch (e) {
+      alert('Error de red: ' + e.message);
+    }
+  };
+
+  window.scDetener = async function(target) {
+    const label = target === 'obs' ? 'OBS (Horizontal)' : 'Aitum (Vertical)';
+    if (!confirm(`¿Detener stream en ${label}?`)) return;
+
+    try {
+      const r = await fetch(apiURL('/api/stream-control/stop'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ target })
+      });
+      const data = await r.json();
+
+      if (data.ok) {
+        scRenderEstado(target, false);
+      } else {
+        alert('Error: ' + (data.error || 'desconocido'));
+      }
+    } catch (e) {
+      alert('Error de red: ' + e.message);
+    }
+  };
+
+  // ═══════════════════════════════════════════════════════════════
+  // SOCKETS
+  // ═══════════════════════════════════════════════════════════════
+
+  if (typeof socket !== 'undefined' && socket) {
+    socket.on('stream-keys:updated', () => skRecargar());
+    socket.on('stream-keys:deleted', () => skRecargar());
+    socket.on('stream-keys:applied', ({ target, platform }) => {
+      console.log(`🔑 Clave aplicada: ${target}/${platform}`);
+    });
+
+    socket.on('obs:stream-state', ({ active }) => {
+      scRenderEstado('obs', active);
+    });
+
+    socket.on('aitum:stream-state', ({ active }) => {
+      scRenderEstado('aitum', active);
+    });
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // ARRANQUE
+  // ═══════════════════════════════════════════════════════════════
+
+  document.addEventListener('DOMContentLoaded', () => {
+    // Cargar catálogo y lista
+    skCargarServers().then(() => skRecargar());
+
+    // Auto-refresh cada 30s
+    setInterval(skRecargar, 30000);
+  });
+
+  // Si el DOM ya está listo
+  if (document.readyState !== 'loading') {
+    skCargarServers().then(() => skRecargar());
+    setInterval(skRecargar, 30000);
+  }
+
+  console.log('[stream-tools] Inicializado');
+})();
+
+// ════════════════════════════════════════════════════════════
+// 🔑 STREAM TOOLS — Colapsable
+// ════════════════════════════════════════════════════════════
+
+const LS_KEY_STREAM_TOOLS_COLLAPSED = 'dashboard:streamToolsCollapsed';
+
+function applyStreamToolsState(collapsed) {
+    const wrapper = document.getElementById('streamToolsWrapper');
+    const icon = document.getElementById('streamToolsToggleIcon');
+    const text = document.getElementById('streamToolsToggleText');
+    if (!wrapper) return;
+
+    wrapper.classList.toggle('collapsed', collapsed);
+    if (icon) icon.className = collapsed ? 'ri-arrow-down-s-line' : 'ri-arrow-up-s-line';
+    if (text) text.textContent = collapsed ? 'Mostrar' : 'Ocultar';
+}
+
+window.toggleStreamTools = function() {
+    const wrapper = document.getElementById('streamToolsWrapper');
+    if (!wrapper) return;
+
+    const collapsed = !wrapper.classList.contains('collapsed');
+    applyStreamToolsState(collapsed);
+
+    try { localStorage.setItem(LS_KEY_STREAM_TOOLS_COLLAPSED, collapsed ? '1' : '0'); } catch (e) {}
+};
+
+(function initStreamToolsCollapse() {
+    let collapsed = false;
+    try { collapsed = localStorage.getItem(LS_KEY_STREAM_TOOLS_COLLAPSED) === '1'; } catch (e) {}
+    applyStreamToolsState(collapsed);
+})();

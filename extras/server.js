@@ -3237,6 +3237,7 @@ app.get('/hype-train',          (req, res) => res.sendFile(path.join(publicDir, 
 app.get('/pride',               (req, res) => res.sendFile(path.join(publicDir, 'pride.html')));
 app.get('/stream-timer.html',   (req, res) => res.sendFile(path.join(publicDir, 'stream-timer.html')));
 app.get('/overlay-custom',      (req, res) => res.sendFile(path.join(publicDir, 'overlay-custom.html')));
+app.get('/stream-health',       (req, res) => res.sendFile(path.join(publicDir, 'stream-health.html')));
 
 // ================================================================
 // 🔧 APIs QUE FALTABAN
@@ -3448,16 +3449,194 @@ app.post('/api/gemini-text/olvidar-resumenes', (req, res) => {
 });
 
 // ─── Deck (StreamDeck web) ───
+let deckModule = null;
 try {
-    const deckModule = require('./deck');
+    deckModule = require('./deck');
     if (deckModule && typeof deckModule.init === 'function') {
         deckModule.init(app, io);
         console.log('🎛️ [DECK] Rutas montadas OK');
     } else {
         console.error('❌ [DECK] deck.js no exporta init()');
+        deckModule = null;
     }
 } catch (e) {
     console.error('❌ [DECK] No se pudo montar:', e.message);
+}
+
+// ─── Stream Health (monitor de salud del stream) ───
+try {
+    const streamHealth = require('./stream-health');
+    if (streamHealth && typeof streamHealth.init === 'function') {
+        // Le pasamos a stream-health una función que devuelve el cliente OBS de deck.js
+        const getObsClient = (deckModule && typeof deckModule.getObsClient === 'function')
+            ? deckModule.getObsClient
+            : () => null;
+        streamHealth.init(io, getObsClient);
+        console.log('📈 [STREAM-HEALTH] Módulo montado OK');
+    } else {
+        console.error('❌ [STREAM-HEALTH] stream-health.js no exporta init()');
+    }
+} catch (e) {
+    console.error('❌ [STREAM-HEALTH] No se pudo montar:', e.message);
+}
+
+// ─── Stream Keys (gestor de claves de transmisión) ───
+try {
+    const streamKeys = require('./stream-keys');
+    if (streamKeys && typeof streamKeys.init === 'function') {
+        // Le pasamos el deckModule para que pueda usar sus funciones
+        streamKeys.init(app, io, deckModule);
+        console.log('🔑 [STREAM-KEYS] Módulo montado OK');
+    } else {
+        console.error('❌ [STREAM-KEYS] stream-keys.js no exporta init()');
+    }
+} catch (e) {
+    console.error('❌ [STREAM-KEYS] No se pudo montar:', e.message);
+}
+
+// ─── Stream Control (iniciar/detener stream en OBS o Aitum) ───
+try {
+    // Helper: consultar el estado real del stream en OBS (horizontal)
+    async function getObsStreamStatus() {
+        try {
+            if (!deckModule || typeof deckModule.getObsStreamStatus !== 'function') {
+                return { ok: false, active: false, error: 'deck.js no disponible' };
+            }
+            return await deckModule.getObsStreamStatus();
+        } catch (e) {
+            return { ok: false, active: false, error: e.message };
+        }
+    }
+
+    // Helper: consultar el estado real del stream en Aitum (vertical)
+    async function getAitumStreamStatus() {
+        try {
+            if (!deckModule || typeof deckModule.aitumGetStatus !== 'function') {
+                return { ok: false, active: false, error: 'deck.js no expone aitumGetStatus' };
+            }
+            const status = await deckModule.aitumGetStatus();
+            return {
+                ok: true,
+                active: !!(status && status.streaming),
+                raw: status || null
+            };
+        } catch (e) {
+            return { ok: false, active: false, error: e.message };
+        }
+    }
+
+    // ─── POST /api/stream-control/start ───
+    // Body: { target: 'obs' | 'aitum' }
+    app.post('/api/stream-control/start', async (req, res) => {
+        try {
+            const { target } = req.body || {};
+
+            if (!target || !['obs', 'aitum'].includes(target)) {
+                return res.status(400).json({ ok: false, error: 'target inválido (obs|aitum)' });
+            }
+            if (!deckModule) {
+                return res.status(500).json({ ok: false, error: 'deck.js no disponible' });
+            }
+
+            // ⚠️ NO COMBINAR: cada target usa SU propia API
+            if (target === 'obs') {
+                if (typeof deckModule.startObsStream !== 'function') {
+                    return res.status(500).json({ ok: false, error: 'deck.js no expone startObsStream()' });
+                }
+                const r = await deckModule.startObsStream();
+                if (!r || !r.ok) {
+                    return res.status(500).json({ ok: false, error: r?.error || 'Error iniciando en OBS' });
+                }
+                console.log('▶️ [STREAM-CONTROL] Stream iniciado en OBS');
+                io.emit('obs:stream-state', { active: true });
+                return res.json({ ok: true, target: 'obs', active: true });
+            }
+
+            if (target === 'aitum') {
+                if (typeof deckModule.aitumStartStreaming !== 'function') {
+                    return res.status(500).json({ ok: false, error: 'deck.js no expone aitumStartStreaming()' });
+                }
+                await deckModule.aitumStartStreaming();
+                console.log('▶️ [STREAM-CONTROL] Stream iniciado en Aitum');
+                io.emit('aitum:stream-state', { active: true });
+                return res.json({ ok: true, target: 'aitum', active: true });
+            }
+        } catch (e) {
+            console.error('❌ [STREAM-CONTROL] Error start:', e.message);
+            res.status(500).json({ ok: false, error: e.message });
+        }
+    });
+
+    // ─── POST /api/stream-control/stop ───
+    // Body: { target: 'obs' | 'aitum' }
+    app.post('/api/stream-control/stop', async (req, res) => {
+        try {
+            const { target } = req.body || {};
+
+            if (!target || !['obs', 'aitum'].includes(target)) {
+                return res.status(400).json({ ok: false, error: 'target inválido (obs|aitum)' });
+            }
+            if (!deckModule) {
+                return res.status(500).json({ ok: false, error: 'deck.js no disponible' });
+            }
+
+            if (target === 'obs') {
+                if (typeof deckModule.stopObsStream !== 'function') {
+                    return res.status(500).json({ ok: false, error: 'deck.js no expone stopObsStream()' });
+                }
+                const r = await deckModule.stopObsStream();
+                if (!r || !r.ok) {
+                    return res.status(500).json({ ok: false, error: r?.error || 'Error deteniendo en OBS' });
+                }
+                console.log('⏹️ [STREAM-CONTROL] Stream detenido en OBS');
+                io.emit('obs:stream-state', { active: false });
+                return res.json({ ok: true, target: 'obs', active: false });
+            }
+
+            if (target === 'aitum') {
+                if (typeof deckModule.aitumStopStreaming !== 'function') {
+                    return res.status(500).json({ ok: false, error: 'deck.js no expone aitumStopStreaming()' });
+                }
+                await deckModule.aitumStopStreaming();
+                console.log('⏹️ [STREAM-CONTROL] Stream detenido en Aitum');
+                io.emit('aitum:stream-state', { active: false });
+                return res.json({ ok: true, target: 'aitum', active: false });
+            }
+        } catch (e) {
+            console.error('❌ [STREAM-CONTROL] Error stop:', e.message);
+            res.status(500).json({ ok: false, error: e.message });
+        }
+    });
+
+    // ─── GET /api/stream-control/status ───
+    app.get('/api/stream-control/status', async (req, res) => {
+        try {
+            const [obsStatus, aitumStatus] = await Promise.all([
+                getObsStreamStatus(),
+                getAitumStreamStatus()
+            ]);
+
+            res.json({
+                ok: true,
+                obs: {
+                    active: !!obsStatus.active,
+                    durationMs: obsStatus.duration || 0,
+                    error: obsStatus.error || null
+                },
+                aitum: {
+                    active: !!aitumStatus.active,
+                    error: aitumStatus.error || null
+                }
+            });
+        } catch (e) {
+            console.error('❌ [STREAM-CONTROL] Error status:', e.message);
+            res.status(500).json({ ok: false, error: e.message });
+        }
+    });
+
+    console.log('🚀 [STREAM-CONTROL] Rutas montadas OK');
+} catch (e) {
+    console.error('❌ [STREAM-CONTROL] No se pudo montar:', e.message);
 }
 
 // ================================================================
